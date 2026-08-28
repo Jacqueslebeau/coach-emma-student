@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
     const judged = extractJson<Record<string, unknown>>(
       await call({
         system: judgeSystem(subject.labelFr, `${subject.board} ${subject.spec}`, level),
+        model: "claude-opus-5", // le juge doit être plus fort que le tuteur qu'il audite
         content:
           `DOSSIER DE LA SÉANCE (élève simulé niveau ${level}, topic « ${topic} ») :\n\n` +
           `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(course).slice(0, 6000)}\n\n` +

@@ -5,6 +5,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // Pas de service_role : le log passe par le client de session (policy RLS
 // « log own runs » sur workflow_runs).
 const MODEL = "claude-sonnet-5";
+// Le thinking adaptatif (actif par défaut) consomme le budget max_tokens :
+// on garantit un plancher pour que la réponse utile ne soit jamais tronquée.
+const MIN_MAX_TOKENS = 12000;
 // €/token approx (aligné sur la convention Emma : input ×2.8, output ×14 par million)
 const IN_EUR = 2.8 / 1e6;
 const OUT_EUR = 14 / 1e6;
@@ -22,6 +25,7 @@ export async function askClaude(opts: {
   lessonId?: string | null;
   userId?: string | null;
   sb?: SupabaseClient;
+  model?: string; // ex. claude-opus-5 pour le jury du harnais qualité
 }): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY manquante");
@@ -43,8 +47,8 @@ export async function askClaude(opts: {
     // NB : `temperature` n'est plus accepté par claude-sonnet-5 (HTTP 400
     // "temperature is deprecated for this model") — l'option est ignorée.
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: opts.maxTokens ?? 4000,
+      model: opts.model || MODEL,
+      max_tokens: Math.max(opts.maxTokens ?? 4000, MIN_MAX_TOKENS),
       system: opts.system,
       messages,
     }),
@@ -61,8 +65,10 @@ export async function askClaude(opts: {
   return text;
 }
 
+function opts2Model(o: { model?: string }) { return o.model || MODEL; }
+
 async function logRun(
-  opts: { workflow: string; lessonId?: string | null; userId?: string | null; sb?: SupabaseClient },
+  opts: { workflow: string; lessonId?: string | null; userId?: string | null; sb?: SupabaseClient; model?: string },
   usage: { input_tokens?: number; output_tokens?: number } | null,
   status: string,
   error: string | null
@@ -73,7 +79,7 @@ async function logRun(
       workflow_name: opts.workflow,
       lesson_id: opts.lessonId ?? null,
       user_id: opts.userId ?? null,
-      model: MODEL,
+      model: opts2Model(opts),
       input_tokens: usage?.input_tokens ?? null,
       output_tokens: usage?.output_tokens ?? null,
       cost_eur: usage ? (usage.input_tokens || 0) * IN_EUR + (usage.output_tokens || 0) * OUT_EUR : null,

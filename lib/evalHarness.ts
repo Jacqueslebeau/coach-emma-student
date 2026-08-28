@@ -24,7 +24,7 @@ export const EVAL_TOPICS: Record<SubjectKey, string[]> = {
   maths: ["Differentiation — chain rule", "Trigonometric identities and equations", "Integration by parts"],
   eco: ["Price elasticity of demand", "Market failure and externalities", "Monetary policy and inflation"],
   geo: ["Carbon cycle — human impacts", "Coastal landscapes — erosion processes", "Global migration — patterns and impacts"],
-  french: ["Paper 2 — étude d'une œuvre : La Haine (thème de la violence)", "Traduction FR↔EN — méthode et pièges", "Paper 1 — résumé et compréhension écrite"],
+  french: ["Paper 2 — étude d'une œuvre : No et moi (Delphine de Vigan)", "Traduction FR↔EN — méthode et pièges", "Paper 1 — résumé et compréhension écrite"],
 };
 
 // Messages de coaching typiques par niveau (l'élève simulé ouvre la séance).
