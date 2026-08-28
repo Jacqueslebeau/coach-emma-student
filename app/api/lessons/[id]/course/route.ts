@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
+import { getSubject } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { courseSystem } from "@/lib/prompts";
 import type { Concept, Course } from "@/lib/types";
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
+  const subj = getSubject(lesson.subject);
 
   const existing = (lesson.course || {}) as Record<string, Course>;
   if (existing[mode]?.sections?.length) {
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const raw = await askClaude({
-      system: courseSystem(auth.firstName, auth.style, mode, concepts),
+      system: courseSystem(auth.firstName, auth.style, subj, mode, concepts),
       content: userMsg,
       maxTokens: mode === "full" ? 8000 : 3500,
       workflow: `course-${mode}`,

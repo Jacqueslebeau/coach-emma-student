@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
+import { getSubject } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { exercisesSystem } from "@/lib/prompts";
 import type { Concept, Exercise } from "@/lib/types";
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
+  const subj = getSubject(lesson.subject);
   const concepts = (lesson.concepts || []) as Concept[];
 
   // Concepts à prioriser : ceux demandés (redo), sinon les fragiles/non acquis.
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const raw = await askClaude({
-      system: exercisesSystem(auth.firstName, auth.style, concepts, focusKeys, variant),
+      system: exercisesSystem(auth.firstName, auth.style, subj, concepts, focusKeys, variant),
       content: `LEÇON : ${lesson.title}\nTOPIC : ${lesson.spec_topic || "—"}\n\nÉcris les 3 exercices.`,
       maxTokens: 3000,
       temperature: 0.4,

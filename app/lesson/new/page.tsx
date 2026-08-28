@@ -5,9 +5,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { compressImage } from "@/lib/compressImage";
+import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 
 export default function NewLesson() {
   const router = useRouter();
+  const [subject, setSubject] = useState<SubjectKey>("maths");
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -20,6 +22,7 @@ export default function NewLesson() {
     setBusy(true); setError(null); setClarify(null);
     try {
       const fd = new FormData();
+      fd.set("subject", subject);
       if (title.trim()) fd.set("title", title.trim());
       if (notes.trim()) fd.set("notes", notes.trim());
       if (photo) fd.set("photo", await compressImage(photo));
@@ -43,14 +46,26 @@ export default function NewLesson() {
       <h1 className="font-serif font-black text-3xl text-indigo-deep">Nouvelle leçon</h1>
       <p className="text-muted mt-2">
         Entre ce que tu as — le titre suffit, mais plus tu en donnes, plus le cours collera à ce que
-        ton prof a fait. Emma identifie les concepts du programme Edexcel.
+        ton prof a fait. Emma identifie les concepts du programme de l'exam board.
       </p>
 
-      {/* Matières : Maths active en Phase 0, Éco/Géo arrivent en Phase 2 */}
-      <div className="flex gap-2 mt-6">
-        <span className="chip-todo !text-[13px] !py-1.5 !px-4">Maths · Edexcel</span>
-        <span className="chip !text-[13px] !py-1.5 !px-4 bg-white border border-line text-faint" title="Bientôt">Éco · bientôt</span>
-        <span className="chip !text-[13px] !py-1.5 !px-4 bg-white border border-line text-faint" title="Bientôt">Géo · bientôt</span>
+      {/* Choix de la matière — chaque matière porte son board et sa technique d'examen */}
+      <div className="flex flex-wrap gap-2 mt-6">
+        {Object.values(SUBJECTS).map((s) => (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => setSubject(s.key)}
+            className={
+              subject === s.key
+                ? "chip !text-[13px] !py-1.5 !px-4 bg-indigo text-white"
+                : "chip !text-[13px] !py-1.5 !px-4 bg-white border border-line text-muted hover:text-indigo"
+            }
+            title={`${s.board} ${s.spec}`}
+          >
+            {s.labelFr} · {s.board}
+          </button>
+        ))}
       </div>
 
       <form onSubmit={onSubmit} className="card p-6 mt-4 space-y-5">
@@ -60,7 +75,7 @@ export default function NewLesson() {
             className="input mt-1"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="ex. Differentiation — chain rule"
+            placeholder={subject === "maths" ? "ex. Differentiation — chain rule" : subject === "eco" ? "ex. Price elasticity of demand" : subject === "geo" ? "ex. Carbon cycle — human impacts" : "ex. Paper 2 — La Haine, thème de la violence"}
           />
         </div>
         <div>

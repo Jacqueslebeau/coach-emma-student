@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
 import { askClaude, extractJson, type ContentBlock } from "@/lib/claude";
 import { conceptExtractionSystem } from "@/lib/prompts";
+import { getSubject } from "@/lib/subjects";
 import type { Concept } from "@/lib/types";
 
 export const maxDuration = 120;
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "formulaire invalide" }, { status: 400 });
 
+  const subj = getSubject(String(form.get("subject") || "maths"));
   const title = String(form.get("title") || "").trim().slice(0, 300);
   const notes = String(form.get("notes") || "").trim().slice(0, 12000);
   const photo = form.get("photo");
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
   };
   try {
     const raw = await askClaude({
-      system: conceptExtractionSystem(auth.firstName, auth.style),
+      system: conceptExtractionSystem(auth.firstName, auth.style, subj),
       content: blocks,
       maxTokens: 2000,
       workflow: "concept-extraction",
@@ -94,8 +96,8 @@ export async function POST(req: NextRequest) {
     .from("lessons")
     .insert({
       user_id: auth.user.id,
-      subject: "maths",
-      exam_board: "Edexcel",
+      subject: subj.key,
+      exam_board: subj.board,
       title: parsed.lesson_title || title || "Leçon",
       notes: notes || null,
       spec_topic: parsed.spec_topic || null,

@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
+import { getSubject } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { remediationSystem } from "@/lib/prompts";
 import type { Concept, Remediation } from "@/lib/types";
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
+  const subj = getSubject(lesson.subject);
   const concept = ((lesson.concepts || []) as Concept[]).find((c) => c.key === conceptKey);
   if (!concept) return NextResponse.json({ error: "concept inconnu" }, { status: 404 });
 
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const raw = await askClaude({
-      system: remediationSystem(auth.firstName, auth.style, concept, wp?.misconception || null),
+      system: remediationSystem(auth.firstName, auth.style, subj, concept, wp?.misconception || null),
       content: `LEÇON : ${lesson.title}\n\nRé-explique « ${concept.label} » sous un autre angle puis pose les 2 questions.`,
       maxTokens: 4000,
       temperature: 0.3,

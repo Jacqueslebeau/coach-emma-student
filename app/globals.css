@@ -19,7 +19,7 @@ body {
     @apply btn bg-indigo text-white hover:bg-indigo-deep;
   }
   .btn-amber {
-    @apply btn bg-amber-bright text-indigo-deep hover:bg-amber;
+    @apply btn bg-amber-bright text-indigo-deep font-extrabold hover:brightness-105;
   }
   .btn-ghost {
     @apply btn border border-line bg-white text-ink hover:bg-indigo-soft;

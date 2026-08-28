@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
+import { getSubject } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { gradeSystem, formatAnswers } from "@/lib/prompts";
 import { applyVerdicts } from "@/lib/mastery";
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
+  const subj = getSubject(lesson.subject);
 
   const { data: attempt } = await auth.sb
     .from("attempts")
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const raw = await askClaude({
-      system: gradeSystem(auth.firstName, auth.style, concepts.length ? concepts : allConcepts),
+      system: gradeSystem(auth.firstName, auth.style, subj, concepts.length ? concepts : allConcepts),
       content:
         `LEÇON : ${lesson.title}\n\n` +
         formatAnswers(questions, answers) +
