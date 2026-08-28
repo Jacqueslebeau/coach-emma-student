@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Rafraîchit la session Supabase à chaque requête (pattern @supabase/ssr),
 // et protège les pages de l'app : sans session → /login.
-const PUBLIC_PATHS = ["/login", "/api/health"];
+const PUBLIC_PATHS = ["/login", "/demo", "/api/health"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
