@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-paper text-ink font-sans antialiased;
+  font-size: 16px;
+  letter-spacing: -0.006em;
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-line rounded-2xl shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-indigo text-white hover:bg-indigo-deep;
+  }
+  .btn-amber {
+    @apply btn bg-amber-bright text-indigo-deep hover:bg-amber;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-white text-ink hover:bg-indigo-soft;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-white px-4 py-2.5 text-[15px] outline-none focus:border-indigo focus:ring-2 focus:ring-indigo-soft;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold;
+  }
+  .chip-acquis { @apply chip bg-mastered-bg text-mastered; }
+  .chip-fragile { @apply chip bg-learning-bg text-learning; }
+  .chip-non_acquis { @apply chip bg-gap-bg text-gap; }
+  .chip-todo { @apply chip bg-indigo-soft text-indigo; }
+}
+
+/* Le contenu généré (cours, feedback) : markdown restreint + KaTeX */
+.rich h2 { @apply font-serif text-xl font-semibold mt-5 mb-2; }
+.rich h3 { @apply font-serif text-lg font-semibold mt-4 mb-1.5; }
+.rich p { @apply my-2 leading-relaxed text-[15.5px]; }
+.rich ul { @apply my-2 pl-5 list-disc space-y-1 text-[15.5px]; }
+.rich li { @apply leading-relaxed; }
+.rich strong { @apply font-semibold text-ink; }
+.rich code { @apply font-mono text-[13px] bg-indigo-soft rounded px-1.5 py-0.5; }
+.rich .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
