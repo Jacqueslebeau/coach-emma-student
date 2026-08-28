@@ -85,7 +85,9 @@ async function logRun(
   }
 }
 
-// Les sorties structurées sont demandées en JSON ; on tolère les fences ```json.
+// Les sorties structurées sont demandées en JSON ; on tolère les fences ```json,
+// les backslashes LaTeX non échappés, les sauts de ligne bruts dans les chaînes
+// et les sorties tronquées (max_tokens) — réparées au mieux.
 export function extractJson<T>(text: string): T {
   const cleaned = text
     .replace(/^[\s\S]*?```(?:json)?\s*/m, (m) => (text.includes("```") ? "" : m))
@@ -94,5 +96,44 @@ export function extractJson<T>(text: string): T {
   const candidate = cleaned.startsWith("{") || cleaned.startsWith("[")
     ? cleaned
     : text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  return JSON.parse(candidate) as T;
+  try {
+    return JSON.parse(candidate) as T;
+  } catch {
+    return JSON.parse(repairJson(candidate)) as T;
+  }
+}
+
+// Réparation best-effort d'un JSON « presque valide » sorti d'un LLM.
+function repairJson(s: string): string {
+  let out = "";
+  let inStr = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (!inStr) {
+      if (c === '"') inStr = true;
+      out += c;
+    } else if (c === "\\") {
+      const n = s[i + 1];
+      if (n !== undefined && '"\\/bfnrtu'.includes(n)) { out += c + n; i++; }
+      else out += "\\\\"; // backslash LaTeX non échappé (\frac, \( …)
+    } else if (c === '"') { inStr = false; out += c; }
+    else if (c === "\n") out += "\\n";      // saut de ligne brut dans une chaîne
+    else if (c === "\r") { /* ignoré */ }
+    else if (c === "\t") out += "\\t";
+    else out += c;
+  }
+  if (inStr) out += '"'; // chaîne coupée par max_tokens
+  // Ferme les structures restées ouvertes (troncature).
+  const stack: string[] = [];
+  let str = false;
+  for (let i = 0; i < out.length; i++) {
+    const c = out[i];
+    if (str) { if (c === "\\") i++; else if (c === '"') str = false; continue; }
+    if (c === '"') str = true;
+    else if (c === "{" || c === "[") stack.push(c);
+    else if (c === "}" || c === "]") stack.pop();
+  }
+  let closed = out.replace(/,\s*$/, "");
+  while (stack.length) closed += stack.pop() === "{" ? "}" : "]";
+  return closed;
 }
