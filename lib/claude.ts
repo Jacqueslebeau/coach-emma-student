@@ -139,7 +139,21 @@ function repairJson(s: string): string {
     else if (c === "{" || c === "[") stack.push(c);
     else if (c === "}" || c === "]") stack.pop();
   }
-  let closed = out.replace(/,\s*$/, "");
+  // Virgules traînantes ({"a":1,} / [1,2,]) — hors chaînes.
+  let noTrail = "";
+  let inS = false;
+  for (let i = 0; i < out.length; i++) {
+    const c = out[i];
+    if (inS) { noTrail += c; if (c === "\\") { noTrail += out[++i] ?? ""; } else if (c === '"') inS = false; continue; }
+    if (c === '"') { inS = true; noTrail += c; continue; }
+    if (c === ",") {
+      let j = i + 1;
+      while (j < out.length && /\s/.test(out[j])) j++;
+      if (out[j] === "}" || out[j] === "]") continue; // virgule traînante : sautée
+    }
+    noTrail += c;
+  }
+  let closed = noTrail.replace(/,\s*$/, "");
   while (stack.length) closed += stack.pop() === "{" ? "}" : "]";
   return closed;
 }
