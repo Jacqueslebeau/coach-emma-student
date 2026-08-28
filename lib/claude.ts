@@ -40,11 +40,11 @@ export async function askClaude(opts: {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
+    // NB : `temperature` n'est plus accepté par claude-sonnet-5 (HTTP 400
+    // "temperature is deprecated for this model") — l'option est ignorée.
     body: JSON.stringify({
       model: MODEL,
       max_tokens: opts.maxTokens ?? 4000,
-      // 0 par défaut : la justesse mathématique prime sur la variété.
-      temperature: opts.temperature ?? 0,
       system: opts.system,
       messages,
     }),
