@@ -52,7 +52,7 @@ export default function ParentPanel() {
     const subject = encodeURIComponent(`Coach Emma Student — suivi de ${name}`);
     const body = encodeURIComponent(
       `Bonjour,\n\n` +
-      `${name} utilise Coach Emma Student, son tuteur personnel GCSE / A Level (cours, exercices en conditions d'examen, correction au standard de l'examinateur, et coaching d'examen).\n\n` +
+      `${name} utilise Coach Emma Student, son tuteur personnel A Level (cours, exercices en conditions d'examen, correction au standard de l'examinateur, et coaching d'examen).\n\n` +
       `Sa console : ${site}\n\n` +
       `Dernières connexions à la console :\n${lines || "  (aucune connexion enregistrée pour l'instant)"}\n\n` +
       `Vous pouvez suivre sa progression par matière (niveau de départ → niveau actuel → objectif) directement sur son tableau de bord.\n\n` +

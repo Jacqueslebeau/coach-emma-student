@@ -23,10 +23,10 @@ const CARD_GLOW = "0 26px 58px -40px rgba(6,78,59,.5)";
 
 const L = {
   fr: {
-    tag: "Tutorat personnel · GCSE & A Level · UK",
+    tag: "Tutorat personnel · A Level · UK",
     h1a: "Le tutorat personnel\nqui vise le ",
     h1b: " — et s'y tient.",
-    sub: "Coach Emma Student est un tuteur personnel d'excellence pour les élèves de GCSE et de A Level. À partir de la leçon vue en classe, Emma construit le cours ancré sur le programme officiel de l'exam board de l'élève, vérifie la compréhension concept par concept, entraîne en conditions réelles d'examen et corrige chaque copie au standard de l'examinateur.",
+    sub: "Coach Emma Student est un tuteur personnel d'excellence pour les élèves de A Level. À partir de la leçon vue en classe, Emma construit le cours ancré sur le programme officiel de l'exam board de l'élève, vérifie la compréhension concept par concept, entraîne en conditions réelles d'examen et corrige chaque copie au standard de l'examinateur.",
     features: [
       ["📘", "Le tutorat", "Cours sur mesure, vérification de maîtrise, exercices type past paper, correction mark par mark — dans la langue et au format de l'examen."],
       ["🎯", "Le coaching d'examen", "Méthode de travail, gestion du stress, préparation des épreuves et performance le jour J — un accompagnement bienveillant et exigeant."],
@@ -79,7 +79,7 @@ const L = {
     whoHelp: {
       title: "À qui s'adresse Coach Emma Student",
       body: [
-        "Aux élèves de GCSE et de A Level au Royaume-Uni — dans les matières couvertes, sur les exam boards Edexcel, AQA et OCR — y compris les candidats libres (par exemple le French A Level).",
+        "Aux élèves de A Level au Royaume-Uni — dans les matières couvertes, sur les exam boards Edexcel, AQA et OCR — y compris les candidats libres (par exemple le French A Level). Le GCSE suivra.",
         "Aux familles qui veulent l'exigence d'un excellent tuteur particulier, disponible tous les soirs, pour une fraction du coût — avec un suivi objectif de la progression.",
         "L'inscription d'un élève mineur requiert le consentement d'un parent ou tuteur légal, qui peut suivre l'activité et la progression.",
       ],
@@ -94,10 +94,10 @@ const L = {
     closeCta: "Créer un compte", beta: "Accès en beta privée pendant la phase de test. Consentement parental requis à l'inscription.",
   },
   en: {
-    tag: "Personal tutoring · GCSE & A Level · UK",
+    tag: "Personal tutoring · A Level · UK",
     h1a: "Personal tutoring\nthat aims for the ",
     h1b: " — and holds the line.",
-    sub: "Coach Emma Student is a personal tutor built for GCSE and A Level students. Starting from the lesson seen in class, Emma writes the course anchored to the student's exam-board specification, checks understanding concept by concept, trains under real exam conditions and marks every script to the examiner's standard.",
+    sub: "Coach Emma Student is a personal tutor built for A Level students. Starting from the lesson seen in class, Emma writes the course anchored to the student's exam-board specification, checks understanding concept by concept, trains under real exam conditions and marks every script to the examiner's standard.",
     features: [
       ["📘", "The tutoring", "Tailored courses, mastery checks, past-paper style exercises, mark-by-mark feedback — in the language and format of the exam."],
       ["🎯", "Exam coaching", "Working method, stress management, exam preparation and performance on the day — demanding, supportive guidance."],
@@ -132,7 +132,7 @@ const L = {
     whoHelp: {
       title: "Who Coach Emma Student is for",
       body: [
-        "GCSE and A Level students in the UK — in the covered subjects, across Edexcel, AQA and OCR — including private candidates (for example A Level French).",
+        "A Level students in the UK — in the covered subjects, across Edexcel, AQA and OCR — including private candidates (for example A Level French). GCSE will follow.",
         "Families who want the standards of an excellent private tutor, available every evening, at a fraction of the cost — with objective progress tracking.",
         "Registering a minor requires the consent of a parent or legal guardian, who can follow activity and progress.",
       ],
