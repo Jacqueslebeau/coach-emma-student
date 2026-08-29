@@ -281,6 +281,35 @@ FORMAT :
 }
 
 // ---------------------------------------------------------------------------
+// HORLOGE DE SÉANCE — Emma SAIT où en est la séance et clôt EN DOUCEUR.
+// Tutoring : 45 min visées, clôture amorcée dès 42, fenêtre de grâce 2-3 min.
+// Coaching : 15 min visées, clôture amorcée dès 12, fenêtre de grâce 2-3 min.
+// JAMAIS de fin abrupte : l'expérience de fin de séance est cruciale.
+// ---------------------------------------------------------------------------
+export function sessionClock(kind: "tutoring" | "coaching", elapsedMin: number): string {
+  if (!elapsedMin || elapsedMin < 1) return "";
+  const target = kind === "coaching" ? 15 : 45;
+  const wind = kind === "coaching" ? 12 : 42;
+  const grace = target + 3;
+  let phase: string;
+  if (elapsedMin < wind) {
+    phase = `Rythme normal — il reste ~${target - elapsedMin} min : gère ton tempo pour que la séance tienne dans ${target} min.`;
+  } else if (elapsedMin < target) {
+    phase = `AMORCE LA CLÔTURE, en douceur : termine le point en cours, n'ouvre AUCUN nouveau gros chantier (pas de nouvelle série d'exercices, pas de nouveau sujet), et annonce gentiment qu'on arrive au bout de la séance.${kind === "coaching" ? " Commence à formuler les 1-3 actions concrètes." : ""}`;
+  } else if (elapsedMin < grace) {
+    phase = `CONCLUS MAINTENANT — tu es dans la fenêtre de grâce (2-3 min max) : ${kind === "coaching" ? "les 1-3 actions concrètes, une phrase qui remotive, et on se quitte bien." : "bilan chaleureux (ce qui est acquis aujourd'hui, le point à retravailler, le prochain pas), et on se quitte bien."} Rien de nouveau.`;
+  } else {
+    phase = `La séance a dépassé sa durée : clôture IMMÉDIATE mais soignée en 2-3 phrases (jamais sèche), et invite à reprendre à la prochaine séance — le cerveau retient mieux avec une vraie pause.`;
+  }
+  return `
+
+=== HORLOGE DE SÉANCE (jamais de fin abrupte — crucial) ===
+${kind === "coaching" ? "Séance de coaching" : "Séance de tutorat"} en cours : ${elapsedMin} min écoulées (cible ~${target} min).
+${phase}
+Ne mentionne l'horloge à l'élève que lorsque tu commences à clore — jamais avant.`;
+}
+
+// ---------------------------------------------------------------------------
 // 6bis. QUESTIONS DE L'ÉLÈVE — comme dans un vrai tutoring, mais EMMA GARDE
 // LE LEAD : fenêtres de questions bornées, réponses ancrées sur la leçon,
 // recadrage des digressions, retour systématique au fil de la séance.

@@ -65,7 +65,7 @@ export default function CoachingPage() {
             how to perform on the big day. Ideal session: 15-20 min.
           </p>
         </div>
-        <SessionTimer />
+        <SessionTimer kind="coaching" />
       </div>
 
       <div className="card mt-5 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">

@@ -3,10 +3,10 @@
 // Met à jour concept_mastery et weak_points.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { gradeSystem, formatAnswers } from "@/lib/prompts";
+import { gradeSystem, formatAnswers , sessionClock } from "@/lib/prompts";
 import { applyVerdicts } from "@/lib/mastery";
 import type { Concept, QuizGrade, QuizQuestion } from "@/lib/types";
 
@@ -47,9 +47,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const testedKeys = new Set(questions.map((q) => q.concept_key));
   const concepts = allConcepts.filter((c) => testedKeys.has(c.key));
 
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     const raw = await askClaude({
-      system: gradeSystem(auth.firstName, auth.style, subj, concepts.length ? concepts : allConcepts),
+      system: gradeSystem(auth.firstName, auth.style, subj, concepts.length ? concepts : allConcepts) + sessionClock("tutoring", elapsed),
       content:
         `LEÇON : ${lesson.title}\n\n` +
         formatAnswers(questions, answers) +

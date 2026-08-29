@@ -6,6 +6,35 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // on considère que c'est une NOUVELLE séance.
 const SESSION_GAP_MIN = 90;
 
+// Minutes écoulées dans la séance EN COURS (même fenêtre de 90 min que
+// touchSession). C'est l'horloge d'Emma : injectée dans ses prompts pour
+// qu'elle sache quand commencer à clore — jamais de fin abrupte.
+export async function sessionElapsedMin(opts: {
+  sb: SupabaseClient;
+  userId: string;
+  kind: "lesson" | "coaching";
+  refId?: string | null;
+}): Promise<number> {
+  try {
+    const cutoff = new Date(Date.now() - SESSION_GAP_MIN * 60_000).toISOString();
+    let q = opts.sb
+      .from("study_sessions")
+      .select("started_at")
+      .eq("user_id", opts.userId)
+      .eq("kind", opts.kind)
+      .gte("last_activity_at", cutoff)
+      .order("last_activity_at", { ascending: false })
+      .limit(1);
+    if (opts.refId) q = q.eq("ref_id", opts.refId);
+    const { data } = await q;
+    const started = data?.[0]?.started_at;
+    if (!started) return 0;
+    return Math.max(0, Math.round((Date.now() - new Date(started).getTime()) / 60000));
+  } catch {
+    return 0;
+  }
+}
+
 export async function touchSession(opts: {
   sb: SupabaseClient;
   userId: string;

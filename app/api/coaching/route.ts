@@ -3,8 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/routeAuth";
 import { askClaude } from "@/lib/claude";
-import { coachingSystem } from "@/lib/prompts";
-import { touchSession } from "@/lib/sessionTrack";
+import { coachingSystem, sessionClock } from "@/lib/prompts";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { estimateGrade } from "@/lib/examTechnique";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 
@@ -94,6 +94,9 @@ export async function POST(req: NextRequest) {
     .join("\n")
     .slice(0, 6000);
 
+  // L'horloge d'Emma : la séance de coaching vise 15 min, clôture dès 12.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "coaching" });
+
   try {
     const reply = await askClaude({
       system: coachingSystem(auth.firstName, auth.style, {
@@ -103,7 +106,7 @@ export async function POST(req: NextRequest) {
         weakPointsSummary,
         subjectsLine,
         lang: auth.contentLang,
-      }),
+      }) + sessionClock("coaching", elapsed),
       content:
         (convo ? `CONVERSATION JUSQU'ICI :\n${convo}\n\n` : "") +
         `NOUVEAU MESSAGE DE ${auth.firstName || "L'ÉLÈVE"} : ${text}`,

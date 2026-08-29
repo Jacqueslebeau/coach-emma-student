@@ -3,10 +3,10 @@
 // max par fenêtre). Emma répond ancrée sur la leçon et GARDE LE LEAD.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude } from "@/lib/claude";
-import { askSystem } from "@/lib/prompts";
+import { askSystem , sessionClock } from "@/lib/prompts";
 import type { Concept } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -73,9 +73,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const courseObj = (lesson.course || {}) as Record<string, unknown>;
   const courseCtx = JSON.stringify(courseObj.full || courseObj.key || {}).slice(0, 5000);
 
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     const answer = await askClaude({
-      system: askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft, lesson.whiteboard),
+      system: askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft, lesson.whiteboard) + sessionClock("tutoring", elapsed),
       content:
         `LESSON: ${lesson.title}\nTOPIC: ${lesson.spec_topic || "—"}\n\n` +
         (courseCtx.length > 10 ? `THE COURSE EMMA WROTE FOR THIS LESSON (context):\n${courseCtx}\n\n` : "") +

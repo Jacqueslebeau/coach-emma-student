@@ -2,10 +2,10 @@
 // mode « variant » pour refaire sur le même point avec un énoncé différent.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { exercisesSystem } from "@/lib/prompts";
+import { exercisesSystem , sessionClock } from "@/lib/prompts";
 import type { Concept, Exercise } from "@/lib/types";
 
 export const maxDuration = 120;
@@ -35,9 +35,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     focusKeys = (mastery || []).filter((m) => m.status !== "acquis").map((m) => m.concept_key);
   }
 
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     const raw = await askClaude({
-      system: exercisesSystem(auth.firstName, auth.style, subj, concepts, focusKeys, variant),
+      system: exercisesSystem(auth.firstName, auth.style, subj, concepts, focusKeys, variant) + sessionClock("tutoring", elapsed),
       content: `LEÇON : ${lesson.title}\nTOPIC : ${lesson.spec_topic || "—"}\n\nÉcris les 3 exercices.`,
       maxTokens: 3000,
       temperature: 0.4,

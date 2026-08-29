@@ -2,10 +2,10 @@
 // Accepte les réponses tapées ET/OU jusqu'à 3 photos de la copie manuscrite.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson, type ContentBlock } from "@/lib/claude";
-import { markSystem } from "@/lib/prompts";
+import { markSystem , sessionClock } from "@/lib/prompts";
 import { applyVerdicts, verdictsFromExercises } from "@/lib/mastery";
 import type { Concept, Exercise, ExerciseMark } from "@/lib/types";
 
@@ -25,6 +25,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const attemptId = String(form.get("attempt_id") || "");
   let answers: { id: string; answer: string }[] = [];
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     answers = JSON.parse(String(form.get("answers") || "[]"));
   } catch { /* réponses tapées absentes → photos seules */ }
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   try {
     const raw = await askClaude({
-      system: markSystem(auth.firstName, auth.style, subj, concepts, exercises),
+      system: markSystem(auth.firstName, auth.style, subj, concepts, exercises) + sessionClock("tutoring", elapsed),
       content: blocks,
       maxTokens: 6000,
       workflow: "exercise-mark",

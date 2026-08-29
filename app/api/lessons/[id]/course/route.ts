@@ -2,10 +2,10 @@
 // mode (re-servi depuis la base si déjà généré).
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { courseSystem } from "@/lib/prompts";
+import { courseSystem , sessionClock } from "@/lib/prompts";
 import type { Concept, Course } from "@/lib/types";
 
 export const maxDuration = 180;
@@ -33,9 +33,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     (lesson.notes ? `\nSES NOTES DE CLASSE (appuie-toi dessus, garde ses notations si elles sont bonnes) :\n${String(lesson.notes).slice(0, 8000)}` : "") +
     `\n\nÉcris le cours (${mode === "full" ? "complet" : "concepts clés"}).`;
 
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     const raw = await askClaude({
-      system: courseSystem(auth.firstName, auth.style, subj, mode, concepts),
+      system: courseSystem(auth.firstName, auth.style, subj, mode, concepts) + sessionClock("tutoring", elapsed),
       content: userMsg,
       maxTokens: mode === "full" ? 8000 : 3500,
       workflow: `course-${mode}`,

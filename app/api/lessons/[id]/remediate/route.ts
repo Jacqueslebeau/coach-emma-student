@@ -2,10 +2,10 @@
 // leçon), sous un autre angle, puis 2 questions de re-vérification.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
-import { touchSession } from "@/lib/sessionTrack";
+import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { remediationSystem } from "@/lib/prompts";
+import { remediationSystem , sessionClock } from "@/lib/prompts";
 import type { Concept, Remediation } from "@/lib/types";
 
 export const maxDuration = 120;
@@ -35,9 +35,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .eq("status", "open")
     .maybeSingle();
 
+  // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
+  const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
+
   try {
     const raw = await askClaude({
-      system: remediationSystem(auth.firstName, auth.style, subj, concept, wp?.misconception || null),
+      system: remediationSystem(auth.firstName, auth.style, subj, concept, wp?.misconception || null) + sessionClock("tutoring", elapsed),
       content: `LEÇON : ${lesson.title}\n\nRé-explique « ${concept.label} » sous un autre angle puis pose les 2 questions.`,
       maxTokens: 4000,
       temperature: 0.3,
