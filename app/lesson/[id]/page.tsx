@@ -10,6 +10,8 @@ import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
 import SessionTimer from "@/components/SessionTimer";
 import BackLink from "@/components/BackLink";
+import AskEmma from "@/components/AskEmma";
+import Whiteboard from "@/components/Whiteboard";
 import { compressImage } from "@/lib/compressImage";
 import type {
   Concept, Course, Exercise, ExerciseMark, QuizGrade, QuizQuestion, Remediation,
@@ -182,6 +184,13 @@ export default function LessonPage() {
 
       {error && <p className="text-sm text-gap font-semibold mb-4">{error}</p>}
 
+      {/* Le tableau blanc — l'espace de travail de la séance (Emma le lit) */}
+      {phase !== "course-choice" && (
+        <div className="mb-5">
+          <Whiteboard lessonId={lesson.id} initial={(lesson as { whiteboard?: string }).whiteboard || ""} />
+        </div>
+      )}
+
       {/* ÉTAPE 1 — choix du cours */}
       {phase === "course-choice" && (
         <div className="grid sm:grid-cols-2 gap-4">
@@ -221,6 +230,10 @@ export default function LessonPage() {
               </div>
             )}
           </div>
+
+          {/* La main levée : questions APRÈS la lecture, avant la vérification */}
+          <AskEmma lessonId={lesson.id} stage="course" />
+
           <div className="flex flex-wrap items-center gap-3 mt-6">
             <button onClick={startQuiz} disabled={busy} className="btn-primary !py-3 !px-6">
               {busy ? "Emma is preparing your questions…" : "Check my mastery →"}
@@ -285,6 +298,8 @@ export default function LessonPage() {
               </div>
             );
           })}
+
+          <AskEmma lessonId={lesson.id} stage="quiz-result" />
 
           {notAcquired.length > 0 ? (
             <div className="card p-5 border-amber">
@@ -369,10 +384,15 @@ export default function LessonPage() {
       {/* ÉTAPE 6 — exercices */}
       {phase === "exercises" && ex && (
         <div className="space-y-4">
-          <p className="text-muted text-sm">
-            {lesson.exam_board || "Your board's"} past-paper style. Do them <strong>online</strong> or <strong>on paper</strong> — in that case,
-            take a photo of your work and upload it below: Emma marks the handwriting against the mark scheme.
-          </p>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <p className="text-muted text-sm flex-1 min-w-[240px]">
+              {lesson.exam_board || "Your board's"} past-paper style. Do them <strong>online</strong> or <strong>on paper</strong> — in that case,
+              take a photo of your work and upload it below: Emma marks the handwriting against the mark scheme.
+            </p>
+            <Link href={`/paper/${ex.attempt_id}`} className="btn-ghost !py-1.5 !px-3.5 text-[13px] shrink-0" target="_blank">
+              🖨️ Print / download this paper
+            </Link>
+          </div>
           {ex.exercises.map((e, i) => (
             <div key={e.id} className="card p-5">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -456,6 +476,8 @@ export default function LessonPage() {
               </div>
             );
           })}
+          <AskEmma lessonId={lesson.id} stage="exercise-result" />
+
           {mark.decision === "redo" ? (
             <div className="card p-5 border-amber">
               <h2 className="font-serif font-semibold text-lg">Emma's verdict: go again — different variation</h2>

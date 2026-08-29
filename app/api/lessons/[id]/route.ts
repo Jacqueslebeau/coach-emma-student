@@ -25,3 +25,22 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     first_name: auth.firstName,
   });
 }
+
+// Sauvegarde du tableau blanc de la leçon (autosave côté client).
+export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser();
+  if (!auth) return NextResponse.json({ error: "not signed in" }, { status: 401 });
+  const { id } = await ctx.params;
+
+  const body = await req.json().catch(() => ({}));
+  if (typeof body?.whiteboard !== "string") {
+    return NextResponse.json({ error: "nothing to update" }, { status: 400 });
+  }
+  const { error } = await auth.sb
+    .from("lessons")
+    .update({ whiteboard: body.whiteboard.slice(0, 20000) })
+    .eq("id", id)
+    .eq("user_id", auth.user.id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

@@ -30,6 +30,7 @@ type Data = {
   lessons: { id: string; title: string; spec_topic: string | null; stage: string; concepts: { key: string }[] | null; created_at: string }[];
   mastery: { lesson_id: string; concept_key: string; label: string; status: string }[];
   weak_points: { id: string; lesson_id: string; label: string; misconception: string | null }[];
+  papers: { id: string; lesson_id: string; title: string; at: string; total_marks: number; awarded: number | null; decision: string | null }[];
   exam_scores: { at: string; pct: number }[];
   avg_pct: number | null;
   estimated_grade: string | null;
@@ -281,6 +282,32 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                 </Link>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      {/* ============ PAST PAPERS — la bibliothèque centralisée ============ */}
+      <section className="mt-8">
+        <div className="flex items-baseline justify-between flex-wrap gap-2">
+          <h2 className="font-serif font-semibold text-xl">Past-paper practice</h2>
+          <p className="text-sm text-faint">Every set is kept here — reopen it, reprint it, review the marking.</p>
+        </div>
+        {(!data.papers || data.papers.length === 0) ? (
+          <p className="text-sm text-faint mt-3">Your practice papers will appear here — do them online, or print them and upload your script.</p>
+        ) : (
+          <div className="card mt-4 divide-y divide-line overflow-hidden">
+            {data.papers.map((pp) => (
+              <Link key={pp.id} href={`/paper/${pp.id}`} className="p-4 flex items-center gap-3 flex-wrap hover:bg-indigo-soft/40 transition">
+                <span className={pp.awarded === null ? "chip-todo shrink-0" : pp.decision === "advance" ? "chip-acquis shrink-0" : "chip-fragile shrink-0"}>
+                  {pp.awarded === null ? "not marked" : `${pp.awarded}/${pp.total_marks} marks`}
+                </span>
+                <span className="flex-1 min-w-[200px] font-semibold text-[14.5px]">{pp.title}</span>
+                <span className="font-mono text-xs text-faint shrink-0">
+                  {new Date(pp.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </span>
+                <span className="text-indigo font-semibold text-sm shrink-0">Open →</span>
+              </Link>
+            ))}
           </div>
         )}
       </section>

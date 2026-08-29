@@ -281,6 +281,57 @@ FORMAT :
 }
 
 // ---------------------------------------------------------------------------
+// 6bis. QUESTIONS DE L'ÉLÈVE — comme dans un vrai tutoring, mais EMMA GARDE
+// LE LEAD : fenêtres de questions bornées, réponses ancrées sur la leçon,
+// recadrage des digressions, retour systématique au fil de la séance.
+// ---------------------------------------------------------------------------
+const ASK_STAGE_CONTEXT: Record<string, { fr: string; next: string }> = {
+  course: {
+    fr: "L'élève vient de LIRE le cours de la leçon. C'est la fenêtre de questions avant la vérification de maîtrise.",
+    next: "the mastery check",
+  },
+  "quiz-result": {
+    fr: "L'élève vient de recevoir la correction de sa vérification de maîtrise (diagnostic par concept).",
+    next: "the targeted revisit or the past-paper exercises",
+  },
+  "exercise-result": {
+    fr: "L'élève vient de recevoir sa correction d'exercices au mark scheme.",
+    next: "redoing the fragile concepts or wrapping up the session",
+  },
+};
+
+export function askSystem(
+  firstName: string,
+  style: TutorStyle,
+  subject: Subject,
+  concepts: Concept[],
+  stage: string,
+  questionsLeft: number,
+  whiteboard?: string | null
+) {
+  const st = ASK_STAGE_CONTEXT[stage] || ASK_STAGE_CONTEXT.course;
+  return personaBase(firstName, style, subject) + `
+
+MOMENT DE LA SÉANCE : ${st.fr}
+${firstName || "L'élève"} lève la main et pose une question — exactement comme dans un vrai tutoring. Après cette réponse, il lui restera ${Math.max(0, questionsLeft - 1)} question(s) dans cette fenêtre.
+
+CONCEPTS DE LA LEÇON :
+${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}
+${whiteboard?.trim() ? `\nSON TABLEAU BLANC (ce qu'il a écrit en travaillant — appuie-toi dessus, corrige ce qui y est faux) :\n${whiteboard.slice(0, 3000)}\n` : ""}
+
+COMMENT RÉPOND LE MEILLEUR TUTEUR DU MONDE :
+1. Réponds COURT et précis (3-8 phrases max) : la question posée, rien d'autre. Un exemple minute si ça éclaire. LaTeX pour toute notation.
+2. ANCRÉ sur cette leçon et le spec ${subject.board} ${subject.spec}. Vérifie ta réponse avant de l'affirmer (JUSTESSE ABSOLUE).
+3. Si la question révèle une MÉPRISE, nomme-la gentiment et corrige-la — c'est de l'or.
+4. Si la question est HORS SUJET de la leçon (autre chapitre, organisation, bavardage) : réponds en UNE phrase max ou dis honnêtement que ce n'est pas le sujet du jour, note-le pour plus tard (« on le prend en coaching » / « ce sera sa propre leçon »), et REVIENS au fil. Tu ne pars JAMAIS dans une digression, même intéressante.
+5. Si l'élève cherche à te faire faire son travail (réponse d'un exercice en cours), guide la MÉTHODE, ne donne pas la réponse.
+6. TERMINE TOUJOURS en gardant le lead : une phrase qui ramène vers la suite (${st.next}) — c'est TOI qui tiens la séance, avec bienveillance.
+${questionsLeft <= 1 ? `7. C'était sa DERNIÈRE question de cette fenêtre : dis-le avec le sourire et embraye sur la suite.` : ""}
+
+Réponds en texte direct (markdown restreint + LaTeX), PAS de JSON — c'est une conversation.`;
+}
+
+// ---------------------------------------------------------------------------
 // 7bis. PLAN D'ACTION PAR MATIÈRE — le rapport d'adéquation de l'inscription
 // ---------------------------------------------------------------------------
 export function actionPlanSystem(

@@ -58,10 +58,9 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
         .limit(50),
       auth.sb
         .from("attempts")
-        .select("result, lesson_id, created_at")
+        .select("id, result, payload, lesson_id, created_at")
         .eq("user_id", auth.user.id)
         .eq("kind", "exercise")
-        .not("result", "is", null)
         .in("lesson_id", inIds)
         .order("created_at", { ascending: true })
         .limit(60),
@@ -80,6 +79,28 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
   const weighted = [...scores.map((s) => s.pct), ...recent.map((s) => s.pct)];
   const avgPct = weighted.length ? Math.round(weighted.reduce((a, b) => a + b, 0) / weighted.length) : null;
 
+  // La bibliothèque des past papers de la matière (faits et en cours) —
+  // chaque série d'exercices est un paper consultable/réimprimable.
+  const lessonTitle = new Map((lessons || []).map((l) => [l.id as string, l.title as string]));
+  const papers = (exAttempts || [])
+    .map((a) => {
+      const items = (a.result as { items?: { marks_awarded?: number; marks_total?: number }[] } | null)?.items || [];
+      const awarded = items.reduce((s, i) => s + (i.marks_awarded || 0), 0);
+      const gradedTotal = items.reduce((s, i) => s + (i.marks_total || 0), 0);
+      const exs = ((a.payload as { exercises?: { marks?: number }[] })?.exercises || []);
+      const total = gradedTotal || exs.reduce((s, e) => s + (e.marks || 0), 0);
+      return {
+        id: a.id as string,
+        lesson_id: a.lesson_id as string,
+        title: lessonTitle.get(a.lesson_id as string) || "Practice paper",
+        at: a.created_at as string,
+        total_marks: total,
+        awarded: a.result ? awarded : null,
+        decision: (a.result as { decision?: string } | null)?.decision || null,
+      };
+    })
+    .reverse();
+
   const subj = getSubjectBoard(key, enrolment?.board);
   return NextResponse.json({
     first_name: auth.firstName,
@@ -95,6 +116,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
         Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 60000)
       ),
     })),
+    papers,
     exam_scores: scores,
     avg_pct: avgPct,
     estimated_grade: avgPct !== null ? estimateGrade(avgPct) : null,
