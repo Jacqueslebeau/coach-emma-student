@@ -6,17 +6,14 @@
 // détaillée par matière × niveau × topic + les améliorations à faire.
 import type { SubjectKey } from "@/lib/subjects";
 
-export const EVAL_LEVELS = ["5", "6", "7", "8", "9"] as const;
+export const EVAL_LEVELS = ["C", "B", "A"] as const;
 export type EvalLevel = (typeof EVAL_LEVELS)[number];
 
-// Profil réaliste de l'élève simulé à chaque niveau (base GCSE 9-1, transposée
-// au travail A Level : 5 = moyen-fragile … 9 = excellent).
+// Profil réaliste de l'élève simulé par GRADE A Level actuel (il vise A*).
 const LEVEL_PROFILES: Record<EvalLevel, string> = {
-  "5": "Élève de niveau 5 : bases présentes mais fragiles. Comprend les idées simples, se perd dès qu'il y a deux étapes. Fait des erreurs de fond typiques (confusions de concepts, méthode incomplète), vocabulaire technique approximatif, se décourage vite.",
-  "6": "Élève de niveau 6 : correct sur les questions standard, mais irrégulier. Erreurs d'étourderie fréquentes, méthode partiellement montrée, difficultés sur les questions multi-étapes.",
-  "7": "Élève de niveau 7 : bon élève. Réussit la plupart des questions, mais perd des marks sur la technique d'examen (étapes sautées, forme non respectée, conclusion oubliée) et bute sur les questions discriminantes.",
-  "8": "Élève de niveau 8 : très bon. Contenu quasi maîtrisé ; ses pertes de marks viennent presque uniquement de la précision fine et des questions les plus difficiles. A besoin d'être poussé, pas ré-expliqué.",
-  "9": "Élève de niveau 9 : excellent. Répond juste presque partout, cherche l'exhaustivité et la nuance. Le tuteur doit l'étirer vers le niveau A* (rigueur totale, questions les plus dures) sans lui faire perdre son temps.",
+  C: "Élève de grade C : bases présentes mais fragiles. Comprend les idées simples, se perd dès qu'il y a deux étapes. Erreurs de fond typiques (confusions de concepts, méthode incomplète), vocabulaire technique approximatif, se décourage vite. À l'examen il perd des marks partout : contenu ET technique.",
+  B: "Élève de grade B : bon élève, régulier sur les questions standard. Ses pertes de marks viennent surtout de la technique d'examen (étapes sautées, forme non respectée, conclusion oubliée, gestion du temps) et des questions multi-étapes discriminantes.",
+  A: "Élève de grade A : très bon. Contenu quasi maîtrisé ; ses pertes de marks viennent presque uniquement de la précision fine et des questions les plus difficiles. Il vise l'A* : le tuteur doit l'étirer (rigueur totale, questions les plus dures) sans lui faire perdre son temps.",
 };
 
 // 3 topics de référence par matière (les « cours » que suivent les agents).
@@ -27,13 +24,12 @@ export const EVAL_TOPICS: Record<SubjectKey, string[]> = {
   french: ["Paper 2 — étude d'une œuvre : No et moi (Delphine de Vigan)", "Traduction FR↔EN — méthode et pièges", "Paper 1 — résumé et compréhension écrite"],
 };
 
-// Messages de coaching typiques par niveau (l'élève simulé ouvre la séance).
+// Messages de coaching typiques par grade (l'élève simulé ouvre la séance —
+// EN ANGLAIS : c'est la langue de l'outil).
 const COACHING_OPENERS: Record<EvalLevel, string> = {
-  "5": "Franchement je sais pas si ça sert à quelque chose, je rate tout en ce moment et l'examen approche. J'ai envie de laisser tomber cette matière.",
-  "6": "J'ai eu une mauvaise note à mon dernier test alors que j'avais révisé. Je stresse pour les mocks, je sais pas comment m'organiser.",
-  "7": "Je bosse beaucoup mais je plafonne. Le jour du test je panique sur les grosses questions et je perds tout mon temps dessus.",
-  "8": "Je vise A* mais je perds toujours 2-3 marks bêtement. Comment je m'entraîne pour être vraiment sûr le jour J ?",
-  "9": "Je suis en avance sur le programme. J'ai peur de m'ennuyer et de me relâcher avant l'examen — comment je garde le rythme ?",
+  C: "Honestly I don't know if this is even worth it. I keep failing everything at the moment and the exam is getting closer. I feel like dropping this subject.",
+  B: "I work really hard but I've hit a ceiling. In tests I panic on the big questions and lose all my time on them.",
+  A: "I'm aiming for the A* but I always throw away 2-3 marks stupidly. How do I train so I'm genuinely certain on the day?",
 };
 
 export function coachingOpener(level: EvalLevel): string {
@@ -50,7 +46,7 @@ PROFIL À INCARNER : ${LEVEL_PROFILES[level]}
 
 TÂCHE : réponds aux questions comme CET élève répondrait — ni mieux, ni pire.
 - Reproduis les erreurs TYPIQUES de ce niveau (pas des erreurs absurdes) : méprises classiques, étapes sautées, imprécisions, réponses partielles.
-- Le niveau ${level} détermine la proportion de réponses justes/partielles/fausses. Niveau 5 ≈ 1-2 justes sur 5 ; niveau 7 ≈ 3-4 justes avec des pertes de technique ; niveau 9 ≈ quasi tout juste avec de petites imperfections.
+- Le grade ${level} détermine la proportion de réponses justes/partielles/fausses. Grade C ≈ 1-2 justes sur 5 ; grade B ≈ 3-4 justes avec des pertes de technique ; grade A ≈ quasi tout juste avec de petites imperfections.
 - Écris comme un élève écrit (concis, parfois brouillon), pas comme un manuel.
 - Réponds dans la LANGUE DES QUESTIONS : en anglais pour les matières examinées en anglais (c'est un A Level), en français pour le français.
 

@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/routeAuth";
 import { askClaude, extractJson } from "@/lib/claude";
-import { getSubject, type SubjectKey } from "@/lib/subjects";
+import { getSubjectBoard, type SubjectKey } from "@/lib/subjects";
 import {
   conceptExtractionSystem, courseSystem, quizSystem, gradeSystem, coachingSystem, formatAnswers,
 } from "@/lib/prompts";
@@ -36,8 +36,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const subject = getSubject(String(body?.subject || "maths"));
-  const level = String(body?.level || "7") as EvalLevel;
+  // La cellule est calibrée sur LE board demandé (grille tous boards).
+  const subject = getSubjectBoard(String(body?.subject || "maths"), String(body?.board || "") || null);
+  const level = String(body?.level || "B") as EvalLevel;
   const topic = String(body?.topic || EVAL_TOPICS[subject.key as SubjectKey][0]).slice(0, 200);
   const call = (opts: Parameters<typeof askClaude>[0]) =>
     askClaude({ ...opts, userId: auth.user.id, sb: auth.sb });
@@ -98,11 +99,12 @@ export async function POST(req: NextRequest) {
     const opener = coachingOpener(level);
     const coachingReply = await call({
       system: coachingSystem("Alex", "sympa", {
-        currentGrade: level <= "6" ? "C" : level === "7" ? "B" : "A",
+        currentGrade: level,
         targetGrade: "A*",
-        progressSummary: `séance de ${subject.labelFr} tout juste terminée`,
+        progressSummary: `a ${subject.labelEn} session just finished`,
+        subjectsLine: `${subject.labelEn} (${subject.board})`,
       }),
-      content: `NOUVEAU MESSAGE DE ALEX : ${opener}`,
+      content: `NEW MESSAGE FROM ALEX: ${opener}`,
       maxTokens: 700, temperature: 0.6, workflow: "eval-coaching",
     });
 
@@ -128,6 +130,7 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: auth.user.id,
         subject: subject.key,
+        board: subject.board,
         level,
         topic,
         scores: judged,
@@ -143,7 +146,7 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
-    return NextResponse.json({ id: saved?.id, subject: subject.key, level, topic, scores: judged });
+    return NextResponse.json({ id: saved?.id, subject: subject.key, board: subject.board, level, topic, scores: judged });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "éval impossible" }, { status: 502 });
   }
