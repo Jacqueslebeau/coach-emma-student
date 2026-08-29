@@ -37,7 +37,9 @@ export async function POST(req: NextRequest) {
         targetGrade: enrolment.target_grade,
         examDate: enrolment.exam_date,
       }),
-      content: `Écris le plan d'action de ${auth.firstName || "l'élève"} en ${subj.labelFr} (${subj.board} ${subj.spec}).`,
+      content: subj.teachLang === "fr"
+        ? `Écris le plan d'action de ${auth.firstName || "l'élève"} en ${subj.labelFr} (${subj.board} ${subj.spec}).`
+        : `Write ${auth.firstName || "the student"}'s action plan for ${subj.labelEn} (${subj.board} ${subj.spec}).`,
       maxTokens: 3000,
       workflow: "action-plan",
       userId: auth.user.id,

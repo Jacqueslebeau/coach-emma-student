@@ -58,7 +58,18 @@ JUSTESSE ABSOLUE (garde-fou) : avant d'affirmer un fait, un résultat ou un juge
 MISSION : un A* = maîtrise du contenu × technique d'examen × pratique constante en conditions d'examen. Tu entraînes les trois, tout le temps.`;
 }
 
-const JSON_RULE = `\n\nRÉPONDS UNIQUEMENT avec un objet JSON valide (pas de texte autour, pas de fence markdown). Toutes les chaînes destinées à l'affichage peuvent contenir du LaTeX \\( \\) et du markdown restreint (## titres, **gras**, listes -). Chaque texte destiné à l'élève respecte la règle LANGUES/LANGUAGE ci-dessus.`;
+// La consigne JSON finale rappelle la LANGUE en dernière position (c'est la
+// consigne la plus proche de la génération — elle doit gagner) : les noms de
+// champs du FORMAT sont en français, mais les VALEURS parlent à l'élève.
+function jsonRule(s: Subject) {
+  const langLine =
+    s.examLang === "fr"
+      ? `Les VALEURS destinées à l'élève sont en FRANÇAIS soutenu (les noms officiels du format d'examen restent en anglais).`
+      : s.teachLang === "fr"
+        ? `Les VALEURS d'explication et de feedback sont en FRANÇAIS ; les énoncés d'exercices, command words, termes techniques et corrigés modèles restent en ANGLAIS (langue de l'examen).`
+        : `CRITICAL — the JSON keys and format descriptions above are in French, but every string VALUE addressed to the student MUST be written in ENGLISH (this is a UK A Level). Do not write the student-facing content in French.`;
+  return `\n\nRÉPONDS UNIQUEMENT avec un objet JSON valide (pas de texte autour, pas de fence markdown). Toutes les chaînes destinées à l'affichage peuvent contenir du LaTeX \\( \\) et du markdown restreint (## titres, **gras**, listes -). ${langLine}`;
+}
 
 // ---------------------------------------------------------------------------
 // 1. Capture de la leçon → identification des concepts
@@ -72,7 +83,7 @@ Règles :
 - Chaque concept = une compétence testable en une ou deux questions.
 - "spec_ref" : la référence du spec ${subject.board} ${subject.spec} si tu la connais, sinon le chapitre usuel des manuels de la matière.
 - "why" : une phrase punchy sur pourquoi ce concept compte pour l'A* (où il tombe à l'examen, sous quel command word / format).
-- Si l'entrée est trop vague pour identifier la leçon, mets "needs_clarification": true avec une question courte dans "clarification".` + JSON_RULE + `
+- Si l'entrée est trop vague pour identifier la leçon, mets "needs_clarification": true avec une question courte dans "clarification".` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -101,7 +112,7 @@ MODE : ${mode === "full"
 ${subject.technique}
 
 CONCEPTS DE LA LEÇON (garde exactement ces keys) :
-${concepts.map((c) => `- ${c.key} : ${c.label}${c.spec_ref ? ` (${c.spec_ref})` : ""}`).join("\n")}` + JSON_RULE + `
+${concepts.map((c) => `- ${c.key} : ${c.label}${c.spec_ref ? ` (${c.spec_ref})` : ""}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -129,7 +140,7 @@ Règles :
 ${subject.technique}
 
 CONCEPTS (garde exactement ces keys) :
-${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + JSON_RULE + `
+${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 { "questions": [ { "id": "q1", "concept_key": "...", "question": "..." } ] }`;
@@ -159,7 +170,7 @@ VERDICTS par concept :
 Feedback : dans ton style, 2-3 phrases par question — où c'est juste, où ça casse, jamais humiliant. "encouragement" : une phrase honnête sur l'ensemble (pas de flatterie creuse).
 
 CONCEPTS (rends un verdict pour CHAQUE key testée) :
-${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + JSON_RULE + `
+${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -179,7 +190,7 @@ TÂCHE : ${firstName || "l'élève"} n'a pas maîtrisé le concept « ${concept.
 
 Ré-explique PRÉCISÉMENT ce concept — pas toute la leçon — sous un ANGLE DIFFÉRENT du cours initial : autre intuition, autre image mentale, autre porte d'entrée${misconception ? ", en attaquant frontalement sa méprise (montre pourquoi elle est tentante et pourquoi elle casse)" : ""}. Termine par un exemple travaillé.
 
-Puis pose 2 questions de re-vérification sur CE concept uniquement : la première très guidée (remet le pied à l'étrier), la seconde niveau examen avec un vrai command word.` + JSON_RULE + `
+Puis pose 2 questions de re-vérification sur CE concept uniquement : la première très guidée (remet le pied à l'étrier), la seconde niveau examen avec un vrai command word.` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -225,7 +236,7 @@ ${exerciseShape(subject)}
 - Vérifie toi-même que chaque exercice a une réponse/un corrigé propre.
 
 CONCEPTS (keys autorisées) :
-${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + JSON_RULE + `
+${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 { "exercises": [ { "id": "e1", "concept_keys": ["..."], "statement": "...", "marks": 4, "command_word": "...", "question_type": "...", "time_min": 5, "exam_expectation": "..." } ] }`;
@@ -258,7 +269,7 @@ EXERCICES DONNÉS (barème à respecter) :
 ${exercises.map((e) => `- ${e.id} (${e.marks} marks, "${e.command_word || ""}", concepts: ${e.concept_keys.join(", ")}): ${e.statement.slice(0, 300)}`).join("\n")}
 
 CONCEPTS :
-${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + JSON_RULE + `
+${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -298,7 +309,7 @@ RÈGLES :
 - Le rythme proposé respecte des séances de 45-60 min max.
 - Les jalons ("milestones") sont datés par rapport à la session d'examen visée et mesurables (ex. "past paper complet en conditions réelles à ≥70%").
 - 3 "first_actions" faisables cette semaine, très concrètes.
-- Écris TOUT le plan dans ta langue d'enseignement (règle LANGUES/LANGUAGE ci-dessus).` + JSON_RULE + `
+- Écris TOUT le plan dans ta langue d'enseignement (règle LANGUES/LANGUAGE ci-dessus).` + jsonRule(subject) + `
 
 FORMAT :
 {
@@ -309,7 +320,11 @@ FORMAT :
   "milestones": [ { "when": "ex. Décembre 2026", "goal": "mesurable" } ],
   "exam_technique_focus": ["les 3-4 réflexes de technique d'examen à installer en priorité"],
   "first_actions": ["3 actions concrètes pour les 7 prochains jours"]
-}`;
+}
+
+${subject.teachLang === "fr"
+    ? "RAPPEL FINAL : les valeurs du JSON sont en français."
+    : "FINAL REMINDER: every string value in the JSON is written in ENGLISH — the field descriptions above are French, your output is not."}`;
 }
 
 // ---------------------------------------------------------------------------
