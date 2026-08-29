@@ -32,9 +32,9 @@ function currentMonth(): Period {
 }
 
 const PRESETS: { key: string; label: string; make: () => Period }[] = [
-  { key: "week", label: "Cette semaine", make: currentWeek },
-  { key: "lastweek", label: "Semaine dernière", make: lastWeek },
-  { key: "month", label: "Ce mois", make: currentMonth },
+  { key: "week", label: "This week", make: currentWeek },
+  { key: "lastweek", label: "Last week", make: lastWeek },
+  { key: "month", label: "This month", make: currentMonth },
 ];
 
 export default function PeriodFilter({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {

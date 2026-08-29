@@ -10,8 +10,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import HeroDemo from "@/components/HeroDemo";
-import DemoStudio from "@/components/DemoStudio";
-import { useLang, LangToggle } from "@/lib/i18n";
+import DemoStudio, { type Chapter } from "@/components/DemoStudio";
+import { useLang } from "@/lib/i18n";
 
 const EM = "#064E3B";
 const GOLD = "#FACC15";
@@ -33,6 +33,14 @@ const L = {
       ["📊", "Le suivi", "Progression mesurée par matière — niveau de départ, niveau actuel, objectif — visible par l'élève et par ses parents."],
     ] as [string, string, string][],
     ctaStart: "Commencer", ctaDemo: "Voir la démo", ctaLogin: "Se connecter",
+    demoMenu: {
+      title: "Quelle démo veux-tu voir ?",
+      options: [
+        { k: "product" as Chapter, ic: "✨", t: "Le produit", d: "Ce qu'est Coach Emma Student, en 3 tableaux." },
+        { k: "tutoring" as Chapter, ic: "📘", t: "Une séance de tutoring", d: "La vraie séance de maths de Max, de la leçon à la correction." },
+        { k: "coaching" as Chapter, ic: "🎯", t: "Une séance de coaching", d: "Emma coach d'examen : le mental, la méthode, le jour J." },
+      ],
+    },
     stats: [
       ["45 min", "la séance efficace, cadrée par Emma"],
       ["4", "matières · tous les grands exam boards"],
@@ -104,6 +112,14 @@ const L = {
       ["📊", "The tracking", "Measured progress per subject — starting level, current level, target — visible to the student and their parents."],
     ] as [string, string, string][],
     ctaStart: "Start", ctaDemo: "Watch the demo", ctaLogin: "Sign in",
+    demoMenu: {
+      title: "Which demo would you like to see?",
+      options: [
+        { k: "product" as Chapter, ic: "✨", t: "The product", d: "What Coach Emma Student is, in 3 scenes." },
+        { k: "tutoring" as Chapter, ic: "📘", t: "A tutoring session", d: "Max's real maths session, from lesson to marking." },
+        { k: "coaching" as Chapter, ic: "🎯", t: "A coaching session", d: "Emma as exam coach: mindset, method, exam day." },
+      ],
+    },
     stats: [
       ["45 min", "the effective session, framed by Emma"],
       ["4", "subjects · all major exam boards"],
@@ -189,10 +205,13 @@ function HelpModal({ title, body, onClose }: { title: string; body: string[]; on
 }
 
 export default function Landing() {
-  const [lang, setLang] = useLang();
-  const [demo, setDemo] = useState(false);
+  const [lang] = useLang();
+  // « Voir la démo » ouvre d'abord le CHOIX de la démo (produit / tutoring /
+  // coaching), puis le studio démarre sur le chapitre choisi.
+  const [chooser, setChooser] = useState(false);
+  const [demo, setDemo] = useState<Chapter | null>(null);
   const [help, setHelp] = useState<null | "how" | "who">(null);
-  const t = L[lang] || L.fr;
+  const t = L[lang] || L.en;
 
   return (
     <main className="-mx-5 -mt-8" style={{ background: CREAM, color: "#2b2a26" }}>
@@ -201,10 +220,7 @@ export default function Landing() {
         <div className="hero-aura" aria-hidden="true" />
         <section className="hero-grid relative z-10 max-w-5xl mx-auto px-5 pt-10 pb-14 grid gap-9 items-center" style={{ gridTemplateColumns: "1.75fr 1fr" }}>
           <div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-[11px] font-bold tracking-[0.15em] uppercase" style={{ color: "#9a8f2e" }}>{t.tag}</div>
-              <LangToggle lang={lang} setLang={setLang} />
-            </div>
+            <div className="text-[11px] font-bold tracking-[0.15em] uppercase" style={{ color: "#9a8f2e" }}>{t.tag}</div>
             <h1 style={{ ...serif, fontWeight: 600, color: EM, fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.12, whiteSpace: "pre-line" }} className="mt-3">
               {t.h1a}<em className="not-italic" style={{ color: "#b58a00" }}>A*</em>{t.h1b}
             </h1>
@@ -223,7 +239,7 @@ export default function Landing() {
               <Link href="/login?register=1" className="cta-glow relative overflow-hidden font-extrabold rounded-2xl no-underline" style={{ background: GOLD_GRAD, color: EM, padding: "15px 28px", boxShadow: GLOW_CTA }}>
                 {t.ctaStart}
               </Link>
-              <button onClick={() => setDemo(true)} className="inline-flex items-center gap-2.5 font-bold rounded-2xl cursor-pointer bg-transparent" style={{ border: `1.5px solid ${EM}`, color: EM, padding: "13px 20px" }}>
+              <button onClick={() => setChooser(true)} className="inline-flex items-center gap-2.5 font-bold rounded-2xl cursor-pointer bg-transparent" style={{ border: `1.5px solid ${EM}`, color: EM, padding: "13px 20px" }}>
                 <span className="inline-flex items-center justify-center rounded-full text-white" style={{ width: 22, height: 22, background: EM, fontSize: 10, paddingLeft: 2 }}>▶</span>
                 {t.ctaDemo}
               </button>
@@ -249,51 +265,54 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ============ COMMENT ÇA MARCHE ============ */}
-      <section className="max-w-5xl mx-auto px-5 pt-11 pb-12">
-        <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">
-          {t.howTitle}
-          <PulseHelp onClick={() => setHelp("how")} label={t.howHelp.title} />
-        </h2>
-        <div className="cards-grid grid grid-cols-2 gap-3 mt-7">
-          {t.steps.map((s, idx, arr) => {
-            const last = idx === arr.length - 1;
-            return (
+      {/* ============ COMMENT ÇA MARCHE — bande émeraude premium ============ */}
+      <section className="relative overflow-hidden" style={{ background: "linear-gradient(150deg,#04382b,#0a6a4e 88%)" }}>
+        <div className="stats-aura" aria-hidden="true" />
+        <div className="how-aura" aria-hidden="true" />
+        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-12 pb-14">
+          <h2 style={{ ...serif, fontWeight: 600, color: "#f3f8f5", fontSize: 30 }} className="text-center">
+            {t.howTitle}
+            <PulseHelp onClick={() => setHelp("how")} label={t.howHelp.title} />
+          </h2>
+          <div className="mx-auto mt-3 h-[3px] w-16 rounded-full" style={{ background: GOLD_GRAD, boxShadow: "0 0 16px rgba(250,204,21,.6)" }} />
+          <div className="cards-grid grid grid-cols-2 gap-4 mt-8">
+            {t.steps.map((s, idx) => (
               <div
                 key={idx}
-                className="flex gap-3 items-start rounded-2xl"
+                className="lift flex gap-3.5 items-start rounded-2xl"
                 style={{
-                  padding: 18,
-                  background: last ? "linear-gradient(150deg,#053f30,#0a6a4e)" : "#fff",
-                  border: last ? "none" : "1px solid #efeadf",
-                  boxShadow: CARD_GLOW,
+                  padding: 20,
+                  background: "rgba(255,255,255,.055)",
+                  border: "1px solid rgba(255,255,255,.14)",
+                  backdropFilter: "blur(2px)",
+                  boxShadow: "0 24px 50px -34px rgba(0,0,0,.55)",
                 }}
               >
                 <span
-                  className="inline-flex items-center justify-center flex-none rounded-lg font-extrabold"
-                  style={{ ...serif, fontSize: 15, color: EM, background: GOLD_GRAD, width: 30, height: 30, boxShadow: "0 6px 16px -6px rgba(250,204,21,.7)" }}
+                  className="inline-flex items-center justify-center flex-none rounded-xl font-extrabold"
+                  style={{ ...serif, fontSize: 16, color: EM, background: GOLD_GRAD, width: 34, height: 34, boxShadow: "0 8px 20px -6px rgba(250,204,21,.75)" }}
                 >
                   {idx + 1}
                 </span>
                 <div>
-                  <p className="text-[14.5px] font-bold leading-snug" style={{ color: last ? "#fff" : EM }}>{s.t}</p>
-                  <ul className="mt-1.5 space-y-1">
+                  <p className="text-[15px] font-bold leading-snug text-white">{s.t}</p>
+                  <ul className="mt-2 space-y-1.5">
                     {s.b.map((line, i) => (
-                      <li key={i} className="flex gap-1.5 text-[13px] leading-snug" style={{ color: last ? "#cfe6da" : "#5b574e" }}>
-                        <span style={{ color: last ? GOLD : "#b58a00" }}>•</span>
+                      <li key={i} className="flex gap-2 text-[13px] leading-snug" style={{ color: "#c8e2d5" }}>
+                        <span style={{ color: GOLD }}>✦</span>
                         <span>{line}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
-            );
-          })}
-        </div>
-        <div className="text-center mt-6">
-          <button onClick={() => setDemo(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: `1.5px solid ${EM}`, color: EM, background: "none", padding: "12px 24px" }}>
-            {t.seeDemo}
-          </button>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <button onClick={() => setChooser(true)} className="cta-glow relative overflow-hidden font-extrabold rounded-2xl cursor-pointer" style={{ background: GOLD_GRAD, color: EM, padding: "13px 26px", border: "none", boxShadow: GLOW_CTA }}>
+              {t.seeDemo}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -332,7 +351,7 @@ export default function Landing() {
             <Link href="/login?register=1" className="cta-glow relative overflow-hidden font-extrabold rounded-2xl no-underline" style={{ background: GOLD_GRAD, color: EM, padding: "14px 30px", boxShadow: GLOW_CTA }}>
               {t.closeCta}
             </Link>
-            <button onClick={() => setDemo(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: "1.5px solid rgba(255,255,255,.75)", color: "#eaf3ee", background: "none", padding: "13px 26px" }}>
+            <button onClick={() => setChooser(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: "1.5px solid rgba(255,255,255,.75)", color: "#eaf3ee", background: "none", padding: "13px 26px" }}>
               {t.ctaDemo}
             </button>
           </div>
@@ -340,7 +359,42 @@ export default function Landing() {
         </div>
       </section>
 
-      {demo && <DemoStudio lang={lang} onClose={() => setDemo(false)} />}
+      {/* Choix de la démo — avant d'entrer dans le studio */}
+      {chooser && (
+        <div
+          onClick={() => setChooser(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(4,32,24,.55)", backdropFilter: "blur(3px)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white rounded-3xl p-6 relative"
+            style={{ boxShadow: "0 40px 90px -30px rgba(6,78,59,.7)" }}
+          >
+            <button onClick={() => setChooser(false)} aria-label="Close" className="absolute top-3 right-3 w-8 h-8 rounded-lg text-lg leading-none text-muted bg-paper hover:bg-line">×</button>
+            <h3 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 21 }}>{t.demoMenu.title}</h3>
+            <div className="mt-4 space-y-2.5">
+              {t.demoMenu.options.map((o) => (
+                <button
+                  key={o.k}
+                  onClick={() => { setChooser(false); setDemo(o.k); }}
+                  className="w-full text-left flex items-start gap-3 rounded-2xl p-4 cursor-pointer transition hover:-translate-y-0.5"
+                  style={{ background: CREAM, border: "1px solid #efeadf", boxShadow: CARD_GLOW }}
+                >
+                  <span className="text-xl leading-6">{o.ic}</span>
+                  <span>
+                    <span className="block font-bold text-[15px]" style={{ color: EM }}>{o.t}</span>
+                    <span className="block text-[13px] mt-0.5" style={{ color: "#5b574e" }}>{o.d}</span>
+                  </span>
+                  <span className="ml-auto self-center font-bold" style={{ color: "#b58a00" }}>▶</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {demo && <DemoStudio lang={lang} initialChapter={demo} onClose={() => setDemo(null)} />}
       {help === "how" && <HelpModal title={t.howHelp.title} body={t.howHelp.body} onClose={() => setHelp(null)} />}
       {help === "who" && <HelpModal title={t.whoHelp.title} body={t.whoHelp.body} onClose={() => setHelp(null)} />}
 
@@ -355,6 +409,7 @@ export default function Landing() {
         .hero-aura::after{content:'';position:absolute;top:-10px;right:-60px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(250,204,21,.30),transparent 62%);animation:floataura 9s ease-in-out infinite}
         @keyframes floataura{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
         .stats-aura{position:absolute;top:-70px;left:28%;width:420px;height:320px;background:radial-gradient(circle,rgba(250,204,21,.20),transparent 60%);pointer-events:none}
+        .how-aura{position:absolute;bottom:-120px;right:-60px;width:520px;height:420px;background:radial-gradient(circle,rgba(250,204,21,.13),transparent 62%);pointer-events:none}
         .lift{transition:transform .18s, box-shadow .18s}
         .lift:hover{transform:translateY(-4px)}
         .pulse-help{animation:pulsehelp 1.8s ease-in-out infinite;box-shadow:0 0 0 0 rgba(250,204,21,.65)}

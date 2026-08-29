@@ -7,6 +7,7 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import RichText from "@/components/RichText";
 import ActivityHistory from "@/components/ActivityHistory";
+import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 
 type Plan = {
   headline?: string;
@@ -35,11 +36,11 @@ type Data = {
 };
 
 const STAGE_LABEL: Record<string, string> = {
-  captured: "Capturée",
-  course: "Cours en main",
-  quiz: "Maîtrise en vérification",
-  practice: "Exercices en cours",
-  done: "Bouclée ✓",
+  captured: "Captured",
+  course: "Lesson in hand",
+  quiz: "Mastery being checked",
+  practice: "Exercises in progress",
+  done: "Wrapped up ✓",
 };
 
 export default function SubjectDashboard({ params }: { params: Promise<{ subject: string }> }) {
@@ -51,7 +52,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
   const load = useCallback(() => {
     fetch(`/api/subject/${subject}/overview`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Chargement impossible"))))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Could not load this subject"))))
       .then(setData)
       .catch((e) => setErr(e.message));
   }, [subject]);
@@ -83,8 +84,9 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
   }, [data, genPlan]);
 
   if (err) return <p className="text-gap font-semibold">{err}</p>;
-  if (!data) return <p className="text-muted">Chargement…</p>;
+  if (!data) return <p className="text-muted">Loading…</p>;
 
+  const subjectLabel = SUBJECTS[data.subject.key as SubjectKey]?.labelEn || data.subject.labelFr;
   const e = data.enrolment;
   const plan = e?.action_plan || null;
   const shown = data.estimated_grade || e?.current_grade || "—";
@@ -100,26 +102,26 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
   return (
     <div>
-      <Link href="/dashboard" className="text-sm text-faint hover:text-indigo font-semibold">← Tableau de bord</Link>
+      <Link href="/dashboard" className="text-sm text-faint hover:text-indigo font-semibold">← Dashboard</Link>
 
       <div className="flex items-end justify-between flex-wrap gap-3 mt-2">
         <div>
-          <h1 className="font-serif font-black text-3xl text-indigo-deep">{data.subject.labelFr}</h1>
+          <h1 className="font-serif font-black text-3xl text-indigo-deep">{subjectLabel}</h1>
           <p className="text-muted mt-1">
             {data.subject.board} A Level ({data.subject.spec})
-            {e?.exam_date ? ` — examen ${e.exam_date.slice(0, 7)}` : ""}
+            {e?.exam_date ? ` — exam ${e.exam_date.slice(0, 7)}` : ""}
           </p>
         </div>
-        <Link href={`/lesson/new?subject=${subject}`} className="btn-amber !py-2 !px-4">＋ Nouvelle leçon</Link>
+        <Link href={`/lesson/new?subject=${subject}`} className="btn-amber !py-2 !px-4">＋ New lesson</Link>
       </div>
 
       {!e && (
         <div className="card p-5 mt-5 border-amber">
           <p className="text-sm text-muted">
-            Cette matière n'est pas encore configurée (board, niveau de départ, objectif) — sans ça,
-            pas de plan d'action ni de calibrage sur ton exam board.
+            This subject isn't set up yet (board, starting grade, target) — without that, there's no
+            action plan and no calibration to your exam board.
           </p>
-          <Link href="/onboarding" className="btn-primary mt-3 inline-block !py-2 !px-4">Configurer →</Link>
+          <Link href="/onboarding" className="btn-primary mt-3 inline-block !py-2 !px-4">Set up →</Link>
         </div>
       )}
 
@@ -128,24 +130,24 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-5">
             <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Départ</p>
+              <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Start</p>
               <p className="font-serif font-black text-3xl text-muted">{e?.baseline_grade || "—"}</p>
             </div>
             <span className="text-faint text-xl">→</span>
             <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-indigo">Actuel{data.estimated_grade ? " (estimé)" : ""}</p>
+              <p className="text-[11px] font-mono uppercase tracking-wider text-indigo">Current{data.estimated_grade ? " (estimated)" : ""}</p>
               <p className="font-serif font-black text-3xl text-indigo">{shown}</p>
-              {data.avg_pct !== null && <p className="font-mono text-[11px] text-faint">{data.avg_pct}% des marks</p>}
+              {data.avg_pct !== null && <p className="font-mono text-[11px] text-faint">{data.avg_pct}% of marks</p>}
             </div>
             <span className="text-faint text-xl">→</span>
             <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-amber">Objectif</p>
+              <p className="text-[11px] font-mono uppercase tracking-wider text-amber">Target</p>
               <p className="font-serif font-black text-3xl text-amber">{e?.target_grade || "A*"}</p>
             </div>
           </div>
           {lastScores.length > 0 && (
             <div>
-              <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-1">Séries d'exercices (% marks)</p>
+              <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-1">Exercise sets (% marks)</p>
               <div className="flex items-end gap-1 h-14">
                 {lastScores.map((s, i) => (
                   <div key={i} className="w-5 rounded-t bg-indigo/80" style={{ height: `${Math.max(8, s.pct * 0.56)}px` }} title={`${s.pct}%`} />
@@ -157,18 +159,18 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         </div>
         <p className="text-sm text-muted mt-4">
           {data.mastery.length > 0
-            ? `${acquis}/${data.mastery.length} concepts acquis · ${data.weak_points.length} point${data.weak_points.length > 1 ? "s" : ""} à travailler`
-            : "La maîtrise par concept apparaîtra dès ta première leçon."}
+            ? `${acquis}/${data.mastery.length} concepts secure · ${data.weak_points.length} point${data.weak_points.length === 1 ? "" : "s"} to work on`
+            : "Concept-by-concept mastery will appear after your first lesson."}
         </p>
       </section>
 
       {/* ============ PLAN D'ACTION ============ */}
       <section className="mt-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif font-semibold text-xl">Ton plan d'action</h2>
+          <h2 className="font-serif font-semibold text-xl">Your action plan</h2>
           {e && plan && (
             <button onClick={() => genPlan(true)} disabled={planBusy} className="text-sm font-semibold text-indigo hover:text-indigo-deep disabled:opacity-50">
-              {planBusy ? "Régénération…" : "Régénérer"}
+              {planBusy ? "Regenerating…" : "Regenerate"}
             </button>
           )}
         </div>
@@ -177,11 +179,11 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
           <div className="card p-6 mt-3">
             <p className="text-muted">
               {planBusy || !planRequested.current
-                ? "Emma analyse l'écart entre ton niveau et ton objectif, et prépare ton plan d'action…"
-                : "Le plan n'a pas pu être généré."}
+                ? "Emma is analysing the gap between your grade and your target, and preparing your action plan…"
+                : "The plan could not be generated."}
             </p>
             {!planBusy && planRequested.current && (
-              <button onClick={() => genPlan(true)} className="btn-primary mt-3 !py-2 !px-4">Réessayer</button>
+              <button onClick={() => genPlan(true)} className="btn-primary mt-3 !py-2 !px-4">Try again</button>
             )}
           </div>
         ) : (
@@ -192,7 +194,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             {plan.weekly_rhythm && (
               <div className="bg-indigo-soft rounded-xl px-4 py-3">
                 <p className="text-sm font-semibold text-indigo">
-                  Rythme : {plan.weekly_rhythm.sessions_per_week ?? 3} séances / semaine · {plan.weekly_rhythm.minutes_per_session ?? 45} min
+                  Rhythm: {plan.weekly_rhythm.sessions_per_week ?? 3} sessions / week · {plan.weekly_rhythm.minutes_per_session ?? 45} min
                 </p>
                 {plan.weekly_rhythm.detail && <p className="text-sm text-muted mt-1">{plan.weekly_rhythm.detail}</p>}
               </div>
@@ -200,7 +202,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
             {Array.isArray(plan.priorities) && plan.priorities.length > 0 && (
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Priorités</p>
+                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Priorities</p>
                 <ul className="space-y-2">
                   {plan.priorities.map((p, i) => (
                     <li key={i} className="flex gap-3">
@@ -217,7 +219,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
             {Array.isArray(plan.milestones) && plan.milestones.length > 0 && (
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Jalons</p>
+                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Milestones</p>
                 <ul className="space-y-1.5">
                   {plan.milestones.map((m, i) => (
                     <li key={i} className="text-sm"><span className="font-mono font-semibold text-indigo">{m.when}</span> — {m.goal}</li>
@@ -228,7 +230,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
             {Array.isArray(plan.exam_technique_focus) && plan.exam_technique_focus.length > 0 && (
               <div>
-                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Technique d'examen à installer</p>
+                <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Exam technique to build</p>
                 <ul className="space-y-1.5">
                   {plan.exam_technique_focus.map((t, i) => (
                     <li key={i} className="text-sm flex gap-2"><span className="text-amber">★</span><span>{t}</span></li>
@@ -239,7 +241,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
             {Array.isArray(plan.first_actions) && plan.first_actions.length > 0 && (
               <div className="bg-amber-soft rounded-xl px-4 py-3">
-                <p className="text-sm font-semibold text-amber mb-1.5">Cette semaine</p>
+                <p className="text-sm font-semibold text-amber mb-1.5">This week</p>
                 <ul className="space-y-1">
                   {plan.first_actions.map((a, i) => (
                     <li key={i} className="text-sm flex gap-2"><span>☐</span><span>{a}</span></li>
@@ -253,11 +255,11 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
       {/* ============ LEÇONS ============ */}
       <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Leçons & topics couverts</h2>
+        <h2 className="font-serif font-semibold text-xl">Lessons & topics covered</h2>
         {data.lessons.length === 0 ? (
           <div className="card p-8 mt-4 text-center">
-            <p className="text-muted">Aucune leçon en {data.subject.labelFr.toLowerCase()} pour l'instant.</p>
-            <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Capturer ma première leçon</Link>
+            <p className="text-muted">No {subjectLabel} lessons yet.</p>
+            <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Capture my first lesson</Link>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4 mt-4">
@@ -274,7 +276,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                   </div>
                   {l.spec_topic && <p className="font-mono text-[11px] text-faint mt-1">{l.spec_topic}</p>}
                   <p className="text-sm text-muted mt-3">
-                    {m ? `${m.acquis}/${m.total} concepts acquis` : `${nConcepts} concepts — maîtrise à vérifier`}
+                    {m ? `${m.acquis}/${m.total} concepts secure` : `${nConcepts} concepts — mastery to be checked`}
                   </p>
                 </Link>
               );
@@ -285,18 +287,18 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
       {/* ============ POINTS À TRAVAILLER ============ */}
       <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Points à travailler</h2>
-        <p className="text-sm text-muted mt-1">Ce qui reste fragile en {data.subject.labelFr.toLowerCase()} — on les re-teste jusqu'à l'A★.</p>
+        <h2 className="font-serif font-semibold text-xl">Points to work on</h2>
+        <p className="text-sm text-muted mt-1">What's still fragile in {subjectLabel} — we re-test them until the A★.</p>
         {data.weak_points.length === 0 ? (
-          <p className="text-sm text-faint mt-3">Rien d'ouvert — soit tu démarres, soit tu gères 💪</p>
+          <p className="text-sm text-faint mt-3">Nothing open — either you're just starting, or you're smashing it 💪</p>
         ) : (
           <ul className="mt-4 space-y-2">
             {data.weak_points.map((w) => (
               <li key={w.id} className="card p-4 flex items-start gap-3">
-                <span className="chip-non_acquis mt-0.5 shrink-0">à revoir</span>
+                <span className="chip-non_acquis mt-0.5 shrink-0">to review</span>
                 <div>
                   <Link href={`/lesson/${w.lesson_id}`} className="font-semibold text-[15px] hover:text-indigo">{w.label}</Link>
-                  {w.misconception && <p className="text-sm text-muted mt-0.5">Méprise repérée : {w.misconception}</p>}
+                  {w.misconception && <p className="text-sm text-muted mt-0.5">Misconception spotted: {w.misconception}</p>}
                 </div>
               </li>
             ))}
@@ -306,8 +308,8 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
       {/* ============ HISTORIQUE ============ */}
       <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Historique des séances</h2>
-        <p className="text-sm text-muted mt-1 mb-3">Cette semaine, la semaine dernière, le mois — ou une période custom.</p>
+        <h2 className="font-serif font-semibold text-xl">Session history</h2>
+        <p className="text-sm text-muted mt-1 mb-3">This week, last week, this month — or a custom range.</p>
         <ActivityHistory subject={subject} />
       </section>
     </div>

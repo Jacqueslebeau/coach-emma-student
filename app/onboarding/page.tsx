@@ -66,7 +66,7 @@ export default function Onboarding() {
       target_grade: rows[k].target_grade || "A*",
       exam_date: rows[k].exam_date || null,
     }));
-    if (!enrolments.length) { setError("Choisis au moins une matière."); return; }
+    if (!enrolments.length) { setError("Choose at least one subject."); return; }
     setBusy(true); setError(null);
     try {
       const r = await fetch("/api/enrolments", {
@@ -75,7 +75,7 @@ export default function Onboarding() {
         body: JSON.stringify({ enrolments }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Enregistrement impossible");
+      if (!r.ok) throw new Error(d.error || "Could not save your subjects");
       router.push("/dashboard");
     } catch (err) {
       setError((err as Error).message);
@@ -87,11 +87,11 @@ export default function Onboarding() {
   return (
     <div className="max-w-3xl mx-auto">
       <BackLink />
-      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">Tes matières</h1>
+      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">Your subjects</h1>
       <p className="text-muted mt-2">
-        Pour chaque matière : ton exam board (chaque board a ses papers et son mark scheme — Emma
-        s'y calibre), ton niveau actuel, ton objectif au A Level et ta session d'examen. Tu recevras
-        un <span className="font-semibold text-ink">plan d'action</span> par matière.
+        For each subject: your exam board (every board has its own papers and mark scheme — Emma
+        calibrates to it), your current grade, your A Level target and your exam session. You'll get
+        an <span className="font-semibold text-ink">action plan</span> for each subject.
       </p>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -108,8 +108,8 @@ export default function Onboarding() {
                   onChange={(e) => patch(k, { on: e.target.checked })}
                   className="h-5 w-5 accent-[#064E3B]"
                 />
-                <span className="font-serif font-semibold text-lg">{s.labelFr}</span>
-                {k === "french" && <span className="chip-todo">candidat libre</span>}
+                <span className="font-serif font-semibold text-lg">{s.labelEn}</span>
+                {k === "french" && <span className="chip-todo">private candidate</span>}
               </label>
 
               {row.on && (
@@ -121,20 +121,20 @@ export default function Onboarding() {
                     </select>
                   </label>
                   <label className="text-sm font-semibold">
-                    Niveau actuel
+                    Current grade
                     <select className="input mt-1 !py-1.5" value={row.current_grade} onChange={(e) => patch(k, { current_grade: e.target.value })}>
                       <option value="">—</option>
                       {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </label>
                   <label className="text-sm font-semibold">
-                    Objectif A Level
+                    A Level target
                     <select className="input mt-1 !py-1.5" value={row.target_grade} onChange={(e) => patch(k, { target_grade: e.target.value })}>
                       {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
                     </select>
                   </label>
                   <label className="text-sm font-semibold">
-                    Session d'examen
+                    Exam session
                     <input
                       type="month"
                       className="input mt-1 !py-1.5"
@@ -150,7 +150,7 @@ export default function Onboarding() {
 
         {error && <p className="text-sm text-gap font-semibold">{error}</p>}
         <button className="btn-primary w-full !py-3" disabled={busy}>
-          {busy ? "Enregistrement…" : "Valider mes matières →"}
+          {busy ? "Saving…" : "Confirm my subjects →"}
         </button>
       </form>
     </div>

@@ -31,7 +31,7 @@ type Phase =
   | "remediation" | "exercises" | "exercise-result" | "done";
 
 const STATUS_LABEL: Record<string, string> = {
-  acquis: "acquis", fragile: "fragile", non_acquis: "à revoir",
+  acquis: "secure", fragile: "fragile", non_acquis: "to review",
 };
 
 export default function LessonPage() {
@@ -55,7 +55,7 @@ export default function LessonPage() {
 
   const refresh = useCallback(async (): Promise<Detail | null> => {
     const r = await fetch(`/api/lessons/${id}`);
-    if (!r.ok) { setError("Leçon introuvable"); return null; }
+    if (!r.ok) { setError("Lesson not found"); return null; }
     const d: Detail = await r.json();
     setDetail(d);
     return d;
@@ -77,7 +77,7 @@ export default function LessonPage() {
     try {
       const r = await fetch(path, init);
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Erreur — réessaie.");
+      if (!r.ok) throw new Error(d.error || "Something went wrong — try again.");
       return d as T;
     } finally {
       setBusy(false);
@@ -145,7 +145,7 @@ export default function LessonPage() {
   });
 
   if (error && !detail) return <p className="text-gap font-semibold">{error}</p>;
-  if (!detail || phase === "loading") return <p className="text-muted">Chargement…</p>;
+  if (!detail || phase === "loading") return <p className="text-muted">Loading…</p>;
 
   const { lesson, mastery, weak_points } = detail;
   const concepts = lesson.concepts || [];
@@ -186,20 +186,20 @@ export default function LessonPage() {
       {phase === "course-choice" && (
         <div className="grid sm:grid-cols-2 gap-4">
           <button onClick={() => chooseCourse("full")} disabled={busy} className="card p-6 text-left hover:border-indigo transition disabled:opacity-60">
-            <h2 className="font-serif font-semibold text-lg">Cours complet</h2>
+            <h2 className="font-serif font-semibold text-lg">Full lesson</h2>
             <p className="text-sm text-muted mt-1.5">
-              Chaque concept expliqué à fond : l'intuition, la notation, un exemple travaillé, le piège d'examen.
+              Every concept explained in depth: the intuition, the notation, a worked example, the exam trap.
             </p>
-            <span className="chip-todo mt-4">~10 min de lecture</span>
+            <span className="chip-todo mt-4">~10 min read</span>
           </button>
           <button onClick={() => chooseCourse("key")} disabled={busy} className="card p-6 text-left hover:border-amber transition disabled:opacity-60">
-            <h2 className="font-serif font-semibold text-lg">Concepts clés</h2>
+            <h2 className="font-serif font-semibold text-lg">Key concepts</h2>
             <p className="text-sm text-muted mt-1.5">
-              La version rapide : formules, réflexes, pièges. Pour réviser ou si le cours du prof était clair.
+              The quick version: formulas, reflexes, traps. For revision, or if your teacher's lesson was clear.
             </p>
-            <span className="chip bg-amber-soft text-amber mt-4">~3 min de lecture</span>
+            <span className="chip bg-amber-soft text-amber mt-4">~3 min read</span>
           </button>
-          {busy && <p className="text-sm text-muted sm:col-span-2">Emma écrit ton cours…</p>}
+          {busy && <p className="text-sm text-muted sm:col-span-2">Emma is writing your lesson…</p>}
         </div>
       )}
 
@@ -216,19 +216,19 @@ export default function LessonPage() {
             ))}
             {course.recap && (
               <div className="mt-6 bg-indigo-soft rounded-xl p-5">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-indigo">Le récap minute</p>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-indigo">One-minute recap</p>
                 <RichText text={course.recap} className="mt-1" />
               </div>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-6">
             <button onClick={startQuiz} disabled={busy} className="btn-primary !py-3 !px-6">
-              {busy ? "Emma prépare tes questions…" : "Vérifier ma maîtrise →"}
+              {busy ? "Emma is preparing your questions…" : "Check my mastery →"}
             </button>
             {!course.sections.length ? null : course.mode === "key" ? (
-              <button onClick={() => chooseCourse("full")} disabled={busy} className="btn-ghost">Voir le cours complet</button>
+              <button onClick={() => chooseCourse("full")} disabled={busy} className="btn-ghost">See the full lesson</button>
             ) : (
-              <button onClick={() => chooseCourse("key")} disabled={busy} className="btn-ghost">Version concepts clés</button>
+              <button onClick={() => chooseCourse("key")} disabled={busy} className="btn-ghost">Key concepts version</button>
             )}
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function LessonPage() {
       {phase === "quiz" && quiz && (
         <div className="space-y-4">
           <p className="text-muted text-sm">
-            Réponds avec ton résultat <strong>et l'étape clé de ta méthode</strong> — c'est la méthode qu'on vérifie, pas la chance.
+            Answer with your result <strong>and the key step of your working</strong> — it's the method we're checking, not luck.
           </p>
           {quiz.questions.map((q, i) => (
             <div key={q.id} className="card p-5">
@@ -246,14 +246,14 @@ export default function LessonPage() {
               <RichText text={q.question} className="mt-1.5" />
               <textarea
                 className="input mt-3 min-h-[70px] font-mono text-[14px]"
-                placeholder="Ta réponse (résultat + méthode)…"
+                placeholder="Your answer (result + method)…"
                 value={quizAnswers[q.id] || ""}
                 onChange={(e) => setQuizAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
               />
             </div>
           ))}
           <button onClick={submitQuiz} disabled={busy} className="btn-primary w-full !py-3">
-            {busy ? "Emma corrige…" : "Envoyer mes réponses"}
+            {busy ? "Emma is marking…" : "Send my answers"}
           </button>
         </div>
       )}
@@ -271,15 +271,15 @@ export default function LessonPage() {
             return (
               <div key={q.id} className="card p-5">
                 <div className="flex items-center gap-2">
-                  <span className={tone}>{it.verdict === "correct" ? "juste" : it.verdict === "partial" ? "presque" : "faux"}</span>
+                  <span className={tone}>{it.verdict === "correct" ? "correct" : it.verdict === "partial" ? "nearly" : "wrong"}</span>
                   <p className="font-mono text-[11px] text-faint">Question {i + 1}</p>
                 </div>
                 <RichText text={it.feedback} className="mt-2" />
                 {it.misconception && (
-                  <p className="text-sm text-gap font-semibold mt-1">Méprise repérée : {it.misconception}</p>
+                  <p className="text-sm text-gap font-semibold mt-1">Misconception spotted: {it.misconception}</p>
                 )}
                 <details className="mt-2">
-                  <summary className="text-sm font-semibold text-indigo cursor-pointer">Voir la solution modèle</summary>
+                  <summary className="text-sm font-semibold text-indigo cursor-pointer">See the model answer</summary>
                   <RichText text={it.model_answer} className="mt-2" />
                 </details>
               </div>
@@ -288,22 +288,22 @@ export default function LessonPage() {
 
           {notAcquired.length > 0 ? (
             <div className="card p-5 border-amber">
-              <h2 className="font-serif font-semibold text-lg">On reprend ce qui coince — précisément</h2>
-              <p className="text-sm text-muted mt-1">Pas toute la leçon : juste le concept, expliqué autrement.</p>
+              <h2 className="font-serif font-semibold text-lg">Let's revisit what's not clicking — precisely</h2>
+              <p className="text-sm text-muted mt-1">Not the whole lesson: just the concept, explained a different way.</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 {notAcquired.map((c) => (
                   <button key={c.key} onClick={() => startRemediation(c.key)} disabled={busy} className="btn-amber !py-2 text-[13px]">
-                    Revoir « {c.label} »
+                    Revisit “{c.label}”
                   </button>
                 ))}
               </div>
               <button onClick={() => startExercises()} disabled={busy} className="text-sm font-semibold text-faint hover:text-indigo mt-4">
-                Passer quand même aux exercices →
+                Skip ahead to the exercises anyway →
               </button>
             </div>
           ) : (
             <button onClick={() => startExercises()} disabled={busy} className="btn-primary w-full !py-3">
-              {busy ? "Emma prépare tes exercices…" : "Tout est acquis — place aux exercices →"}
+              {busy ? "Emma is preparing your exercises…" : "All secure — on to the exercises →"}
             </button>
           )}
         </div>
@@ -313,25 +313,25 @@ export default function LessonPage() {
       {phase === "remediation" && rem && (
         <div className="space-y-4">
           <div className="card p-6 border-amber">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-amber">Remédiation ciblée</p>
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-amber">Targeted revisit</p>
             <RichText text={rem.remediation.explanation} className="mt-2" />
           </div>
           {!remGrade ? (
             <>
               {rem.remediation.questions.map((q, i) => (
                 <div key={q.id} className="card p-5">
-                  <p className="font-mono text-[11px] text-faint">Re-vérification {i + 1}/2</p>
+                  <p className="font-mono text-[11px] text-faint">Re-check {i + 1}/2</p>
                   <RichText text={q.question} className="mt-1.5" />
                   <textarea
                     className="input mt-3 min-h-[70px] font-mono text-[14px]"
-                    placeholder="Ta réponse…"
+                    placeholder="Your answer…"
                     value={remAnswers[q.id] || ""}
                     onChange={(e) => setRemAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
                   />
                 </div>
               ))}
               <button onClick={submitRemediation} disabled={busy} className="btn-primary w-full !py-3">
-                {busy ? "Emma corrige…" : "Vérifier"}
+                {busy ? "Emma is marking…" : "Check"}
               </button>
             </>
           ) : (
@@ -342,11 +342,11 @@ export default function LessonPage() {
               {remGrade.items.map((it) => (
                 <div key={it.id} className="card p-5">
                   <span className={it.verdict === "correct" ? "chip-acquis" : it.verdict === "partial" ? "chip-fragile" : "chip-non_acquis"}>
-                    {it.verdict === "correct" ? "juste" : it.verdict === "partial" ? "presque" : "faux"}
+                    {it.verdict === "correct" ? "correct" : it.verdict === "partial" ? "nearly" : "wrong"}
                   </span>
                   <RichText text={it.feedback} className="mt-2" />
                   <details className="mt-2">
-                    <summary className="text-sm font-semibold text-indigo cursor-pointer">Solution modèle</summary>
+                    <summary className="text-sm font-semibold text-indigo cursor-pointer">Model answer</summary>
                     <RichText text={it.model_answer} className="mt-2" />
                   </details>
                 </div>
@@ -354,11 +354,11 @@ export default function LessonPage() {
               <div className="flex flex-wrap gap-3">
                 {notAcquired.filter((c) => c.key !== rem.remediation.concept_key).map((c) => (
                   <button key={c.key} onClick={() => startRemediation(c.key)} disabled={busy} className="btn-amber !py-2 text-[13px]">
-                    Revoir « {c.label} »
+                    Revisit “{c.label}”
                   </button>
                 ))}
                 <button onClick={() => startExercises()} disabled={busy} className="btn-primary !py-2.5">
-                  {busy ? "…" : "Place aux exercices →"}
+                  {busy ? "…" : "On to the exercises →"}
                 </button>
               </div>
             </>
@@ -370,13 +370,13 @@ export default function LessonPage() {
       {phase === "exercises" && ex && (
         <div className="space-y-4">
           <p className="text-muted text-sm">
-            Style past paper {lesson.exam_board || "de ton board"}. Fais-les <strong>en ligne</strong> ou <strong>sur papier</strong> — dans ce cas,
-            prends ta copie en photo et uploade-la en bas : Emma corrige le manuscrit au mark scheme.
+            {lesson.exam_board || "Your board's"} past-paper style. Do them <strong>online</strong> or <strong>on paper</strong> — in that case,
+            take a photo of your work and upload it below: Emma marks the handwriting against the mark scheme.
           </p>
           {ex.exercises.map((e, i) => (
             <div key={e.id} className="card p-5">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="font-mono text-[11px] text-faint">Exercice {i + 1}</p>
+                <p className="font-mono text-[11px] text-faint">Exercise {i + 1}</p>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {e.command_word && <span className="chip bg-amber-soft text-amber font-mono">“{e.command_word}”</span>}
                   {e.question_type && <span className="chip-todo">{e.question_type}</span>}
@@ -386,19 +386,19 @@ export default function LessonPage() {
               <RichText text={e.statement} className="mt-1.5" />
               {(e.exam_expectation || e.method_note) && (
                 <p className="text-xs text-muted mt-2 bg-indigo-soft rounded-lg px-3 py-2">
-                  🎯 <strong>Ce que l'examinateur attend :</strong> {e.exam_expectation || e.method_note}
+                  🎯 <strong>What the examiner expects:</strong> {e.exam_expectation || e.method_note}
                 </p>
               )}
               <textarea
                 className="input mt-3 min-h-[90px] font-mono text-[14px]"
-                placeholder="Ta réponse ici… (ou laisse vide si tu uploades ta copie en photo)"
+                placeholder="Your answer here… (or leave blank if you're uploading a photo of your work)"
                 value={exAnswers[e.id] || ""}
                 onChange={(ev) => setExAnswers((a) => ({ ...a, [e.id]: ev.target.value }))}
               />
             </div>
           ))}
           <div className="card p-5">
-            <label className="text-sm font-semibold">Photo(s) de ta copie <span className="text-faint font-normal">(jusqu'à 3)</span></label>
+            <label className="text-sm font-semibold">Photo(s) of your work <span className="text-faint font-normal">(up to 3)</span></label>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
@@ -411,7 +411,7 @@ export default function LessonPage() {
             )}
           </div>
           <button onClick={submitExercises} disabled={busy} className="btn-primary w-full !py-3">
-            {busy ? "Emma corrige ta copie au mark scheme…" : "Envoyer pour correction"}
+            {busy ? "Emma is marking your work against the mark scheme…" : "Send for marking"}
           </button>
         </div>
       )}
@@ -422,7 +422,7 @@ export default function LessonPage() {
           <div className="card p-5 bg-indigo-soft border-indigo-soft">
             <p className="font-semibold text-indigo-deep">{mark.summary}</p>
             <p className="font-mono text-sm text-indigo mt-2">
-              Total : {mark.items.reduce((s, i) => s + (i.marks_awarded || 0), 0)}
+              Total: {mark.items.reduce((s, i) => s + (i.marks_awarded || 0), 0)}
               /{mark.items.reduce((s, i) => s + (i.marks_total || 0), 0)} marks
             </p>
           </div>
@@ -435,22 +435,22 @@ export default function LessonPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={tone}>{it.marks_awarded}/{it.marks_total} marks</span>
-                    <p className="font-mono text-[11px] text-faint">Exercice {i + 1}</p>
+                    <p className="font-mono text-[11px] text-faint">Exercise {i + 1}</p>
                   </div>
                 </div>
                 <RichText text={it.feedback} className="mt-2" />
-                <p className="text-sm text-muted mt-2"><strong>Method marks :</strong> {it.method_comment}</p>
+                <p className="text-sm text-muted mt-2"><strong>Method marks:</strong> {it.method_comment}</p>
                 {Array.isArray(it.exam_habits) && it.exam_habits.length > 0 && (
                   <div className="text-sm mt-2 bg-learning-bg rounded-lg px-3 py-2">
-                    <strong className="text-learning">Technique d'examen à corriger :</strong>
+                    <strong className="text-learning">Exam technique to fix:</strong>
                     <ul className="list-disc pl-5 mt-1 text-muted">
                       {it.exam_habits.map((h, j) => <li key={j}>{h}</li>)}
                     </ul>
                   </div>
                 )}
-                {it.misconception && <p className="text-sm text-gap font-semibold mt-1">Méprise repérée : {it.misconception}</p>}
+                {it.misconception && <p className="text-sm text-gap font-semibold mt-1">Misconception spotted: {it.misconception}</p>}
                 <details className="mt-2">
-                  <summary className="text-sm font-semibold text-indigo cursor-pointer">Corrigé pas à pas (mark scheme)</summary>
+                  <summary className="text-sm font-semibold text-indigo cursor-pointer">Step-by-step solution (mark scheme)</summary>
                   <RichText text={it.model_solution} className="mt-2" />
                 </details>
               </div>
@@ -458,17 +458,17 @@ export default function LessonPage() {
           })}
           {mark.decision === "redo" ? (
             <div className="card p-5 border-amber">
-              <h2 className="font-serif font-semibold text-lg">Verdict d'Emma : on refait — variante différente</h2>
+              <h2 className="font-serif font-semibold text-lg">Emma's verdict: go again — different variation</h2>
               <p className="text-sm text-muted mt-1">
-                Même(s) concept(s), autre énoncé. C'est en refaisant qu'on sécurise.
+                Same concept(s), different question. Doing it again is what makes it stick.
               </p>
               <button onClick={() => startExercises(mark.redo_concept_keys, true)} disabled={busy} className="btn-amber mt-3">
-                {busy ? "Emma prépare la variante…" : "Refaire une variante ciblée"}
+                {busy ? "Emma is preparing the variation…" : "Try a targeted variation"}
               </button>
             </div>
           ) : (
             <button onClick={() => setPhase("done")} className="btn-primary w-full !py-3">
-              Boucle bouclée ✓ — voir mon bilan
+              Loop closed ✓ — see my summary
             </button>
           )}
         </div>
@@ -478,7 +478,7 @@ export default function LessonPage() {
       {phase === "done" && (
         <div className="space-y-4">
           <div className="card p-6">
-            <h2 className="font-serif font-black text-2xl text-indigo-deep">Bilan de la leçon</h2>
+            <h2 className="font-serif font-black text-2xl text-indigo-deep">Lesson summary</h2>
             <div className="mt-4 space-y-2">
               {concepts.map((c) => {
                 const s = statusOf(c.key);
@@ -486,7 +486,7 @@ export default function LessonPage() {
                 return (
                   <div key={c.key} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
                     <span className="text-[15px] font-semibold">{c.label}</span>
-                    <span className={cls}>{s === "todo" ? "non vérifié" : STATUS_LABEL[s]}</span>
+                    <span className={cls}>{s === "todo" ? "not checked" : STATUS_LABEL[s]}</span>
                   </div>
                 );
               })}
@@ -494,8 +494,8 @@ export default function LessonPage() {
           </div>
           {weak_points.filter((w) => w.status === "open").length > 0 && (
             <div className="card p-6 border-amber">
-              <h3 className="font-serif font-semibold text-lg">Tes points à travailler</h3>
-              <p className="text-sm text-muted mt-1">Emma te les re-proposera — c'est ça qui construit l'A★.</p>
+              <h3 className="font-serif font-semibold text-lg">Your points to work on</h3>
+              <p className="text-sm text-muted mt-1">Emma will bring these back — that's what builds the A★.</p>
               <ul className="mt-3 space-y-2">
                 {weak_points.filter((w) => w.status === "open").map((w) => (
                   <li key={w.id} className="text-sm">
@@ -507,8 +507,8 @@ export default function LessonPage() {
             </div>
           )}
           <div className="flex gap-3">
-            <Link href="/dashboard" className="btn-primary">Retour au tableau de bord</Link>
-            <button onClick={() => startExercises()} disabled={busy} className="btn-ghost">Encore des exercices</button>
+            <Link href="/dashboard" className="btn-primary">Back to dashboard</Link>
+            <button onClick={() => startExercises()} disabled={busy} className="btn-ghost">More exercises</button>
           </div>
         </div>
       )}

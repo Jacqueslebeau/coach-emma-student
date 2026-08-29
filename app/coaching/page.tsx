@@ -10,10 +10,10 @@ import BackLink from "@/components/BackLink";
 type Msg = { role: string; message: string };
 
 const OPENERS = [
-  "Comment tu te sens par rapport aux exams en ce moment ?",
-  "C'est quoi qui te stresse le plus quand tu penses au jour J ?",
-  "Raconte-moi ta dernière session de travail — comment ça s'est passé ?",
-  "On prépare ta stratégie de gestion du temps en examen ?",
+  "How are you feeling about your exams at the moment?",
+  "What stresses you most when you think about the big day?",
+  "Tell me about your last study session — how did it go?",
+  "Shall we work on your time management strategy for the exam?",
 ];
 
 export default function CoachingPage() {
@@ -26,7 +26,7 @@ export default function CoachingPage() {
 
   useEffect(() => {
     fetch("/api/coaching")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Chargement impossible"))))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Could not load your coaching history"))))
       .then((d) => { setMessages(d.messages || []); setFirstName(d.first_name || ""); })
       .catch((e) => setError(e.message));
   }, []);
@@ -45,7 +45,7 @@ export default function CoachingPage() {
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ message: t }),
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Erreur — réessaie.");
+      if (!r.ok) throw new Error(d.error || "Something went wrong — try again.");
       setMessages((m) => [...m, { role: "assistant", message: d.reply }]);
     } catch (e) {
       setError((e as Error).message);
@@ -59,10 +59,10 @@ export default function CoachingPage() {
       <BackLink />
       <div className="flex items-end justify-between flex-wrap gap-3 mt-2">
         <div>
-          <h1 className="font-serif font-black text-2xl text-indigo-deep">Coaching d'examen</h1>
+          <h1 className="font-serif font-black text-2xl text-indigo-deep">Exam coaching</h1>
           <p className="text-muted text-sm mt-1">
-            Ici on ne fait pas de maths : on prépare le compétiteur. Ce que tu ressens, comment te préparer,
-            comment performer le jour J. Séance idéale : 15-20 min.
+            No maths here: we prepare the competitor. How you're feeling, how to get ready,
+            how to perform on the big day. Ideal session: 15-20 min.
           </p>
         </div>
         <SessionTimer />
@@ -72,7 +72,7 @@ export default function CoachingPage() {
         {messages.length === 0 && !busy && (
           <div>
             <p className="text-muted text-sm">
-              Salut {firstName || ""} 👋 De quoi tu veux parler ? Quelques pistes :
+              Hi {firstName || ""} 👋 What would you like to talk about? A few ideas:
             </p>
             <div className="flex flex-wrap gap-2 mt-3">
               {OPENERS.map((o) => (
@@ -96,7 +96,7 @@ export default function CoachingPage() {
             </div>
           </div>
         ))}
-        {busy && <p className="text-sm text-faint">Emma réfléchit…</p>}
+        {busy && <p className="text-sm text-faint">Emma is thinking…</p>}
         <div ref={endRef} />
       </div>
 
@@ -108,16 +108,16 @@ export default function CoachingPage() {
       >
         <input
           className="input flex-1"
-          placeholder="Dis-lui ce que tu as sur le cœur…"
+          placeholder="Tell her what's on your mind…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={busy}
         />
-        <button className="btn-primary" disabled={busy || !input.trim()}>Envoyer</button>
+        <button className="btn-primary" disabled={busy || !input.trim()}>Send</button>
       </form>
       <p className="text-[11px] text-faint mt-2">
-        Emma est un coach scolaire, pas un professionnel de santé. Si ça ne va vraiment pas, parles-en à tes
-        parents ou à un adulte de confiance.
+        Emma is a study coach, not a healthcare professional. If things really aren't okay, talk to your
+        parents or a trusted adult.
       </p>
     </div>
   );

@@ -18,7 +18,7 @@ const GOLD = "#FACC15";
 const serif = { fontFamily: "Fraunces, Georgia, serif" } as const;
 
 type Shot = { cap: string; secs: number; scene: React.ReactNode };
-type Chapter = "product" | "tutoring" | "coaching";
+export type Chapter = "product" | "tutoring" | "coaching";
 
 function EmmaMark() {
   return (
@@ -423,10 +423,10 @@ const UI = {
 
 const CHAPTERS: Chapter[] = ["product", "tutoring", "coaching"];
 
-export default function DemoStudio({ onClose, fullscreen, lang = "fr" }: { onClose?: () => void; fullscreen?: boolean; lang?: Lang }) {
-  const [chapter, setChapter] = useState<Chapter>("product");
+export default function DemoStudio({ onClose, fullscreen, lang = "en", initialChapter = "product" }: { onClose?: () => void; fullscreen?: boolean; lang?: Lang; initialChapter?: Chapter }) {
+  const [chapter, setChapter] = useState<Chapter>(initialChapter);
   const shots = buildShots(lang, chapter);
-  const u = UI[lang] || UI.fr;
+  const u = UI[lang] || UI.en;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
@@ -434,16 +434,36 @@ export default function DemoStudio({ onClose, fullscreen, lang = "fr" }: { onClo
   const startRef = useRef<number>(Date.now());
   const shot = shots[Math.min(idx, shots.length - 1)];
 
+  // NARRATION — la voix UK de Coach Emma (clips /demo-audio, anglais).
+  // La durée de chaque tableau se cale sur la durée du clip.
+  const hasAudio = lang === "en";
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
+  const [audioDur, setAudioDur] = useState(0);
+  const effSecs = Math.max(shot.secs, audioDur > 0 ? audioDur + 0.6 : 0);
+
   useEffect(() => {
     startRef.current = Date.now();
     setTick(0);
-  }, [idx, chapter]);
+    setAudioDur(0);
+    const a = audioRef.current;
+    if (!a) return;
+    a.pause();
+    if (hasAudio) {
+      a.src = `/demo-audio/${chapter}-${idx}.mp3`;
+      a.currentTime = 0;
+      if (playing && soundOn) a.play().catch(() => setSoundOn(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, chapter, hasAudio]);
+
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
 
   useEffect(() => {
     if (!playing) return;
     const loop = () => {
       const elapsed = (Date.now() - startRef.current) / 1000;
-      const pct = Math.min(100, (elapsed / shot.secs) * 100);
+      const pct = Math.min(100, (elapsed / effSecs) * 100);
       setTick(pct);
       if (pct >= 100) {
         setIdx((x) => {
@@ -462,13 +482,26 @@ export default function DemoStudio({ onClose, fullscreen, lang = "fr" }: { onClo
     };
     raf.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf.current);
-  }, [playing, idx, chapter, shot.secs, shots.length]);
+  }, [playing, idx, chapter, effSecs, shots.length]);
 
   const togglePlay = () => {
-    if (playing) setPlaying(false);
-    else {
-      startRef.current = Date.now() - (tick / 100) * shot.secs * 1000;
+    if (playing) {
+      setPlaying(false);
+      audioRef.current?.pause();
+    } else {
+      startRef.current = Date.now() - (tick / 100) * effSecs * 1000;
       setPlaying(true);
+      if (hasAudio && soundOn) audioRef.current?.play().catch(() => {});
+    }
+  };
+  const toggleSound = () => {
+    const a = audioRef.current;
+    if (soundOn) {
+      setSoundOn(false);
+      a?.pause();
+    } else {
+      setSoundOn(true);
+      if (a && hasAudio && playing) a.play().catch(() => {});
     }
   };
   const pickChapter = (c: Chapter) => {
@@ -480,6 +513,15 @@ export default function DemoStudio({ onClose, fullscreen, lang = "fr" }: { onClo
 
   const inner = (
     <div className="w-full max-w-xl bg-white rounded-3xl overflow-hidden flex flex-col" style={{ boxShadow: "0 40px 90px -30px rgba(6,78,59,.7)" }}>
+      {/* Narration : la voix UK de Coach Emma */}
+      <audio
+        ref={audioRef}
+        preload="auto"
+        onLoadedMetadata={(e) => {
+          const d = (e.target as HTMLAudioElement).duration;
+          if (isFinite(d) && d > 0) setAudioDur(d);
+        }}
+      />
       <div className="relative px-5 py-4" style={{ background: `linear-gradient(150deg,${EM},${EM2})` }}>
         {onClose && (
           <button onClick={onClose} aria-label="Fermer" className="absolute top-3 right-3 w-8 h-8 rounded-lg text-lg leading-none text-white/80 bg-white/10 hover:bg-white/20">×</button>
@@ -528,6 +570,11 @@ export default function DemoStudio({ onClose, fullscreen, lang = "fr" }: { onClo
 
       <div className="flex items-center justify-between px-5 py-3 border-t border-line">
         <div className="flex gap-2">
+          {hasAudio && (
+            <button onClick={toggleSound} title={soundOn ? "Mute Emma's voice" : "Unmute Emma's voice"} className="btn-ghost !py-1.5 !px-3 text-[12.5px]">
+              {soundOn ? "🔊" : "🔇"}
+            </button>
+          )}
           <button onClick={() => { setIdx(0); setPlaying(true); }} className="btn-ghost !py-1.5 !px-3 text-[12.5px]">{u.replay}</button>
           {!lastOfAll && <button onClick={togglePlay} className="btn-ghost !py-1.5 !px-3 text-[12.5px]">{playing ? u.pause : u.play}</button>}
           {!lastOfAll && (

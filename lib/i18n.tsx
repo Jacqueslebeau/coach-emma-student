@@ -1,12 +1,13 @@
 "use client";
 
-// i18n minimal FR/EN (même mécanique que Coach Emma : ui_lang en localStorage).
+// i18n minimal EN/FR (même mécanique que Coach Emma : ui_lang en localStorage).
+// L'ANGLAIS est la langue par défaut : le produit prépare des A Levels UK.
 import { useEffect, useState } from "react";
 
 export type Lang = "fr" | "en";
 
 export function useLang(): [Lang, (l: Lang) => void] {
-  const [lang, setLangState] = useState<Lang>("fr");
+  const [lang, setLangState] = useState<Lang>("en");
   useEffect(() => {
     const v = typeof window !== "undefined" ? localStorage.getItem("ui_lang") : null;
     if (v === "fr" || v === "en") setLangState(v);
@@ -25,16 +26,18 @@ export function useLang(): [Lang, (l: Lang) => void] {
   return [lang, setLang];
 }
 
+// Sélecteur de langue — EN d'abord (défaut), segments nets et espacés.
 export function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   return (
-    <div className="inline-flex rounded-lg border border-line overflow-hidden text-[11px] font-bold">
-      {(["fr", "en"] as Lang[]).map((l) => (
+    <div className="inline-flex rounded-lg border border-line overflow-hidden text-[11.5px] font-bold divide-x divide-line">
+      {(["en", "fr"] as Lang[]).map((l) => (
         <button
           key={l}
           onClick={() => setLang(l)}
-          className={lang === l ? "px-2 py-1 bg-indigo text-white" : "px-2 py-1 bg-white text-muted hover:text-indigo"}
+          aria-pressed={lang === l}
+          className={lang === l ? "px-3 py-1.5 bg-indigo text-white" : "px-3 py-1.5 bg-white text-muted hover:text-indigo"}
         >
-          {l.toUpperCase()}
+          {l === "en" ? "EN 🇬🇧" : "FR"}
         </button>
       ))}
     </div>

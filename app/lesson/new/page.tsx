@@ -10,7 +10,7 @@ import BackLink from "@/components/BackLink";
 
 export default function NewLessonPage() {
   return (
-    <Suspense fallback={<p className="text-muted">Chargement…</p>}>
+    <Suspense fallback={<p className="text-muted">Loading…</p>}>
       <NewLesson />
     </Suspense>
   );
@@ -54,10 +54,10 @@ function NewLesson() {
       const r = await fetch("/api/lessons", { method: "POST", body: fd });
       const d = await r.json().catch(() => ({}));
       if (r.status === 422 && d.needs_clarification) {
-        setClarify(d.clarification || "Peux-tu préciser le chapitre ?");
+        setClarify(d.clarification || "Could you say which chapter this is?");
         return;
       }
-      if (!r.ok) throw new Error(d.error || "Erreur");
+      if (!r.ok) throw new Error(d.error || "Something went wrong");
       router.push(`/lesson/${d.id}`);
     } catch (err) {
       setError((err as Error).message);
@@ -69,10 +69,10 @@ function NewLesson() {
   return (
     <div className="max-w-2xl mx-auto">
       <BackLink />
-      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">Nouvelle leçon</h1>
+      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">New lesson</h1>
       <p className="text-muted mt-2">
-        Entre ce que tu as — le titre suffit, mais plus tu en donnes, plus le cours collera à ce que
-        ton prof a fait. Emma identifie les concepts du programme de l'exam board.
+        Enter what you have — the title is enough, but the more you give, the closer the lesson will
+        stick to what your teacher covered. Emma identifies the concepts from your exam board's specification.
       </p>
 
       {/* Choix de la matière — chaque matière porte son board et sa technique d'examen */}
@@ -89,48 +89,48 @@ function NewLesson() {
             }
             title={`${boards[s.key] || s.board} ${s.spec}`}
           >
-            {s.labelFr} · {boards[s.key] || s.board}
+            {s.labelEn} · {boards[s.key] || s.board}
           </button>
         ))}
       </div>
 
       <form onSubmit={onSubmit} className="card p-6 mt-4 space-y-5">
         <div>
-          <label className="text-sm font-semibold">Titre de la leçon</label>
+          <label className="text-sm font-semibold">Lesson title</label>
           <input
             className="input mt-1"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={subject === "maths" ? "ex. Differentiation — chain rule" : subject === "eco" ? "ex. Price elasticity of demand" : subject === "geo" ? "ex. Carbon cycle — human impacts" : "ex. Paper 2 — La Haine, thème de la violence"}
+            placeholder={subject === "maths" ? "e.g. Differentiation — chain rule" : subject === "eco" ? "e.g. Price elasticity of demand" : subject === "geo" ? "e.g. Carbon cycle — human impacts" : "e.g. Paper 2 — La Haine, thème de la violence"}
           />
         </div>
         <div>
-          <label className="text-sm font-semibold">Tes notes <span className="text-faint font-normal">(optionnel)</span></label>
+          <label className="text-sm font-semibold">Your notes <span className="text-faint font-normal">(optional)</span></label>
           <textarea
             className="input mt-1 min-h-[140px]"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Colle ou tape ce que vous avez vu en classe…"
+            placeholder="Paste or type what you covered in class…"
           />
         </div>
         <div>
-          <label className="text-sm font-semibold">Photo du cours <span className="text-faint font-normal">(optionnel)</span></label>
+          <label className="text-sm font-semibold">Photo of the lesson <span className="text-faint font-normal">(optional)</span></label>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"
             className="mt-1 block w-full text-sm text-muted file:mr-3 file:btn-ghost file:!py-1.5 file:!px-3.5 file:text-[13px] file:border-0 file:bg-indigo-soft file:text-indigo file:rounded-lg file:font-semibold"
             onChange={(e) => setPhoto(e.target.files?.[0] || null)}
           />
-          {photo && <p className="text-xs text-faint mt-1">{photo.name} ({Math.round(photo.size / 1024)} Ko)</p>}
+          {photo && <p className="text-xs text-faint mt-1">{photo.name} ({Math.round(photo.size / 1024)} KB)</p>}
         </div>
         {clarify && (
           <p className="text-sm font-semibold text-learning bg-learning-bg rounded-xl px-4 py-3">
-            Emma a besoin d'une précision : {clarify}
+            Emma needs one more detail: {clarify}
           </p>
         )}
         {error && <p className="text-sm text-gap font-semibold">{error}</p>}
         <button className="btn-primary w-full !py-3" disabled={busy}>
-          {busy ? "Emma identifie les concepts…" : "C'est parti →"}
+          {busy ? "Emma is identifying the concepts…" : "Let's go →"}
         </button>
       </form>
     </div>

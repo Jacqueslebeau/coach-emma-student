@@ -27,7 +27,7 @@ type ActivityData = {
 
 export function subjectChipLabel(subject: string): string {
   if (subject === "coaching") return "coaching";
-  return SUBJECTS[subject as SubjectKey]?.labelFr || subject;
+  return SUBJECTS[subject as SubjectKey]?.labelEn || subject;
 }
 
 export default function ActivityHistory({ subject }: { subject?: string }) {
@@ -50,8 +50,8 @@ export default function ActivityHistory({ subject }: { subject?: string }) {
 
   const filters = useMemo(
     () => [
-      { key: "", label: "Tout" },
-      ...Object.values(SUBJECTS).map((s) => ({ key: s.key as string, label: s.labelFr })),
+      { key: "", label: "All" },
+      ...Object.values(SUBJECTS).map((s) => ({ key: s.key as string, label: s.labelEn })),
       { key: "coaching", label: "Coaching" },
     ],
     []
@@ -63,7 +63,7 @@ export default function ActivityHistory({ subject }: { subject?: string }) {
         <PeriodFilter value={period} onChange={setPeriod} />
         {data && (
           <p className="font-mono text-xs text-faint">
-            {data.totals.count} séance{data.totals.count > 1 ? "s" : ""} · {Math.round(data.totals.minutes / 6) / 10} h
+            {data.totals.count} session{data.totals.count === 1 ? "" : "s"} · {Math.round(data.totals.minutes / 6) / 10} h
           </p>
         )}
       </div>
@@ -88,9 +88,9 @@ export default function ActivityHistory({ subject }: { subject?: string }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-faint mt-4">Chargement…</p>
+        <p className="text-sm text-faint mt-4">Loading…</p>
       ) : !data || data.sessions.length === 0 ? (
-        <p className="text-sm text-faint mt-4">Aucune séance sur cette période.</p>
+        <p className="text-sm text-faint mt-4">No sessions in this period.</p>
       ) : (
         <div className="card mt-4 divide-y divide-line overflow-hidden">
           {data.sessions.map((s) => (
@@ -110,7 +110,7 @@ export default function ActivityHistory({ subject }: { subject?: string }) {
               </div>
               <div className="text-right shrink-0">
                 <p className="font-mono text-xs text-faint">
-                  {new Date(s.started_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  {new Date(s.started_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </p>
                 <p className="font-mono text-xs font-semibold text-indigo">{s.duration_min} min</p>
               </div>

@@ -7,14 +7,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Coach Emma Student",
   description:
-    "Le tuteur qui vise l'A★ : cours, vérification de maîtrise, remédiation, exercices corrigés, points à travailler.",
+    "The personal A Level tutor that aims for the A★: courses, mastery checks, targeted remediation, marked past-paper practice, exam coaching.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
         <footer className="mx-auto max-w-5xl px-5 pb-10 pt-4 text-xs text-faint">
-          Coach Emma Student — beta privée · A Level · Edexcel, AQA, OCR. Consentement parental requis. Produit distinct de Coach Emma.
+          Coach Emma Student — private beta · A Level · Edexcel, AQA, OCR. Parental consent required. A separate product from Coach Emma.
         </footer>
       </body>
     </html>

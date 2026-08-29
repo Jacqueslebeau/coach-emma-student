@@ -3,7 +3,7 @@
 // Bouton retour présent sur chaque page de la console.
 import { useRouter } from "next/navigation";
 
-export default function BackLink({ fallback = "/dashboard", label = "← Retour" }: { fallback?: string; label?: string }) {
+export default function BackLink({ fallback = "/dashboard", label = "← Back" }: { fallback?: string; label?: string }) {
   const router = useRouter();
   return (
     <button

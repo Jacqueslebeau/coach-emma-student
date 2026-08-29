@@ -30,10 +30,10 @@ type Overview = {
 };
 
 const STYLES: { key: string; label: string; hint: string }[] = [
-  { key: "sympa", label: "Sympa", hint: "chaleureuse, encourageante" },
-  { key: "strict", label: "Stricte", hint: "cadrée, exigeante" },
-  { key: "direct", label: "Direct", hint: "l'essentiel, zéro détour" },
-  { key: "chatty", label: "Chatty", hint: "conversationnelle (5 min max)" },
+  { key: "sympa", label: "Friendly", hint: "warm and encouraging" },
+  { key: "strict", label: "Strict", hint: "structured and demanding" },
+  { key: "direct", label: "Direct", hint: "straight to the point, no detours" },
+  { key: "chatty", label: "Chatty", hint: "conversational (5 min max)" },
 ];
 
 export default function Dashboard() {
@@ -44,7 +44,7 @@ export default function Dashboard() {
 
   const load = useCallback(() => {
     fetch("/api/overview")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Chargement impossible"))))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Could not load your dashboard"))))
       .then(setData)
       .catch((e) => setErr(e.message));
   }, []);
@@ -67,7 +67,7 @@ export default function Dashboard() {
   }
 
   if (err) return <p className="text-gap font-semibold">{err}</p>;
-  if (!data) return <p className="text-muted">Chargement…</p>;
+  if (!data) return <p className="text-muted">Loading…</p>;
 
   const p = data.profile;
   // Matières à afficher : les inscriptions + les matières qui ont déjà des
@@ -79,28 +79,28 @@ export default function Dashboard() {
     <div>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-serif font-black text-3xl text-indigo-deep">Salut {data.first_name || "champion"} 👋</h1>
-          <p className="text-muted mt-1">Chaque matière a son tableau de bord, son board et son plan d'action.</p>
+          <h1 className="font-serif font-black text-3xl text-indigo-deep">Hi {data.first_name || "champ"} 👋</h1>
+          <p className="text-muted mt-1">Each subject has its own dashboard, exam board and action plan.</p>
         </div>
-        <button onClick={logout} className="text-sm text-faint hover:text-indigo font-semibold">Se déconnecter</button>
+        <button onClick={logout} className="text-sm text-faint hover:text-indigo font-semibold">Sign out</button>
       </div>
 
       {/* ============ MES MATIÈRES ============ */}
       <section className="mt-6">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif font-semibold text-xl">Mes matières</h2>
+          <h2 className="font-serif font-semibold text-xl">My subjects</h2>
           <Link href="/onboarding" className="text-sm font-semibold text-indigo hover:text-indigo-deep">
-            {data.enrolments.length ? "Modifier mes matières" : "Configurer"}
+            {data.enrolments.length ? "Edit my subjects" : "Set up"}
           </Link>
         </div>
 
         {data.enrolments.length === 0 && legacyKeys.length === 0 ? (
           <div className="card p-8 mt-4 text-center">
             <p className="text-muted">
-              Commence par choisir tes matières, ton exam board et ton objectif — Emma te prépare un
-              plan d'action par matière.
+              Start by choosing your subjects, your exam board and your target — Emma will put together
+              an action plan for each subject.
             </p>
-            <Link href="/onboarding" className="btn-amber mt-4 inline-block">Configurer mes matières →</Link>
+            <Link href="/onboarding" className="btn-amber mt-4 inline-block">Set up my subjects →</Link>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4 mt-4">
@@ -111,7 +111,7 @@ export default function Dashboard() {
               return (
                 <Link key={e.id} href={`/matiere/${e.subject}`} className="card p-5 hover:border-indigo transition">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-serif font-semibold text-lg">{s?.labelFr || e.subject}</h3>
+                    <h3 className="font-serif font-semibold text-lg">{s?.labelEn || e.subject}</h3>
                     <span className="chip-todo shrink-0">{e.board} · {e.spec}</span>
                   </div>
                   <div className="flex items-center gap-3 mt-3">
@@ -121,12 +121,12 @@ export default function Dashboard() {
                     <span className="text-faint">→</span>
                     <span className="font-serif font-black text-2xl text-amber">{e.target_grade || "A*"}</span>
                     {r?.avg_pct !== null && r?.avg_pct !== undefined && (
-                      <span className="font-mono text-[11px] text-faint self-end pb-1">{r.avg_pct}% des marks</span>
+                      <span className="font-mono text-[11px] text-faint self-end pb-1">{r.avg_pct}% of marks</span>
                     )}
                   </div>
                   <p className="text-sm text-muted mt-3">
-                    {r ? `${r.lessons} leçon${r.lessons > 1 ? "s" : ""} · ${r.open_weak_points} point${r.open_weak_points > 1 ? "s" : ""} à travailler · ${Math.round(r.minutes / 6) / 10} h` : "Pas encore de leçon — le plan d'action t'attend"}
-                    {e.exam_date ? ` · examen ${e.exam_date.slice(0, 7)}` : ""}
+                    {r ? `${r.lessons} lesson${r.lessons === 1 ? "" : "s"} · ${r.open_weak_points} point${r.open_weak_points === 1 ? "" : "s"} to work on · ${Math.round(r.minutes / 6) / 10} h` : "No lessons yet — your action plan is waiting"}
+                    {e.exam_date ? ` · exam ${e.exam_date.slice(0, 7)}` : ""}
                   </p>
                 </Link>
               );
@@ -137,11 +137,11 @@ export default function Dashboard() {
               return (
                 <Link key={k} href={`/matiere/${k}`} className="card p-5 hover:border-indigo transition">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-serif font-semibold text-lg">{s?.labelFr || k}</h3>
-                    <span className="chip-non_acquis shrink-0">board à configurer</span>
+                    <h3 className="font-serif font-semibold text-lg">{s?.labelEn || k}</h3>
+                    <span className="chip-non_acquis shrink-0">board to set up</span>
                   </div>
                   <p className="text-sm text-muted mt-3">
-                    {r.lessons} leçon{r.lessons > 1 ? "s" : ""} · {r.open_weak_points} point{r.open_weak_points > 1 ? "s" : ""} à travailler
+                    {r.lessons} lesson{r.lessons === 1 ? "" : "s"} · {r.open_weak_points} point{r.open_weak_points === 1 ? "" : "s"} to work on
                   </p>
                 </Link>
               );
@@ -153,12 +153,12 @@ export default function Dashboard() {
       {/* ============ ACTIONS ============ */}
       <div className="grid sm:grid-cols-2 gap-4 mt-6">
         <Link href="/lesson/new" className="card p-5 hover:border-indigo transition">
-          <h2 className="font-serif font-semibold text-lg">📚 Nouvelle leçon</h2>
-          <p className="text-sm text-muted mt-1">Titre, notes ou photo du cours — la boucle complète jusqu'aux exercices corrigés.</p>
+          <h2 className="font-serif font-semibold text-lg">📚 New lesson</h2>
+          <p className="text-sm text-muted mt-1">A title, your notes or a photo of the lesson — the full loop through to marked exercises.</p>
         </Link>
         <Link href="/coaching" className="card p-5 hover:border-amber transition">
-          <h2 className="font-serif font-semibold text-lg">🎯 Coaching d'examen</h2>
-          <p className="text-sm text-muted mt-1">Pas de contenu ici : le stress, la stratégie, le jour J. Emma t'écoute et te prépare.</p>
+          <h2 className="font-serif font-semibold text-lg">🎯 Exam coaching</h2>
+          <p className="text-sm text-muted mt-1">No content here: stress, strategy, the big day. Emma listens and gets you ready.</p>
         </Link>
       </div>
 
@@ -166,7 +166,7 @@ export default function Dashboard() {
       <section className="card mt-6 p-5">
         <div className="flex flex-wrap items-start gap-x-10 gap-y-4">
           <div>
-            <p className="text-sm font-semibold mb-2">Ton Emma <span className="text-faint font-normal">(le ton change, pas l'exigence)</span></p>
+            <p className="text-sm font-semibold mb-2">Your Emma <span className="text-faint font-normal">(the tone changes, the standards don't)</span></p>
             <div className="flex flex-wrap gap-2">
               {STYLES.map((s) => (
                 <button
@@ -185,27 +185,8 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold mb-2">Langue d'Emma <span className="text-faint font-normal">(l'A Level se passe en anglais)</span></p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => patchProfile({ content_lang: "en" })}
-                disabled={saving}
-                title="Cours, exercices, corrections et coaching en anglais — comme le jour J"
-                className={(p.content_lang || "en") === "en" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
-              >
-                English 🇬🇧 (défaut)
-              </button>
-              <button
-                onClick={() => patchProfile({ content_lang: "fr" })}
-                disabled={saving}
-                title="Explications en français — les énoncés, command words et corrigés restent en anglais"
-                className={p.content_lang === "fr" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
-              >
-                Explications en français
-              </button>
-            </div>
-          </div>
+          {/* Tout se passe en anglais — c'est un A Level. Le français (programme
+              du bac) viendra comme offre séparée ; content_lang reste en base. */}
         </div>
       </section>
 
@@ -214,8 +195,8 @@ export default function Dashboard() {
 
       {/* ============ HISTORIQUE DES SÉANCES (filtrable) ============ */}
       <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Tes séances</h2>
-        <p className="text-sm text-muted mt-1 mb-3">Par semaine, semaine dernière, mois — ou une période custom.</p>
+        <h2 className="font-serif font-semibold text-xl">Your sessions</h2>
+        <p className="text-sm text-muted mt-1 mb-3">This week, last week, this month — or a custom range.</p>
         <ActivityHistory />
       </section>
     </div>

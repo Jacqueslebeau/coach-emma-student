@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { useLang } from "@/lib/i18n";
+import { useLang, LangToggle } from "@/lib/i18n";
 import { BOARD_OPTIONS, SUBJECTS, SUBJECT_KEYS } from "@/lib/subjects";
 
 const T = {
@@ -72,8 +72,8 @@ function Dropdown({ label, children }: { label: string; children: React.ReactNod
 
 export default function HeaderNav() {
   const [logged, setLogged] = useState<boolean | null>(null);
-  const [lang] = useLang();
-  const t = T[lang] || T.fr;
+  const [lang, setLang] = useLang();
+  const t = T[lang] || T.en;
 
   useEffect(() => {
     supabaseBrowser()
@@ -119,6 +119,7 @@ export default function HeaderNav() {
         </div>
         <Link href="/login" className="text-muted hover:text-indigo">{t.login}</Link>
         <Link href="/login?register=1" className="btn-amber !py-1.5 !px-3.5 text-[13px]">{t.start}</Link>
+        <LangToggle lang={lang} setLang={setLang} />
       </nav>
     );
   }

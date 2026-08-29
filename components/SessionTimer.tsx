@@ -21,11 +21,11 @@ export default function SessionTimer() {
       <span className={`chip ${cls} font-mono`}>⏱ {mins} min</span>
       {mins >= 60 ? (
         <span className="text-xs font-semibold text-gap">
-          +1h — le cerveau sature : note où tu en es et reprends après une vraie pause.
+          1h+ — your brain is saturating: note where you are and come back after a proper break.
         </span>
       ) : mins >= 45 ? (
         <span className="text-xs font-semibold text-learning">
-          45 min — termine l'étape en cours, puis pause de 10 min : tu retiendras mieux.
+          45 min — finish the step you're on, then take a 10-minute break: you'll remember more.
         </span>
       ) : null}
     </div>
