@@ -8,7 +8,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
-import SessionTimer from "@/components/SessionTimer";
 import BackLink from "@/components/BackLink";
 import AskEmma from "@/components/AskEmma";
 import Whiteboard from "@/components/Whiteboard";
@@ -166,7 +165,6 @@ export default function LessonPage() {
           <p className="font-mono text-[11px] text-faint">
             {[lesson.exam_board, lesson.spec_topic].filter(Boolean).join(" · ") || "A Level"}
           </p>
-          <SessionTimer />
         </div>
         <h1 className="font-serif font-black text-2xl text-indigo-deep mt-0.5">{lesson.title}</h1>
         <div className="flex flex-wrap gap-1.5 mt-3">

@@ -28,7 +28,7 @@ const L = {
     h1b: " — et s'y tient.",
     sub: "Coach Emma Student est un tuteur personnel d'excellence pour les élèves de A Level. À partir de la leçon vue en classe, Emma construit le cours ancré sur le programme officiel de l'exam board de l'élève, vérifie la compréhension concept par concept, entraîne en conditions réelles d'examen et corrige chaque copie au standard de l'examinateur.",
     features: [
-      ["📘", "Le tutorat — séances de 45 minutes", "Cours sur mesure, vérification de maîtrise, exercices type past paper, correction mark par mark — la durée d'attention optimale d'un élève, cadrée par un minuteur."],
+      ["📘", "Le tutorat — séances de 45 minutes", "Cours sur mesure, vérification de maîtrise, exercices type past paper, correction mark par mark — la durée d'attention optimale d'un élève — Emma gère le temps et clôt la séance en douceur."],
       ["🎯", "Le coaching d'examen — points de 15 à 20 minutes", "Méthode de travail, gestion du stress, préparation des épreuves et performance le jour J — court et régulier, comme un vrai coach."],
       ["📊", "Le suivi", "Progression mesurée par matière — niveau de départ, niveau actuel, objectif — visible par l'élève et par ses parents."],
     ] as [string, string, string][],
@@ -107,7 +107,7 @@ const L = {
     h1b: " — and holds the line.",
     sub: "Coach Emma Student is a personal tutor built for A Level students. Starting from the lesson seen in class, Emma writes the course anchored to the student's exam-board specification, checks understanding concept by concept, trains under real exam conditions and marks every script to the examiner's standard.",
     features: [
-      ["📘", "The tutoring — 45-minute sessions", "Tailored courses, mastery checks, past-paper style exercises, mark-by-mark feedback — the optimal span of focused attention, framed by a timer."],
+      ["📘", "The tutoring — 45-minute sessions", "Tailored courses, mastery checks, past-paper style exercises, mark-by-mark feedback — the optimal span of focused attention — Emma keeps time and winds the session down smoothly."],
       ["🎯", "Exam coaching — 15–20 minute check-ins", "Working method, stress management, exam preparation and performance on the day — short and regular, like a real coach."],
       ["📊", "The tracking", "Measured progress per subject — starting level, current level, target — visible to the student and their parents."],
     ] as [string, string, string][],

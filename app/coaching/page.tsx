@@ -3,7 +3,6 @@
 // Coaching d'examen : pas du contenu — le mental, la préparation, le jour J.
 // Emma écoute, guide, motive ; chaque séance repart avec des actions concrètes.
 import { useEffect, useRef, useState } from "react";
-import SessionTimer from "@/components/SessionTimer";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 
@@ -65,7 +64,6 @@ export default function CoachingPage() {
             how to perform on the big day. Ideal session: 15-20 min.
           </p>
         </div>
-        <SessionTimer kind="coaching" />
       </div>
 
       <div className="card mt-5 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">

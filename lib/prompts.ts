@@ -293,20 +293,20 @@ export function sessionClock(kind: "tutoring" | "coaching", elapsedMin: number):
   const grace = target + 3;
   let phase: string;
   if (elapsedMin < wind) {
-    phase = `Rythme normal — il reste ~${target - elapsedMin} min : gère ton tempo pour que la séance tienne dans ${target} min.`;
+    phase = `Rythme normal — gère ton tempo pour que la séance tienne naturellement dans ~${target} min.`;
   } else if (elapsedMin < target) {
-    phase = `AMORCE LA CLÔTURE, en douceur : termine le point en cours, n'ouvre AUCUN nouveau gros chantier (pas de nouvelle série d'exercices, pas de nouveau sujet), et annonce gentiment qu'on arrive au bout de la séance.${kind === "coaching" ? " Commence à formuler les 1-3 actions concrètes." : ""}`;
+    phase = `AMORCE LA CLÔTURE, en douceur et par le CONTENU : termine le point en cours, n'ouvre AUCUN nouveau gros chantier (pas de nouvelle série d'exercices, pas de nouveau sujet) et oriente naturellement vers un bilan — comme si c'était le déroulé normal de la séance.${kind === "coaching" ? " Commence à formuler les 1-3 actions concrètes." : ""}`;
   } else if (elapsedMin < grace) {
-    phase = `CONCLUS MAINTENANT — tu es dans la fenêtre de grâce (2-3 min max) : ${kind === "coaching" ? "les 1-3 actions concrètes, une phrase qui remotive, et on se quitte bien." : "bilan chaleureux (ce qui est acquis aujourd'hui, le point à retravailler, le prochain pas), et on se quitte bien."} Rien de nouveau.`;
+    phase = `CONCLUS MAINTENANT, naturellement (fenêtre de grâce 2-3 min max) : ${kind === "coaching" ? "les 1-3 actions concrètes, une phrase qui remotive, et on se quitte bien." : "bilan chaleureux (ce qui est acquis aujourd'hui, le point à retravailler, le prochain pas), et on se quitte bien."} Rien de nouveau. La fin doit sembler être l'aboutissement logique de la séance.`;
   } else {
-    phase = `La séance a dépassé sa durée : clôture IMMÉDIATE mais soignée en 2-3 phrases (jamais sèche), et invite à reprendre à la prochaine séance — le cerveau retient mieux avec une vraie pause.`;
+    phase = `Clôture IMMÉDIATE mais soignée, en 2-3 phrases chaleureuses (jamais sèche) : valorise ce qui a été fait et donne envie de revenir à la prochaine séance.`;
   }
   return `
 
-=== HORLOGE DE SÉANCE (jamais de fin abrupte — crucial) ===
+=== HORLOGE INTERNE DE SÉANCE (invisible pour l'élève — crucial) ===
 ${kind === "coaching" ? "Séance de coaching" : "Séance de tutorat"} en cours : ${elapsedMin} min écoulées (cible ~${target} min).
 ${phase}
-Ne mentionne l'horloge à l'élève que lorsque tu commences à clore — jamais avant.`;
+RÈGLE ABSOLUE : tu ne mentionnes JAMAIS le temps, la durée, l'horloge ni « la fin de la séance approche » à l'élève — aucune pression temporelle, jamais. La clôture passe uniquement par le contenu (bilan, acquis, prochain pas) et doit sembler naturelle.`;
 }
 
 // ---------------------------------------------------------------------------
