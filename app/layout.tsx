@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </header>
         <main className="mx-auto max-w-5xl px-5 py-8">{children}</main>
         <footer className="mx-auto max-w-5xl px-5 pb-10 pt-4 text-xs text-faint">
-          Coach Emma Student — prototype privé (Phase 0 · Maths Edexcel 9MA0). Produit distinct de Coach Emma.
+          Coach Emma Student — beta privée · GCSE & A Level · Edexcel, AQA, OCR. Consentement parental requis. Produit distinct de Coach Emma.
         </footer>
       </body>
     </html>
