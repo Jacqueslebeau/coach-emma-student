@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
-import { getSubject } from "@/lib/subjects";
+import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { gradeSystem, formatAnswers } from "@/lib/prompts";
 import { applyVerdicts } from "@/lib/mastery";
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
-  const subj = getSubject(lesson.subject);
+  const subj = getSubjectBoard(lesson.subject, lesson.exam_board);
 
   const { data: attempt } = await auth.sb
     .from("attempts")
@@ -67,6 +67,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       sb: auth.sb,
       userId: auth.user.id,
       lessonId: id,
+      subject: lesson.subject,
       concepts: allConcepts,
       verdicts: (grade.concepts || []).map((v) => ({
         concept_key: v.concept_key,
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       source: attempt.kind,
     });
 
-    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, covered: attempt.kind === "quiz" ? "Diagnostic corrigé" : "Remédiation re-vérifiée" });
+    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: attempt.kind === "quiz" ? "Diagnostic corrigé" : "Remédiation re-vérifiée" });
     return NextResponse.json({ grade });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "correction impossible" }, { status: 502 });

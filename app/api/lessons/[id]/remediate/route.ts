@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
-import { getSubject } from "@/lib/subjects";
+import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { remediationSystem } from "@/lib/prompts";
 import type { Concept, Remediation } from "@/lib/types";
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
-  const subj = getSubject(lesson.subject);
+  const subj = getSubjectBoard(lesson.subject, lesson.exam_board);
   const concept = ((lesson.concepts || []) as Concept[]).find((c) => c.key === conceptKey);
   if (!concept) return NextResponse.json({ error: "concept inconnu" }, { status: 404 });
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       .single();
     if (error || !attempt) throw new Error(error?.message || "attempt");
 
-    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, covered: "Remédiation : " + concept.label });
+    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: "Remédiation : " + concept.label });
     return NextResponse.json({ attempt_id: attempt.id, remediation });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "remédiation impossible" }, { status: 502 });

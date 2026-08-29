@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
-import { getSubject } from "@/lib/subjects";
+import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson, type ContentBlock } from "@/lib/claude";
 import { markSystem } from "@/lib/prompts";
 import { applyVerdicts, verdictsFromExercises } from "@/lib/mastery";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
-  const subj = getSubject(lesson.subject);
+  const subj = getSubjectBoard(lesson.subject, lesson.exam_board);
 
   const { data: attempt } = await auth.sb
     .from("attempts")
@@ -98,6 +98,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       sb: auth.sb,
       userId: auth.user.id,
       lessonId: id,
+      subject: lesson.subject,
       concepts,
       verdicts: verdictsFromExercises(mark.items || [], exercises),
       source: "exercise",
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     if (mark.decision === "advance") {
       await auth.sb.from("lessons").update({ stage: "done" }).eq("id", id);
     }
-    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, covered: "Correction au mark scheme" });
+    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: "Correction au mark scheme" });
     return NextResponse.json({ mark });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "correction impossible" }, { status: 502 });

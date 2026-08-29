@@ -1,99 +1,203 @@
-// Les matières de Coach Emma Student — chaque matière porte son exam board,
-// son spec, la langue de l'examen et SA technique d'examen (le cœur du produit).
+// La bibliothèque des matières de Coach Emma Student — TOUS LES BOARDS.
+// Chaque matière porte un cœur de technique d'examen (le vrai savoir-faire,
+// commun aux boards) + un bloc STRUCTURE propre à chaque board (papers, marks,
+// formats de questions, spécificités du mark scheme). L'élève choisit son board
+// à l'inscription ; toute la boucle (cours, questions, exercices, corrections)
+// est alors calibrée sur CE board.
 import { EXAM_TECHNIQUE_MATHS } from "@/lib/examTechnique";
 
 export type SubjectKey = "maths" | "eco" | "geo" | "french";
+export type BoardKey = "edexcel" | "aqa" | "ocr";
+
+export type BoardOption = {
+  board: BoardKey;
+  label: string;     // nom affiché, ex. "Edexcel"
+  spec: string;      // code du spec officiel, ex. "9MA0"
+  structure: string; // bloc structure d'examen injecté dans les prompts
+};
 
 export type Subject = {
   key: SubjectKey;
   labelFr: string;
   labelEn: string;
-  board: string;
-  spec: string;           // code du spec officiel
+  board: string;          // label du board choisi
+  boardKey: BoardKey;
+  spec: string;
   examLang: "en" | "fr";  // langue des copies le jour J
   kind: "calculation" | "essay" | "language";
-  technique: string;      // bloc technique d'examen injecté dans les prompts
+  technique: string;      // cœur matière + structure du board
 };
 
-const TECHNIQUE_ECO = `
-=== TECHNIQUE D'EXAMEN — EDEXCEL A LEVEL ECONOMICS A (9EC0) ===
+// ---------------------------------------------------------------------------
+// CŒURS DE TECHNIQUE PAR MATIÈRE (valables quel que soit le board)
+// ---------------------------------------------------------------------------
 
-STRUCTURE : 3 papers de 2h (Markets & business behaviour / The national & global economy / Microeconomics & macroeconomics). Questions de 5 à 25 marks.
+const CORE_ECO = `
+=== TECHNIQUE D'EXAMEN — A LEVEL ECONOMICS (cœur, tous boards) ===
 
 LES ASSESSMENT OBJECTIVES (c'est LA grille de l'examinateur) :
 - AO1 Knowledge : définitions précises, théorie exacte.
 - AO2 Application : TOUJOURS ancré dans le contexte de l'extrait ou d'un exemple réel — une réponse générique plafonne.
 - AO3 Analysis : chaînes de raisonnement ("this leads to… which causes… therefore…"), diagrammes corrects et EXPLOITÉS (pas décoratifs).
-- AO4 Evaluation : les gros marks des 25-markers — "it depends on…", magnitude, court vs long terme, hypothèses du modèle, contre-argument pesé, jugement final justifié.
+- AO4 Evaluation : les gros marks des essais longs — "it depends on…", magnitude, court vs long terme, hypothèses du modèle, contre-argument pesé, jugement final justifié.
 
-STRUCTURE GAGNANTE D'UN 25-MARKER : KAA + E par paragraphe (Knowledge → Application → Analysis, puis Evaluation), 2 gros arguments développés + évaluations > 4 arguments superficiels ; conclusion qui TRANCHE avec un critère.
+STRUCTURE GAGNANTE D'UN ESSAI LONG : KAA + E par paragraphe (Knowledge → Application → Analysis, puis Evaluation), 2 gros arguments développés + évaluations > 4 arguments superficiels ; conclusion qui TRANCHE avec un critère.
 
-COMMAND WORDS : "Define" (précis, 2 marks), "Calculate" (formule + unités), "Explain" (chaîne causale), "Examine" (analyse + un peu d'évaluation), "Discuss" / "Evaluate" / "To what extent" (évaluation substantielle obligatoire), "Assess" (jugement pesé).
+COMMAND WORDS : "Define" (précis), "Calculate" (formule + unités), "Explain" (chaîne causale), "Examine" (analyse + un peu d'évaluation), "Discuss" / "Evaluate" / "To what extent" (évaluation substantielle obligatoire), "Assess" (jugement pesé).
 
-CE QUI COÛTE L'A* : diagramme absent ou non commenté, évaluation plaquée en fin de copie ("however it depends" sans développement), pas d'application au contexte, définitions floues, conclusion qui ne tranche pas, gestion du temps (25-marker ≈ 30 min).
-`;
+CE QUI COÛTE L'A* : diagramme absent ou non commenté, évaluation plaquée en fin de copie ("however it depends" sans développement), pas d'application au contexte, définitions floues, conclusion qui ne tranche pas, gestion du temps (essai long ≈ 30 min).`;
 
-const TECHNIQUE_GEO = `
-=== TECHNIQUE D'EXAMEN — OCR A LEVEL GEOGRAPHY (H481) ===
-
-STRUCTURE : Physical systems / Human interactions / Geographical debates + investigation indépendante. Questions courtes → essais de 16 et 33 marks.
+const CORE_GEO = `
+=== TECHNIQUE D'EXAMEN — A LEVEL GEOGRAPHY (cœur, tous boards) ===
 
 ASSESSMENT OBJECTIVES :
 - AO1 Knowledge : lieux, processus, concepts, théories — PRÉCIS (chiffres, dates, noms).
 - AO2 Application : appliquer au cas / à la question EXACTE posée.
 - AO3 Skills : données, cartes, statistiques exploitées.
 
-COMMAND WORDS OCR (chacun est un contrat) : "Describe" (quoi, pas pourquoi), "Explain" (pourquoi, chaînes causales), "Examine" (décortiquer les relations), "Analyse" (composants + liens), "Assess" (peser importance/succès + jugement), "Evaluate" (forces/faiblesses + verdict), "To what extent" (position défendue, nuancée), "Discuss" (les deux côtés).
+COMMAND WORDS (chacun est un contrat) : "Describe" (quoi, pas pourquoi), "Explain" (pourquoi, chaînes causales), "Examine" (décortiquer les relations), "Analyse" (composants + liens), "Assess" (peser importance/succès + jugement), "Evaluate" (forces/faiblesses + verdict), "To what extent" (position défendue, nuancée), "Discuss" (les deux côtés).
 
 STRUCTURE D'ESSAI GAGNANTE : plan en 30 secondes ; paragraphes PEEL (Point, Evidence — case study précise avec CHIFFRES, Explain, Link à la question) ; évaluation FILÉE dans les paragraphes, pas plaquée à la fin ; conclusion qui répond littéralement à la question posée.
 
-CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur le 33-marker.
-`;
+CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur l'essai le plus long.`;
 
-const TECHNIQUE_FRENCH = `
-=== TECHNIQUE D'EXAMEN — AQA A LEVEL FRENCH (7652) — élève francophone en candidat libre ===
+const CORE_FRENCH = `
+=== TECHNIQUE D'EXAMEN — A LEVEL FRENCH (cœur) — élève francophone en candidat libre ===
 
 ATTENTION AU PIÈGE : être francophone natif ne garantit PAS l'A* — l'examen note une MÉTHODE, pas la fluency. Les natifs perdent des marks sur la technique, le registre et les exercices formatés.
 
-STRUCTURE : Paper 1 Listening/Reading/Writing (dont TRADUCTIONS FR↔EN), Paper 2 Writing (2 essais sur œuvre littéraire et/ou film étudiés), Paper 3 Speaking (stimulus card + Independent Research Project).
-
 CE QUE NOTE L'EXAMINATEUR :
-- AO3 Langue : précision grammaticale (même un natif fait des fautes d'accord à l'écrit rapide), variété des structures (subjonctif, passif, connecteurs soutenus), registre SOUTENU.
-- AO4 Connaissance critique : les essais notent l'ANALYSE de l'œuvre/du film (thèmes, techniques, contexte social) — structure dissertation : problématique, arguments avec CITATIONS/scènes précises, conclusion.
+- Langue : précision grammaticale (même un natif fait des fautes d'accord à l'écrit rapide), variété des structures (subjonctif, passif, connecteurs soutenus), registre SOUTENU.
+- Connaissance critique : les essais notent l'ANALYSE de l'œuvre/du film (thèmes, techniques, contexte social) — structure dissertation : problématique, arguments avec CITATIONS/scènes précises, conclusion.
 - Traduction : fidélité EXACTE au sens, pas de paraphrase élégante — chaque segment est un point.
-- Résumé : nombre de mots STRICT, reformulation (pas de copier-coller), les points du texte source.
+- Résumé / réponses guidées : nombre de mots STRICT, reformulation (pas de copier-coller), les points du texte source.
 
-CE QUI COÛTE L'A* AU CANDIDAT LIBRE : essais hors méthode (brillants mais non structurés AQA), traductions paraphrasées, dépassement des limites de mots, œuvre/film mal choisis ou connus superficiellement (citations approximatives), speaking : ne pas défendre l'IRP avec des sources.
+CE QUI COÛTE L'A* AU CANDIDAT LIBRE : essais hors méthode (brillants mais non structurés selon le barème du board), traductions paraphrasées, dépassement des limites de mots, œuvre/film mal choisis ou connus superficiellement (citations approximatives), speaking : ne pas défendre l'IRP avec des sources.
 
-SPÉCIFICITÉ : les consignes et essais sont EN FRANÇAIS ; les traductions travaillent les DEUX sens. Le tuteur explique la MÉTHODE en français et entraîne au format exact des papers.
-`;
+SPÉCIFICITÉ : les consignes et essais sont EN FRANÇAIS ; les traductions travaillent les DEUX sens. Le tuteur explique la MÉTHODE en français et entraîne au format exact des papers.`;
 
-export const SUBJECTS: Record<SubjectKey, Subject> = {
-  maths: {
-    key: "maths", labelFr: "Mathématiques", labelEn: "Mathematics",
-    board: "Edexcel", spec: "9MA0", examLang: "en", kind: "calculation",
-    technique: EXAM_TECHNIQUE_MATHS,
-  },
-  eco: {
-    key: "eco", labelFr: "Économie", labelEn: "Economics",
-    board: "Edexcel", spec: "9EC0", examLang: "en", kind: "essay",
-    technique: TECHNIQUE_ECO,
-  },
-  geo: {
-    key: "geo", labelFr: "Géographie", labelEn: "Geography",
-    board: "OCR", spec: "H481", examLang: "en", kind: "essay",
-    technique: TECHNIQUE_GEO,
-  },
-  french: {
-    key: "french", labelFr: "Français (candidat libre)", labelEn: "French (private candidate)",
-    board: "AQA", spec: "7652", examLang: "fr", kind: "language",
-    technique: TECHNIQUE_FRENCH,
-  },
+// ---------------------------------------------------------------------------
+// STRUCTURES PAR BOARD — la bibliothèque tous boards
+// ---------------------------------------------------------------------------
+
+export const BOARD_OPTIONS: Record<SubjectKey, BoardOption[]> = {
+  maths: [
+    {
+      board: "edexcel", label: "Edexcel", spec: "9MA0",
+      structure: `
+STRUCTURE EDEXCEL 9MA0 : Paper 1 & Paper 2 Pure Mathematics (2h, 100 marks chacun) ; Paper 3 Statistics & Mechanics (2h, 100 marks — Section A stats avec le Large Data Set, Section B mécanique). Rythme ~1 mark/min. Mark scheme M/A/B/ft strict ; les questions stats exigent des réponses EN CONTEXTE avec les mots de l'énoncé.`,
+    },
+    {
+      board: "aqa", label: "AQA", spec: "7357",
+      structure: `
+STRUCTURE AQA 7357 : Paper 1 Pure (2h, 100 marks) ; Paper 2 Pure + Mechanics (2h, 100 marks) ; Paper 3 Pure + Statistics (2h, 100 marks — avec le Large Data Set). AQA ouvre souvent par quelques questions à choix multiple (1-2 marks) : rapides, ne pas y perdre de temps. Mark scheme M/A/B/ft ; "Fully justify" = chaque étape écrite.`,
+    },
+    {
+      board: "ocr", label: "OCR", spec: "H240",
+      structure: `
+STRUCTURE OCR (Mathematics A) H240 : Paper 1 Pure (2h, 100 marks) ; Paper 2 Pure + Statistics (2h, 100 marks — Large Data Set) ; Paper 3 Pure + Mechanics (2h, 100 marks). SPÉCIFICITÉ OCR : l'étiquette "In this question you must show detailed reasoning" = calculatrice interdite comme raccourci, TOUT le raisonnement doit être écrit — une réponse juste sans cheminement complet perd presque tout. Mark scheme M/A/B/ft.`,
+    },
+  ],
+  eco: [
+    {
+      board: "edexcel", label: "Edexcel", spec: "9EC0",
+      structure: `
+STRUCTURE EDEXCEL 9EC0 (Economics A) : Paper 1 Markets and business behaviour (thèmes 1 & 3) ; Paper 2 The national and global economy (thèmes 2 & 4) ; Paper 3 synoptique — 2h, 100 marks chacun. Questions de 5 à 25 marks sur données ; le 25-marker (choix entre deux) se gagne en KAA + E avec diagramme exploité. Grille AO1-AO4 par niveaux.`,
+    },
+    {
+      board: "aqa", label: "AQA", spec: "7136",
+      structure: `
+STRUCTURE AQA 7136 : Paper 1 Markets and market failure ; Paper 2 National and international economy ; Paper 3 Economic principles and issues (30 QCM + étude de cas) — 2h, 80 marks chacun. Formats clés : 9-markers (chaîne d'analyse), 15-markers, 25-markers (essai au choix, évaluation substantielle + jugement final). AQA note par NIVEAUX holistiques : une bonne chaîne logique complète bat une liste de points.`,
+    },
+    {
+      board: "ocr", label: "OCR", spec: "H460",
+      structure: `
+STRUCTURE OCR H460 : Paper 1 Microeconomics ; Paper 2 Macroeconomics ; Paper 3 Themes in economics — 2h, 80 marks chacun. Mélange de questions courtes, réponses sur données et essais longs (20-25 marks) exigeant analyse ET évaluation ; le jugement final doit s'appuyer sur un critère explicite (magnitude, horizon temporel, hypothèses).`,
+    },
+  ],
+  geo: [
+    {
+      board: "ocr", label: "OCR", spec: "H481",
+      structure: `
+STRUCTURE OCR H481 : Paper 1 Physical systems (1h30, 66 marks) ; Paper 2 Human interactions (1h30, 66 marks) ; Paper 3 Geographical debates (2h30, 108 marks) ; + investigation indépendante (NEA, 20%). Questions courtes → essais de 16 marks et le grand 33-marker synoptique du Paper 3 (planifier 5 min, PEEL, évaluation filée).`,
+    },
+    {
+      board: "aqa", label: "AQA", spec: "7037",
+      structure: `
+STRUCTURE AQA 7037 : Paper 1 Physical geography (2h30, 120 marks) ; Paper 2 Human geography (2h30, 120 marks) ; + NEA (20%). Formats clés : 4/6 marks (précis, pas d'essai), 9-markers (analyse appliquée au stimulus) et essais de 20 marks (argumentation équilibrée + conclusion qui tranche). AQA valorise fortement les liens explicites au matériel fourni (figures, cartes).`,
+    },
+    {
+      board: "edexcel", label: "Edexcel", spec: "9GE0",
+      structure: `
+STRUCTURE EDEXCEL 9GE0 : Paper 1 (physique, 2h15, 105 marks) ; Paper 2 (humaine, 2h15, 105 marks) ; Paper 3 synoptique sur ressources (2h15, 70 marks) ; + NEA (20%). Essais de 12 et 20 marks ; le Paper 3 exige la synopticité via les lentilles officielles : players, attitudes and actions, futures and uncertainties — les citer et les utiliser rapporte.`,
+    },
+  ],
+  french: [
+    {
+      board: "aqa", label: "AQA", spec: "7652",
+      structure: `
+STRUCTURE AQA 7652 : Paper 1 Listening, reading and writing (2h30, 100 marks — dont TRADUCTIONS FR↔EN et résumé à nombre de mots strict) ; Paper 2 Writing (2h, 80 marks — 2 essais d'environ 300 mots sur œuvre littéraire et/ou film étudiés, notés AO3 langue + AO4 analyse) ; Paper 3 Speaking (stimulus card + Independent Research Project). Candidat libre : l'inscription inclut l'épreuve orale dans un centre agréé.`,
+    },
+    {
+      board: "edexcel", label: "Edexcel", spec: "9FR0",
+      structure: `
+STRUCTURE EDEXCEL 9FR0 : Paper 1 Listening, reading and translation into English (2h, 80 marks) ; Paper 2 Written response to works and translation into French (2h40, 120 marks — traduction EN→FR + 2 essais sur œuvres/films, ~300 mots conseillés chacun) ; Paper 3 Speaking (discussion sur thème + Independent Research Project). Les deux essais du Paper 2 pèsent lourd : méthode dissertation stricte, citations précises.`,
+    },
+  ],
+};
+// NB : OCR n'offre pas le français au A Level — d'où 2 boards pour le français.
+
+// ---------------------------------------------------------------------------
+// MATIÈRES
+// ---------------------------------------------------------------------------
+
+type SubjectBase = {
+  key: SubjectKey; labelFr: string; labelEn: string;
+  examLang: "en" | "fr"; kind: Subject["kind"]; core: string;
 };
 
-export function getSubject(key: string): Subject {
-  return SUBJECTS[(key as SubjectKey)] || SUBJECTS.maths;
+const SUBJECT_BASE: Record<SubjectKey, SubjectBase> = {
+  maths: { key: "maths", labelFr: "Mathématiques", labelEn: "Mathematics", examLang: "en", kind: "calculation", core: EXAM_TECHNIQUE_MATHS },
+  eco: { key: "eco", labelFr: "Économie", labelEn: "Economics", examLang: "en", kind: "essay", core: CORE_ECO },
+  geo: { key: "geo", labelFr: "Géographie", labelEn: "Geography", examLang: "en", kind: "essay", core: CORE_GEO },
+  french: { key: "french", labelFr: "Français (candidat libre)", labelEn: "French (private candidate)", examLang: "fr", kind: "language", core: CORE_FRENCH },
+};
+
+export const SUBJECT_KEYS: SubjectKey[] = ["maths", "eco", "geo", "french"];
+
+function buildSubject(base: SubjectBase, opt: BoardOption): Subject {
+  return {
+    key: base.key,
+    labelFr: base.labelFr,
+    labelEn: base.labelEn,
+    board: opt.label,
+    boardKey: opt.board,
+    spec: opt.spec,
+    examLang: base.examLang,
+    kind: base.kind,
+    technique: `${base.core}\n${opt.structure}\n`,
+  };
 }
+
+// La matière calibrée sur un board précis. `board` accepte la key ("aqa") ou
+// le label ("AQA") — tombe sur le board par défaut de la matière sinon.
+export function getSubjectBoard(key: string, board?: string | null): Subject {
+  const k = (SUBJECT_KEYS.includes(key as SubjectKey) ? key : "maths") as SubjectKey;
+  const options = BOARD_OPTIONS[k];
+  const wanted = String(board || "").trim().toLowerCase();
+  const opt = options.find((o) => o.board === wanted || o.label.toLowerCase() === wanted) || options[0];
+  return buildSubject(SUBJECT_BASE[k], opt);
+}
+
+// Compat : la matière sur son board par défaut (premier de la liste).
+export function getSubject(key: string): Subject {
+  return getSubjectBoard(key, null);
+}
+
+// Les 4 matières sur leur board par défaut (pickers, vitrines).
+export const SUBJECTS: Record<SubjectKey, Subject> = Object.fromEntries(
+  SUBJECT_KEYS.map((k) => [k, getSubject(k)])
+) as Record<SubjectKey, Subject>;
 
 // Description courte de la matière pour les prompts.
 export function subjectLine(s: Subject): string {

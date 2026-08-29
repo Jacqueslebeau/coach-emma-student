@@ -1,32 +1,33 @@
 "use client";
 
-// Tableau de bord : LA VUE PROGRESSION — niveau de départ → niveau actuel →
-// objectif A*, séances (durée + couvert), topics/leçons, points à travailler.
+// Tableau de bord : TOUT PAR MATIÈRE — une carte par matière inscrite
+// (board, départ → actuel estimé → objectif, leçons, points ouverts, temps),
+// le style d'Emma, et l'historique des séances filtrable par période.
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
+import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
+import ActivityHistory from "@/components/ActivityHistory";
 
+type Enrolment = {
+  id: string; subject: string; board: string; spec: string;
+  current_grade: string | null; baseline_grade: string | null; target_grade: string;
+  exam_date: string | null; action_plan: unknown;
+};
+type Roll = {
+  lessons: number; lessons_done: number; open_weak_points: number;
+  minutes: number; scores: { at: string; pct: number }[];
+  avg_pct: number | null; estimated_grade: string | null;
+};
 type Overview = {
   first_name: string;
-  profile: { tutor_style: string; current_grade: string | null; baseline_grade: string | null; target_grade: string };
-  lessons: { id: string; title: string; spec_topic: string | null; stage: string; concepts: { key: string }[] | null; created_at: string }[];
-  mastery: { lesson_id: string; concept_key: string; label: string; status: string }[];
-  weak_points: { id: string; lesson_id: string; label: string; misconception: string | null; created_at: string }[];
-  sessions: { id: string; kind: string; ref_id: string | null; title: string; started_at: string; duration_min: number; summary: { covered?: string[] } }[];
-  exam_scores: { at: string; pct: number }[];
-  avg_pct: number | null;
-  estimated_grade: string | null;
+  profile: { tutor_style: string; target_grade: string };
+  enrolments: Enrolment[];
+  by_subject: Record<string, Roll>;
+  lessons: { id: string; subject: string }[];
 };
 
-const STAGE_LABEL: Record<string, string> = {
-  captured: "Capturée",
-  course: "Cours en main",
-  quiz: "Maîtrise en vérification",
-  practice: "Exercices en cours",
-  done: "Bouclée ✓",
-};
-const GRADES = ["E", "D", "C", "B", "A", "A*"];
 const STYLES: { key: string; label: string; hint: string }[] = [
   { key: "sympa", label: "Sympa", hint: "chaleureuse, encourageante" },
   { key: "strict", label: "Stricte", hint: "cadrée, exigeante" },
@@ -68,114 +69,84 @@ export default function Dashboard() {
   if (!data) return <p className="text-muted">Chargement…</p>;
 
   const p = data.profile;
-  const currentShown = data.estimated_grade || p.current_grade || "—";
-  const masteryByLesson = new Map<string, { acquis: number; total: number }>();
-  for (const m of data.mastery) {
-    const cur = masteryByLesson.get(m.lesson_id) || { acquis: 0, total: 0 };
-    cur.total += 1;
-    if (m.status === "acquis") cur.acquis += 1;
-    masteryByLesson.set(m.lesson_id, cur);
-  }
-  const totalMinutes = data.sessions.reduce((s, x) => s + x.duration_min, 0);
-  const lastScores = data.exam_scores.slice(-10);
+  // Matières à afficher : les inscriptions + les matières qui ont déjà des
+  // leçons sans inscription (comptes d'avant l'onboarding).
+  const enrolledKeys = new Set(data.enrolments.map((e) => e.subject));
+  const legacyKeys = Object.keys(data.by_subject).filter((k) => !enrolledKeys.has(k));
 
   return (
     <div>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-serif font-black text-3xl text-indigo-deep">Salut {data.first_name || "champion"} 👋</h1>
-          <p className="text-muted mt-1">Maths · Edexcel A Level — objectif <span className="font-serif font-black text-amber">{p.target_grade || "A*"}</span></p>
+          <p className="text-muted mt-1">Chaque matière a son tableau de bord, son board et son plan d'action.</p>
         </div>
         <button onClick={logout} className="text-sm text-faint hover:text-indigo font-semibold">Se déconnecter</button>
       </div>
 
-      {/* ============ PROGRESSION ============ */}
-      <section className="card mt-6 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-5">
-            <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Départ</p>
-              <p className="font-serif font-black text-3xl text-muted">{p.baseline_grade || "—"}</p>
-            </div>
-            <span className="text-faint text-xl">→</span>
-            <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-indigo">Actuel{data.estimated_grade ? " (estimé)" : ""}</p>
-              <p className="font-serif font-black text-3xl text-indigo">{currentShown}</p>
-              {data.avg_pct !== null && <p className="font-mono text-[11px] text-faint">{data.avg_pct}% des marks</p>}
-            </div>
-            <span className="text-faint text-xl">→</span>
-            <div className="text-center">
-              <p className="text-[11px] font-mono uppercase tracking-wider text-amber">Objectif</p>
-              <p className="font-serif font-black text-3xl text-amber">{p.target_grade || "A*"}</p>
-            </div>
-          </div>
-          {/* Tendance des séries d'exercices */}
-          {lastScores.length > 0 && (
-            <div>
-              <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-1">Séries d'exercices (% marks)</p>
-              <div className="flex items-end gap-1 h-14">
-                {lastScores.map((s, i) => (
-                  <div key={i} className="w-5 rounded-t bg-indigo/80" style={{ height: `${Math.max(8, s.pct * 0.56)}px` }} title={`${s.pct}%`} />
-                ))}
-                <span className="text-[10px] font-mono text-faint ml-1 self-end">{lastScores[lastScores.length - 1].pct}%</span>
-              </div>
-            </div>
-          )}
+      {/* ============ MES MATIÈRES ============ */}
+      <section className="mt-6">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-serif font-semibold text-xl">Mes matières</h2>
+          <Link href="/onboarding" className="text-sm font-semibold text-indigo hover:text-indigo-deep">
+            {data.enrolments.length ? "Modifier mes matières" : "Configurer"}
+          </Link>
         </div>
-        {!p.current_grade && (
-          <p className="text-sm text-learning font-semibold mt-4 bg-learning-bg rounded-xl px-4 py-2.5">
-            Renseigne ton niveau actuel dans les réglages ci-dessous — c'est ta ligne de départ pour mesurer la progression.
-          </p>
-        )}
-      </section>
 
-      {/* ============ RÉGLAGES : style d'Emma + niveaux ============ */}
-      <section className="card mt-4 p-5">
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-          <div>
-            <p className="text-sm font-semibold mb-2">Ton Emma <span className="text-faint font-normal">(le ton change, pas l'exigence)</span></p>
-            <div className="flex flex-wrap gap-2">
-              {STYLES.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => patchProfile({ tutor_style: s.key })}
-                  disabled={saving}
-                  title={s.hint}
-                  className={
-                    p.tutor_style === s.key
-                      ? "btn-primary !py-1.5 !px-3.5 text-[13px]"
-                      : "btn-ghost !py-1.5 !px-3.5 text-[13px]"
-                  }
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+        {data.enrolments.length === 0 && legacyKeys.length === 0 ? (
+          <div className="card p-8 mt-4 text-center">
+            <p className="text-muted">
+              Commence par choisir tes matières, ton exam board et ton objectif — Emma te prépare un
+              plan d'action par matière.
+            </p>
+            <Link href="/onboarding" className="btn-amber mt-4 inline-block">Configurer mes matières →</Link>
           </div>
-          <div className="flex gap-4">
-            <label className="text-sm font-semibold">
-              Niveau actuel
-              <select
-                className="input mt-1 !py-1.5"
-                value={p.current_grade || ""}
-                onChange={(e) => e.target.value && patchProfile({ current_grade: e.target.value })}
-              >
-                <option value="">—</option>
-                {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </label>
-            <label className="text-sm font-semibold">
-              Objectif
-              <select
-                className="input mt-1 !py-1.5"
-                value={p.target_grade || "A*"}
-                onChange={(e) => patchProfile({ target_grade: e.target.value })}
-              >
-                {GRADES.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </label>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-4 mt-4">
+            {data.enrolments.map((e) => {
+              const s = SUBJECTS[e.subject as SubjectKey];
+              const r = data.by_subject[e.subject];
+              const shown = r?.estimated_grade || e.current_grade || "—";
+              return (
+                <Link key={e.id} href={`/matiere/${e.subject}`} className="card p-5 hover:border-indigo transition">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-serif font-semibold text-lg">{s?.labelFr || e.subject}</h3>
+                    <span className="chip-todo shrink-0">{e.board} · {e.spec}</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-3">
+                    <span className="font-serif font-black text-2xl text-muted">{e.baseline_grade || "—"}</span>
+                    <span className="text-faint">→</span>
+                    <span className="font-serif font-black text-2xl text-indigo">{shown}</span>
+                    <span className="text-faint">→</span>
+                    <span className="font-serif font-black text-2xl text-amber">{e.target_grade || "A*"}</span>
+                    {r?.avg_pct !== null && r?.avg_pct !== undefined && (
+                      <span className="font-mono text-[11px] text-faint self-end pb-1">{r.avg_pct}% des marks</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted mt-3">
+                    {r ? `${r.lessons} leçon${r.lessons > 1 ? "s" : ""} · ${r.open_weak_points} point${r.open_weak_points > 1 ? "s" : ""} à travailler · ${Math.round(r.minutes / 6) / 10} h` : "Pas encore de leçon — le plan d'action t'attend"}
+                    {e.exam_date ? ` · examen ${e.exam_date.slice(0, 7)}` : ""}
+                  </p>
+                </Link>
+              );
+            })}
+            {legacyKeys.map((k) => {
+              const s = SUBJECTS[k as SubjectKey];
+              const r = data.by_subject[k];
+              return (
+                <Link key={k} href={`/matiere/${k}`} className="card p-5 hover:border-indigo transition">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-serif font-semibold text-lg">{s?.labelFr || k}</h3>
+                    <span className="chip-non_acquis shrink-0">board à configurer</span>
+                  </div>
+                  <p className="text-sm text-muted mt-3">
+                    {r.lessons} leçon{r.lessons > 1 ? "s" : ""} · {r.open_weak_points} point{r.open_weak_points > 1 ? "s" : ""} à travailler
+                  </p>
+                </Link>
+              );
+            })}
           </div>
-        </div>
+        )}
       </section>
 
       {/* ============ ACTIONS ============ */}
@@ -186,94 +157,37 @@ export default function Dashboard() {
         </Link>
         <Link href="/coaching" className="card p-5 hover:border-amber transition">
           <h2 className="font-serif font-semibold text-lg">🎯 Coaching d'examen</h2>
-          <p className="text-sm text-muted mt-1">Pas de maths ici : le stress, la stratégie, le jour J. Emma t'écoute et te prépare.</p>
+          <p className="text-sm text-muted mt-1">Pas de contenu ici : le stress, la stratégie, le jour J. Emma t'écoute et te prépare.</p>
         </Link>
       </div>
 
-      {/* ============ LEÇONS / TOPICS COUVERTS ============ */}
-      <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Leçons & topics couverts</h2>
-        {data.lessons.length === 0 ? (
-          <div className="card p-8 mt-4 text-center">
-            <p className="text-muted">Aucune leçon pour l'instant.</p>
-            <Link href="/lesson/new" className="btn-amber mt-4">Capturer ma première leçon</Link>
-          </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 gap-4 mt-4">
-            {data.lessons.map((l) => {
-              const m = masteryByLesson.get(l.id);
-              const nConcepts = Array.isArray(l.concepts) ? l.concepts.length : 0;
-              return (
-                <Link key={l.id} href={`/lesson/${l.id}`} className="card p-5 hover:border-indigo transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-[15.5px] leading-snug">{l.title}</h3>
-                    <span className={l.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
-                      {STAGE_LABEL[l.stage] || l.stage}
-                    </span>
-                  </div>
-                  {l.spec_topic && <p className="font-mono text-[11px] text-faint mt-1">{l.spec_topic}</p>}
-                  <p className="text-sm text-muted mt-3">
-                    {m ? `${m.acquis}/${m.total} concepts acquis` : `${nConcepts} concepts — maîtrise à vérifier`}
-                  </p>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* ============ SÉANCES ============ */}
-      <section className="mt-8">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-serif font-semibold text-xl">Tes séances</h2>
-          {totalMinutes > 0 && <p className="font-mono text-xs text-faint">{Math.round(totalMinutes / 6) / 10} h au total</p>}
+      {/* ============ RÉGLAGES : style d'Emma ============ */}
+      <section className="card mt-6 p-5">
+        <p className="text-sm font-semibold mb-2">Ton Emma <span className="text-faint font-normal">(le ton change, pas l'exigence)</span></p>
+        <div className="flex flex-wrap gap-2">
+          {STYLES.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => patchProfile({ tutor_style: s.key })}
+              disabled={saving}
+              title={s.hint}
+              className={
+                p.tutor_style === s.key
+                  ? "btn-primary !py-1.5 !px-3.5 text-[13px]"
+                  : "btn-ghost !py-1.5 !px-3.5 text-[13px]"
+              }
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
-        {data.sessions.length === 0 ? (
-          <p className="text-sm text-faint mt-3">Ta première séance apparaîtra ici automatiquement.</p>
-        ) : (
-          <div className="card mt-4 divide-y divide-line overflow-hidden">
-            {data.sessions.map((s) => (
-              <div key={s.id} className="p-4 flex items-start gap-3 flex-wrap">
-                <span className={s.kind === "coaching" ? "chip bg-amber-soft text-amber shrink-0" : "chip-todo shrink-0"}>
-                  {s.kind === "coaching" ? "coaching" : "leçon"}
-                </span>
-                <div className="flex-1 min-w-[200px]">
-                  <p className="font-semibold text-[14.5px]">{s.title}</p>
-                  {Array.isArray(s.summary?.covered) && s.summary.covered.length > 0 && (
-                    <p className="text-xs text-muted mt-0.5">{s.summary.covered.join(" → ")}</p>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-mono text-xs text-faint">
-                    {new Date(s.started_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-                  </p>
-                  <p className="font-mono text-xs font-semibold text-indigo">{s.duration_min} min</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
-      {/* ============ POINTS À TRAVAILLER ============ */}
+      {/* ============ HISTORIQUE DES SÉANCES (filtrable) ============ */}
       <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Points à travailler</h2>
-        <p className="text-sm text-muted mt-1">Ce qui reste fragile — on les re-teste jusqu'à l'A★.</p>
-        {data.weak_points.length === 0 ? (
-          <p className="text-sm text-faint mt-3">Rien d'ouvert — soit tu démarres, soit tu gères 💪</p>
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {data.weak_points.map((w) => (
-              <li key={w.id} className="card p-4 flex items-start gap-3">
-                <span className="chip-non_acquis mt-0.5 shrink-0">à revoir</span>
-                <div>
-                  <Link href={`/lesson/${w.lesson_id}`} className="font-semibold text-[15px] hover:text-indigo">{w.label}</Link>
-                  {w.misconception && <p className="text-sm text-muted mt-0.5">Méprise repérée : {w.misconception}</p>}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <h2 className="font-serif font-semibold text-xl">Tes séances</h2>
+        <p className="text-sm text-muted mt-1 mb-3">Par semaine, semaine dernière, mois — ou une période custom.</p>
+        <ActivityHistory />
       </section>
     </div>
   );

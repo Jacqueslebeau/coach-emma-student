@@ -1,16 +1,13 @@
 // LE CŒUR DU PRODUIT : la technique d'examen. On ne vend pas du contenu,
 // on vend des A* — donc chaque exercice, chaque correction, chaque question
 // est ancré sur ce que l'examinateur attend réellement.
-// Référence : Edexcel A Level Mathematics (9MA0) — papers, mark scheme,
-// command words, habitudes qui coûtent l'A*.
+// Cœur maths valable pour tous les boards (Edexcel/AQA/OCR notent tous en
+// M/A/B/ft) ; la structure des papers de chaque board vit dans lib/subjects.ts.
 
 export const EXAM_TECHNIQUE_MATHS = `
-=== TECHNIQUE D'EXAMEN — EDEXCEL A LEVEL MATHEMATICS (9MA0) ===
+=== TECHNIQUE D'EXAMEN — A LEVEL MATHEMATICS (cœur, tous boards) ===
 
-STRUCTURE DE L'EXAMEN (à garder en tête pour calibrer) :
-- Paper 1 & Paper 2 : Pure Mathematics — 2h, 100 marks chacun.
-- Paper 3 : Statistics & Mechanics — 2h, 100 marks (Section A stats, Section B mécanique).
-- Rythme : ~1 mark ≈ 1 minute. Un exercice de 5 marks doit être faisable en ~5-6 min.
+RYTHME : ~1 mark ≈ 1 minute. Un exercice de 5 marks doit être faisable en ~5-6 min.
 
 TYPES DE MARKS (c'est COMME ÇA qu'on note, et comme ça que TU notes) :
 - M (method) : la méthode est engagée correctement — se gagne MÊME si le calcul final est faux.

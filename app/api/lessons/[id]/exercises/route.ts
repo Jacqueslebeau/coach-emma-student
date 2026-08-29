@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
-import { getSubject } from "@/lib/subjects";
+import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
 import { exercisesSystem } from "@/lib/prompts";
 import type { Concept, Exercise } from "@/lib/types";
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
-  const subj = getSubject(lesson.subject);
+  const subj = getSubjectBoard(lesson.subject, lesson.exam_board);
   const concepts = (lesson.concepts || []) as Concept[];
 
   // Concepts à prioriser : ceux demandés (redo), sinon les fragiles/non acquis.
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     if (error || !attempt) throw new Error(error?.message || "attempt");
 
     await auth.sb.from("lessons").update({ stage: "practice" }).eq("id", id);
-    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, covered: variant ? "Exercices (variante ciblée)" : "Exercices past paper" });
+    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: variant ? "Exercices (variante ciblée)" : "Exercices past paper" });
     return NextResponse.json({ attempt_id: attempt.id, exercises: parsed.exercises });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "génération impossible" }, { status: 502 });

@@ -262,14 +262,56 @@ FORMAT :
 }
 
 // ---------------------------------------------------------------------------
+// 7bis. PLAN D'ACTION PAR MATIÈRE — le rapport d'adéquation de l'inscription
+// ---------------------------------------------------------------------------
+export function actionPlanSystem(
+  firstName: string,
+  style: TutorStyle,
+  subject: Subject,
+  ctx: { currentGrade?: string | null; targetGrade?: string | null; examDate?: string | null }
+) {
+  const current = ctx.currentGrade || "non renseigné";
+  const target = ctx.targetGrade || "A*";
+  const exam = ctx.examDate || "session de juin (année non précisée)";
+  return personaBase(firstName, style, subject) + `
+
+TÂCHE : ${firstName || "l'élève"} vient de s'inscrire en ${subject.labelFr} (${subject.board} ${subject.spec}). Écris son PLAN D'ACTION — un rapport d'adéquation entre son niveau actuel et son objectif, comme le ferait un directeur d'études exigeant.
+
+SES DONNÉES :
+- Niveau actuel déclaré : ${current}
+- Objectif au A Level : ${target}
+- Session d'examen visée : ${exam}
+
+${subject.technique}
+
+RÈGLES :
+- Sois FRANC sur l'écart : dis si l'objectif est confortable, ambitieux ou très ambitieux vu le point de départ et le temps restant — sans jamais décourager (l'écart se comble avec un plan, pas avec de l'espoir).
+- Tout est spécifique à CE board et CE spec : les priorités citent les zones du programme et les formats de questions où se gagnent les marks.
+- Le rythme proposé respecte des séances de 45-60 min max.
+- Les jalons ("milestones") sont datés par rapport à la session d'examen visée et mesurables (ex. "past paper complet en conditions réelles à ≥70%").
+- 3 "first_actions" faisables cette semaine, très concrètes.` + JSON_RULE + `
+
+FORMAT :
+{
+  "headline": "une phrase franche : l'écart, sa faisabilité, le ton du plan",
+  "gap_analysis": "markdown court — où il en est, ce que ${target} exige à l'examen ${subject.board}, et ce que ça implique concrètement",
+  "weekly_rhythm": { "sessions_per_week": 3, "minutes_per_session": 45, "detail": "comment répartir : leçons nouvelles / exercices past-paper / révision espacée des points faibles" },
+  "priorities": [ { "title": "...", "why": "où ça rapporte des marks à l'examen", "spec_area": "zone du spec ${subject.spec}" } ],
+  "milestones": [ { "when": "ex. Décembre 2026", "goal": "mesurable" } ],
+  "exam_technique_focus": ["les 3-4 réflexes de technique d'examen à installer en priorité"],
+  "first_actions": ["3 actions concrètes pour les 7 prochains jours"]
+}`;
+}
+
+// ---------------------------------------------------------------------------
 // 8. COACHING D'EXAMEN — pas du contenu : le mental, la préparation, le jour J
 // ---------------------------------------------------------------------------
 export function coachingSystem(
   firstName: string,
   style: TutorStyle,
-  ctx: { currentGrade?: string | null; targetGrade?: string | null; weakPointsSummary?: string; progressSummary?: string }
+  ctx: { currentGrade?: string | null; targetGrade?: string | null; weakPointsSummary?: string; progressSummary?: string; subjectsLine?: string }
 ) {
-  return `Tu es Emma Student, la coach d'examen de ${firstName || "l'élève"}, en sixth form au Royaume-Uni. Ses matières : Maths (Edexcel), Économie (Edexcel), Géographie (OCR) et Français AQA en candidat libre. Objectif : A*.
+  return `Tu es Emma Student, la coach d'examen de ${firstName || "l'élève"}, en sixth form au Royaume-Uni. Ses matières : ${ctx.subjectsLine || "Maths (Edexcel), Économie (Edexcel), Géographie (OCR) et Français AQA en candidat libre"}. Objectif : ${ctx.targetGrade || "A*"}.
 
 ${STYLE_DIRECTIVES[style] || STYLE_DIRECTIVES.sympa}
 ${GUARDRAILS}

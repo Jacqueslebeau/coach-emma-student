@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/routeAuth";
 import { touchSession } from "@/lib/sessionTrack";
 import { askClaude, extractJson, type ContentBlock } from "@/lib/claude";
 import { conceptExtractionSystem } from "@/lib/prompts";
-import { getSubject } from "@/lib/subjects";
+import { getSubjectBoard } from "@/lib/subjects";
 import type { Concept } from "@/lib/types";
 
 export const maxDuration = 120;
@@ -32,7 +32,15 @@ export async function POST(req: NextRequest) {
   const form = await req.formData().catch(() => null);
   if (!form) return NextResponse.json({ error: "formulaire invalide" }, { status: 400 });
 
-  const subj = getSubject(String(form.get("subject") || "maths"));
+  // Le board de la leçon vient de l'inscription de l'élève dans cette matière.
+  const subjectKey = String(form.get("subject") || "maths");
+  const { data: enr } = await auth.sb
+    .from("subject_enrolments")
+    .select("board")
+    .eq("user_id", auth.user.id)
+    .eq("subject", subjectKey)
+    .maybeSingle();
+  const subj = getSubjectBoard(subjectKey, enr?.board);
   const title = String(form.get("title") || "").trim().slice(0, 300);
   const notes = String(form.get("notes") || "").trim().slice(0, 12000);
   const photo = form.get("photo");
@@ -116,6 +124,6 @@ export async function POST(req: NextRequest) {
     if (!up.error) await auth.sb.from("lessons").update({ photo_path: path }).eq("id", lesson.id);
   }
 
-  await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: lesson.id, title: parsed.lesson_title || title || "Leçon", covered: "Leçon capturée" });
+  await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: lesson.id, title: parsed.lesson_title || title || "Leçon", subject: subj.key, covered: "Leçon capturée" });
   return NextResponse.json({ id: lesson.id });
 }

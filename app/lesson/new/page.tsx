@@ -2,14 +2,38 @@
 
 // Capture d'une leçon — les 3 portes d'entrée, une destination :
 // titre, notes tapées, ou photo du cours → mêmes concepts identifiés.
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { compressImage } from "@/lib/compressImage";
-import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
+import { SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
 
-export default function NewLesson() {
+export default function NewLessonPage() {
+  return (
+    <Suspense fallback={<p className="text-muted">Chargement…</p>}>
+      <NewLesson />
+    </Suspense>
+  );
+}
+
+function NewLesson() {
   const router = useRouter();
-  const [subject, setSubject] = useState<SubjectKey>("maths");
+  const search = useSearchParams();
+  const preselect = search.get("subject");
+  const [subject, setSubject] = useState<SubjectKey>(
+    SUBJECT_KEYS.includes(preselect as SubjectKey) ? (preselect as SubjectKey) : "maths"
+  );
+  // Le board affiché sur chaque puce vient de l'inscription de l'élève.
+  const [boards, setBoards] = useState<Record<string, string>>({});
+  useEffect(() => {
+    fetch("/api/enrolments")
+      .then((r) => (r.ok ? r.json() : { enrolments: [] }))
+      .then((d) => {
+        const map: Record<string, string> = {};
+        for (const e of d.enrolments || []) map[e.subject] = e.board;
+        setBoards(map);
+      })
+      .catch(() => {});
+  }, []);
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -61,9 +85,9 @@ export default function NewLesson() {
                 ? "chip !text-[13px] !py-1.5 !px-4 bg-indigo text-white"
                 : "chip !text-[13px] !py-1.5 !px-4 bg-white border border-line text-muted hover:text-indigo"
             }
-            title={`${s.board} ${s.spec}`}
+            title={`${boards[s.key] || s.board} ${s.spec}`}
           >
-            {s.labelFr} · {s.board}
+            {s.labelFr} · {boards[s.key] || s.board}
           </button>
         ))}
       </div>

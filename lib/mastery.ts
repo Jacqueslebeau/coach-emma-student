@@ -8,6 +8,7 @@ export async function applyVerdicts(opts: {
   sb: SupabaseClient;
   userId: string;
   lessonId: string;
+  subject: string; // la matière — tout le suivi est distingué par matière
   concepts: Concept[];
   verdicts: { concept_key: string; status: MasteryStatus; misconception?: string | null }[];
   source: string; // quiz | remediation | exercise
@@ -35,6 +36,7 @@ export async function applyVerdicts(opts: {
       {
         user_id: opts.userId,
         lesson_id: opts.lessonId,
+        subject: opts.subject,
         concept_key: v.concept_key,
         label,
         status: v.status,
@@ -71,6 +73,7 @@ export async function applyVerdicts(opts: {
         await sb.from("weak_points").insert({
           user_id: opts.userId,
           lesson_id: opts.lessonId,
+          subject: opts.subject,
           concept_key: v.concept_key,
           label,
           misconception: v.misconception || null,

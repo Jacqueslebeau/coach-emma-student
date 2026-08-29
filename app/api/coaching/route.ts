@@ -6,6 +6,7 @@ import { askClaude } from "@/lib/claude";
 import { coachingSystem } from "@/lib/prompts";
 import { touchSession } from "@/lib/sessionTrack";
 import { estimateGrade } from "@/lib/examTechnique";
+import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 
 export const maxDuration = 60;
 const DAILY_CAP = 80; // garde-fou coût : messages max / jour
@@ -41,8 +42,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Grosse journée de coaching ! On reprend demain 💪", capped: true }, { status: 429 });
   }
 
-  // Contexte réel : progression + points en travail (le coach cite du VRAI).
-  const [{ data: attempts }, { data: weakPoints }, { data: history }] = await Promise.all([
+  // Contexte réel : matières inscrites, progression + points en travail (le coach cite du VRAI).
+  const [{ data: enrolments }, { data: attempts }, { data: weakPoints }, { data: history }] = await Promise.all([
+    auth.sb
+      .from("subject_enrolments")
+      .select("subject, board, target_grade")
+      .eq("user_id", auth.user.id),
     auth.sb
       .from("attempts")
       .select("result, created_at")
@@ -77,6 +82,11 @@ export async function POST(req: NextRequest) {
     ? `dernières séries d'exercices (du plus récent) : ${pcts.map((p) => p + "%").join(", ")} — niveau indicatif actuel ${estimateGrade(pcts[0])}`
     : "pas encore d'exercices corrigés";
   const weakPointsSummary = (weakPoints || []).map((w) => w.label).join(" · ") || "";
+  const subjectsLine = (enrolments || []).length
+    ? (enrolments || [])
+        .map((e) => `${SUBJECTS[e.subject as SubjectKey]?.labelFr || e.subject} (${e.board}${e.subject === "french" ? ", candidat libre" : ""})`)
+        .join(", ")
+    : undefined;
 
   const convo = (history || [])
     .reverse()
@@ -91,6 +101,7 @@ export async function POST(req: NextRequest) {
         targetGrade: auth.targetGrade,
         progressSummary,
         weakPointsSummary,
+        subjectsLine,
       }),
       content:
         (convo ? `CONVERSATION JUSQU'ICI :\n${convo}\n\n` : "") +
@@ -102,7 +113,7 @@ export async function POST(req: NextRequest) {
       sb: auth.sb,
     });
 
-    const sessionId = await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "coaching", covered: "Coaching d'examen" });
+    const sessionId = await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "coaching", subject: "general", covered: "Coaching d'examen" });
     await auth.sb.from("coaching_messages").insert([
       { user_id: auth.user.id, session_id: sessionId, role: "user", message: text },
       { user_id: auth.user.id, session_id: sessionId, role: "assistant", message: reply },
