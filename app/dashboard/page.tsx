@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 import ActivityHistory from "@/components/ActivityHistory";
+import ParentPanel from "@/components/ParentPanel";
 
 type Enrolment = {
   id: string; subject: string; board: string; spec: string;
@@ -207,6 +208,9 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+
+      {/* ============ SUIVI PARENT & CONNEXIONS ============ */}
+      <ParentPanel />
 
       {/* ============ HISTORIQUE DES SÉANCES (filtrable) ============ */}
       <section className="mt-8">

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
 import SessionTimer from "@/components/SessionTimer";
+import BackLink from "@/components/BackLink";
 import { compressImage } from "@/lib/compressImage";
 import type {
   Concept, Course, Exercise, ExerciseMark, QuizGrade, QuizQuestion, Remediation,
@@ -159,6 +160,7 @@ export default function LessonPage() {
       {/* En-tête leçon + barre de maîtrise (toujours visible) */}
       <div className="mb-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
+          <BackLink />
           <p className="font-mono text-[11px] text-faint">
             {[lesson.exam_board, lesson.spec_topic].filter(Boolean).join(" · ") || "A Level"}
           </p>

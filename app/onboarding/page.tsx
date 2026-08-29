@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BOARD_OPTIONS, SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
+import BackLink from "@/components/BackLink";
 
 const GRADES = ["E", "D", "C", "B", "A", "A*"];
 
@@ -85,7 +86,8 @@ export default function Onboarding() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="font-serif font-black text-3xl text-indigo-deep">Tes matières</h1>
+      <BackLink />
+      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">Tes matières</h1>
       <p className="text-muted mt-2">
         Pour chaque matière : ton exam board (chaque board a ses papers et son mark scheme — Emma
         s'y calibre), ton niveau actuel, ton objectif au A Level et ta session d'examen. Tu recevras

@@ -11,7 +11,7 @@ export async function requireUser() {
   if (!user) return null;
   const { data: profile } = await sb
     .from("student_profiles")
-    .select("first_name, target_grade, tutor_style, current_grade, baseline_grade, content_lang")
+    .select("first_name, target_grade, tutor_style, current_grade, baseline_grade, content_lang, parent_email, parent_consent_at")
     .eq("user_id", user.id)
     .maybeSingle();
   const style = (["strict", "sympa", "direct", "chatty"].includes(profile?.tutor_style)
@@ -27,6 +27,8 @@ export async function requireUser() {
     targetGrade: (profile?.target_grade as string) || "A*",
     // Langue d'enseignement : ANGLAIS par défaut (c'est un A Level).
     contentLang: (profile?.content_lang === "fr" ? "fr" : "en") as "en" | "fr",
+    parentEmail: (profile?.parent_email as string) || null,
+    parentConsentAt: (profile?.parent_consent_at as string) || null,
   };
 }
 

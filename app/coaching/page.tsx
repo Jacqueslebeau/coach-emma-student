@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import SessionTimer from "@/components/SessionTimer";
 import RichText from "@/components/RichText";
+import BackLink from "@/components/BackLink";
 
 type Msg = { role: string; message: string };
 
@@ -55,7 +56,8 @@ export default function CoachingPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-end justify-between flex-wrap gap-3">
+      <BackLink />
+      <div className="flex items-end justify-between flex-wrap gap-3 mt-2">
         <div>
           <h1 className="font-serif font-black text-2xl text-indigo-deep">Coaching d'examen</h1>
           <p className="text-muted text-sm mt-1">

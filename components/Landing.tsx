@@ -3,8 +3,10 @@
 // Site vitrine — STRUCTURE, DESIGN, LAYOUT ET CODE COULEUR de Coach Emma :
 // crème #FAF8F3, émeraude #064E3B, or #FACC15, Fraunces ; hero + halo, démo
 // animée (HeroDemo), CTA or « Commencer » (effet brillance), « ▶ Voir la
-// démo » (DemoStudio scénarisé), bandeau preuve émeraude, Comment ça marche,
-// Pour qui, matières. Bilingue FR/EN.
+// démo » (DemoStudio : produit / tutoring / coaching), bandeau preuve
+// émeraude, Comment ça marche et Pour qui avec « ? » palpitant (mécanique
+// Coach Emma). Ton professionnel : ce sont les parents qui achètent.
+// Les matières et boards vivent dans la barre de menu (HeaderNav).
 import { useState } from "react";
 import Link from "next/link";
 import HeroDemo from "@/components/HeroDemo";
@@ -12,7 +14,6 @@ import DemoStudio from "@/components/DemoStudio";
 import { useLang, LangToggle } from "@/lib/i18n";
 
 const EM = "#064E3B";
-const EM2 = "#0c6a4e";
 const GOLD = "#FACC15";
 const CREAM = "#FAF8F3";
 const serif = { fontFamily: "Fraunces, Georgia, serif" } as const;
@@ -22,88 +23,175 @@ const CARD_GLOW = "0 26px 58px -40px rgba(6,78,59,.5)";
 
 const L = {
   fr: {
-    tag: "Tuteur personnel · GCSE & A Level · UK",
-    h1a: "Le tuteur qui ne lâche rien\navant le ",
-    sub: "Coach Emma Student prend la leçon du jour, vérifie qu'elle est comprise, fait pratiquer en conditions d'examen, corrige comme un examinateur — et retravaille ce qui cloche jusqu'à ce que ça tienne.",
+    tag: "Tutorat personnel · GCSE & A Level · UK",
+    h1a: "Le tutorat personnel\nqui vise le ",
+    h1b: " — et s'y tient.",
+    sub: "Coach Emma Student est un tuteur personnel d'excellence pour les élèves de GCSE et de A Level. À partir de la leçon vue en classe, Emma construit le cours ancré sur le programme officiel de l'exam board de l'élève, vérifie la compréhension concept par concept, entraîne en conditions réelles d'examen et corrige chaque copie au standard de l'examinateur.",
+    features: [
+      ["📘", "Le tutorat", "Cours sur mesure, vérification de maîtrise, exercices type past paper, correction mark par mark — dans la langue et au format de l'examen."],
+      ["🎯", "Le coaching d'examen", "Méthode de travail, gestion du stress, préparation des épreuves et performance le jour J — un accompagnement bienveillant et exigeant."],
+      ["📊", "Le suivi", "Progression mesurée par matière — niveau de départ, niveau actuel, objectif — visible par l'élève et par ses parents."],
+    ] as [string, string, string][],
     ctaStart: "Commencer", ctaDemo: "Voir la démo", ctaLogin: "Se connecter",
     stats: [
       ["45 min", "la séance efficace, cadrée par Emma"],
-      ["4", "matières · Maths · Éco · Géo · Français"],
+      ["4", "matières · tous les grands exam boards"],
       ["M + A", "noté mark par mark, comme l'examinateur"],
       ["A★", "l'objectif — et la courbe qui le prouve"],
     ] as [string, string][],
     howTitle: "Comment ça marche",
+    howHelp: {
+      title: "Le principe",
+      body: [
+        "Coach Emma Student reproduit la méthode des meilleurs tuteurs particuliers : partir de ce que l'élève a réellement vu en classe, s'assurer que c'est compris, puis entraîner dans les conditions exactes de l'examen — et ne rien laisser passer.",
+        "Chaque matière est calibrée sur l'exam board choisi à l'inscription (Edexcel, AQA ou OCR) : les cours suivent le spec officiel, les exercices reprennent les formats des past papers, et la correction applique la logique du mark scheme.",
+        "Tout est mesuré : la maîtrise concept par concept, les points fragiles, la progression vers l'objectif. L'élève et ses parents voient exactement où il en est.",
+      ],
+    },
     steps: [
-      "Il capture sa leçon du jour — le titre, ses notes, ou une photo du cours pris en classe.",
-      "Emma écrit le cours : complet ou « concepts clés », ancré sur le spec de l'exam board.",
-      "Elle vérifie la maîtrise concept par concept — et réexplique autrement ce qui coince, jusqu'à ce que ce soit acquis.",
-      "Il pratique en conditions d'examen : exercices style past paper, en ligne ou sur papier + photo de la copie.",
-      "Correction d'examinateur : mark par mark, méthode valorisée, méprises nommées — on refait tant que ce n'est pas solide.",
-      "Rien n'est oublié : les points fragiles reviennent automatiquement, et la progression s'affiche — départ → actuel → A★.",
+      {
+        t: "L'élève capture sa leçon du jour",
+        b: ["Le titre suffit — les notes ou une photo du cours pris en classe affinent le résultat.", "Emma identifie la leçon dans le programme officiel et la découpe en concepts à maîtriser."],
+      },
+      {
+        t: "Emma écrit le cours",
+        b: ["Version complète ou « concepts clés » pour réviser vite.", "Ancré sur le spec de l'exam board de l'élève, avec exemples travaillés au format examen.", "Pour chaque concept : où il tombe à l'examen et le piège qui coûte des marks."],
+      },
+      {
+        t: "Vérification de la maîtrise",
+        b: ["Des questions courtes, concept par concept — verdict : acquis, fragile ou à revoir.", "Ce qui coince est réexpliqué sous un autre angle, puis re-testé jusqu'à ce que ce soit acquis."],
+      },
+      {
+        t: "Entraînement en conditions d'examen",
+        b: ["Exercices au style et au barème des past papers du board.", "En ligne, ou sur papier : l'élève photographie sa copie manuscrite et l'envoie."],
+      },
+      {
+        t: "Correction au standard de l'examinateur",
+        b: ["Notation mark par mark : la méthode est valorisée, chaque point perdu est expliqué.", "Les erreurs de technique d'examen sont nommées — ce sont elles qui coûtent le A*.", "On refait sur des variantes tant que ce n'est pas solide."],
+      },
+      {
+        t: "Rien n'est oublié",
+        b: ["Les points fragiles reviennent automatiquement en révision.", "La progression s'affiche par matière : départ → actuel → objectif A★.", "Les parents peuvent recevoir le récapitulatif des séances."],
+      },
     ],
-    seeDemo: "▶ Voir la démo d'une séance",
+    seeDemo: "▶ Voir la démo",
     whoTitle: "Pour qui ?",
+    whoHelp: {
+      title: "À qui s'adresse Coach Emma Student",
+      body: [
+        "Aux élèves de GCSE et de A Level au Royaume-Uni — dans les matières couvertes, sur les exam boards Edexcel, AQA et OCR — y compris les candidats libres (par exemple le French A Level).",
+        "Aux familles qui veulent l'exigence d'un excellent tuteur particulier, disponible tous les soirs, pour une fraction du coût — avec un suivi objectif de la progression.",
+        "L'inscription d'un élève mineur requiert le consentement d'un parent ou tuteur légal, qui peut suivre l'activité et la progression.",
+      ],
+    },
     who: [
-      { ic: "🎓", t: "L'élève qui vise A/A*", d: "GCSE ou A Level, il a le niveau mais veut sécuriser les derniers marks : technique d'examen, pratique constante, points faibles traqués un par un." },
-      { ic: "📈", t: "L'élève qui veut monter", d: "De C vers A, de B vers A* : le diagnostic par concept trouve exactement où ça coince, et la boucle ne le lâche pas tant que ce n'est pas acquis." },
-      { ic: "👨‍👩‍👧", t: "Les parents", d: "Un tuteur exigeant disponible tous les soirs, une fraction du prix d'un tuteur particulier — et la progression visible séance par séance." },
+      { ic: "🎓", t: "L'élève qui vise A/A*", d: "Il a le niveau, il veut sécuriser les derniers marks : technique d'examen, pratique constante, points faibles traités un par un." },
+      { ic: "📈", t: "L'élève qui veut progresser", d: "De C vers A, de B vers A* : le diagnostic par concept trouve précisément où cela bloque, et la boucle de travail ne s'arrête pas avant l'acquisition." },
+      { ic: "👨‍👩‍👧", t: "Les parents", d: "Un tuteur exigeant et bienveillant, disponible chaque soir, pour une fraction du prix d'un tuteur particulier — avec une progression visible séance par séance et un suivi des connexions." },
     ],
-    subjTitle: "Les matières",
-    subjects: [
-      { t: "Mathématiques", b: "Edexcel A Level (9MA0)", d: "Cours, notation propre, exercices past-paper, correction des copies photographiées.", tag: "disponible" },
-      { t: "Économie", b: "Edexcel A Level (9EC0)", d: "Dissertations KAA + Évaluation, diagrammes exploités, 25-markers structurés.", tag: "disponible" },
-      { t: "Géographie", b: "OCR A Level (H481)", d: "Command words (« assess », « evaluate »), case studies chiffrées, essais PEEL.", tag: "disponible" },
-      { t: "Français · candidat libre", b: "AQA A Level (7652)", d: "Traductions FR↔EN, essais sur œuvre/film, méthode AQA — être natif ne suffit pas pour l'A*.", tag: "disponible" },
-    ],
-    subjNote: "La voix d'Emma (coaching parlé) arrive — même voix que Coach Emma. D'autres matières et boards suivront.",
-    closeTitle1: "Un ami qui sait tout dans la matière.",
-    closeTitle2: "Et qui veut vraiment ton ",
-    closeCta: "Créer un compte", beta: "Accès en beta privée pendant la phase de test.",
+    closeTitle1: "L'exigence d'un excellent tuteur.",
+    closeTitle2: "La constance en plus — jusqu'au ",
+    closeCta: "Créer un compte", beta: "Accès en beta privée pendant la phase de test. Consentement parental requis à l'inscription.",
   },
   en: {
-    tag: "Personal tutor · GCSE & A Level · UK",
-    h1a: "The tutor that never lets go\nbefore the ",
-    sub: "Coach Emma Student takes today's lesson, checks it's understood, drills it under exam conditions, marks like an examiner — and reworks whatever's shaky until it holds.",
+    tag: "Personal tutoring · GCSE & A Level · UK",
+    h1a: "Personal tutoring\nthat aims for the ",
+    h1b: " — and holds the line.",
+    sub: "Coach Emma Student is a personal tutor built for GCSE and A Level students. Starting from the lesson seen in class, Emma writes the course anchored to the student's exam-board specification, checks understanding concept by concept, trains under real exam conditions and marks every script to the examiner's standard.",
+    features: [
+      ["📘", "The tutoring", "Tailored courses, mastery checks, past-paper style exercises, mark-by-mark feedback — in the language and format of the exam."],
+      ["🎯", "Exam coaching", "Working method, stress management, exam preparation and performance on the day — demanding, supportive guidance."],
+      ["📊", "The tracking", "Measured progress per subject — starting level, current level, target — visible to the student and their parents."],
+    ] as [string, string, string][],
     ctaStart: "Start", ctaDemo: "Watch the demo", ctaLogin: "Sign in",
     stats: [
       ["45 min", "the effective session, framed by Emma"],
-      ["4", "subjects · Maths · Econ · Geog · French"],
+      ["4", "subjects · all major exam boards"],
       ["M + A", "marked mark by mark, like the examiner"],
       ["A★", "the target — and the curve to prove it"],
     ] as [string, string][],
     howTitle: "How it works",
+    howHelp: {
+      title: "The principle",
+      body: [
+        "Coach Emma Student reproduces the method of the best private tutors: start from what the student actually covered in class, make sure it is understood, then train under the exact conditions of the exam — and let nothing slip.",
+        "Each subject is calibrated to the exam board chosen at sign-up (Edexcel, AQA or OCR): courses follow the official specification, exercises mirror past-paper formats, and marking applies the mark-scheme logic.",
+        "Everything is measured: mastery concept by concept, weak points, progress towards the target. The student and their parents see exactly where they stand.",
+      ],
+    },
     steps: [
-      "He captures today's lesson — the title, his notes, or a photo taken in class.",
-      "Emma writes the course: full or “key concepts”, anchored to the exam-board spec.",
-      "She checks mastery concept by concept — and re-explains what's stuck, another way, until it's secure.",
-      "He practises under exam conditions: past-paper style exercises, online or on paper + a photo of the script.",
-      "Examiner marking: mark by mark, method rewarded, misconceptions named — redo until it's solid.",
-      "Nothing is forgotten: fragile points come back automatically, and progress is visible — start → current → A★.",
+      { t: "The student captures today's lesson", b: ["The title is enough — notes or a photo of the lesson refine the result.", "Emma locates the lesson in the official programme and splits it into concepts to master."] },
+      { t: "Emma writes the course", b: ["Full version, or “key concepts” for quick revision.", "Anchored to the student's exam-board spec, with worked examples in exam format.", "For each concept: where it appears in the exam and the trap that costs marks."] },
+      { t: "Mastery check", b: ["Short questions, concept by concept — verdict: secure, fragile or to review.", "Whatever is stuck is re-explained another way, then re-tested until secure."] },
+      { t: "Training under exam conditions", b: ["Exercises in the style and mark tariff of the board's past papers.", "Online, or on paper: the student photographs their handwritten script and uploads it."] },
+      { t: "Marking to the examiner's standard", b: ["Mark-by-mark: method is rewarded, every lost mark is explained.", "Exam-technique errors are named — they are what costs the A*.", "Variants are set until it is solid."] },
+      { t: "Nothing is forgotten", b: ["Fragile points come back automatically for revision.", "Progress is shown per subject: start → current → A★ target.", "Parents can receive the session summary."] },
     ],
-    seeDemo: "▶ Watch a session demo",
+    seeDemo: "▶ Watch the demo",
     whoTitle: "Who it's for",
+    whoHelp: {
+      title: "Who Coach Emma Student is for",
+      body: [
+        "GCSE and A Level students in the UK — in the covered subjects, across Edexcel, AQA and OCR — including private candidates (for example A Level French).",
+        "Families who want the standards of an excellent private tutor, available every evening, at a fraction of the cost — with objective progress tracking.",
+        "Registering a minor requires the consent of a parent or legal guardian, who can follow activity and progress.",
+      ],
+    },
     who: [
-      { ic: "🎓", t: "The A/A* candidate", d: "GCSE or A Level, they have the level but want to secure the last marks: exam technique, constant practice, weak points hunted one by one." },
-      { ic: "📈", t: "The grade climber", d: "From C to A, from B to A*: the concept-level diagnosis finds exactly where it breaks, and the loop doesn't let go until it's secure." },
-      { ic: "👨‍👩‍👧", t: "Parents", d: "A demanding tutor available every evening, a fraction of a private tutor's price — and progress visible session by session." },
+      { ic: "🎓", t: "The A/A* candidate", d: "They have the level and want to secure the final marks: exam technique, constant practice, weak points addressed one by one." },
+      { ic: "📈", t: "The grade climber", d: "From C to A, from B to A*: concept-level diagnosis finds precisely where it breaks, and the working loop doesn't stop before mastery." },
+      { ic: "👨‍👩‍👧", t: "Parents", d: "A demanding, supportive tutor available every evening, at a fraction of a private tutor's price — with progress visible session by session and a log of console connections." },
     ],
-    subjTitle: "Subjects",
-    subjects: [
-      { t: "Mathematics", b: "Edexcel A Level (9MA0)", d: "Courses, clean notation, past-paper exercises, marking of photographed scripts.", tag: "available" },
-      { t: "Economics", b: "Edexcel A Level (9EC0)", d: "KAA + Evaluation essays, diagrams put to work, structured 25-markers.", tag: "available" },
-      { t: "Geography", b: "OCR A Level (H481)", d: "Command words (“assess”, “evaluate”), data-rich case studies, PEEL essays.", tag: "available" },
-      { t: "French · private candidate", b: "AQA A Level (7652)", d: "FR↔EN translations, essays on the set work/film, AQA method — being native isn't enough for the A*.", tag: "available" },
-    ],
-    subjNote: "Emma's voice (spoken coaching) is coming — the same voice as Coach Emma. More subjects and boards will follow.",
-    closeTitle1: "A friend who knows the whole subject.",
-    closeTitle2: "And really wants your ",
-    closeCta: "Create an account", beta: "Private beta access during the test phase.",
+    closeTitle1: "The standards of an excellent tutor.",
+    closeTitle2: "Plus the consistency — all the way to the ",
+    closeCta: "Create an account", beta: "Private beta access during the test phase. Parental consent required at sign-up.",
   },
 };
+
+// « ? » palpitant (mécanique Coach Emma) : cliquer ouvre l'explication.
+function PulseHelp({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="pulse-help inline-flex items-center justify-center rounded-full font-black align-middle ml-3 cursor-pointer"
+      style={{ ...serif, width: 30, height: 30, fontSize: 17, color: EM, background: GOLD_GRAD, border: "none" }}
+    >
+      ?
+    </button>
+  );
+}
+
+function HelpModal({ title, body, onClose }: { title: string; body: string[]; onClose: () => void }) {
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(4,32,24,.55)", backdropFilter: "blur(3px)" }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg bg-white rounded-3xl p-7 relative"
+        style={{ boxShadow: "0 40px 90px -30px rgba(6,78,59,.7)" }}
+      >
+        <button onClick={onClose} aria-label="Fermer" className="absolute top-3 right-3 w-8 h-8 rounded-lg text-lg leading-none text-muted bg-paper hover:bg-line">×</button>
+        <h3 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 22 }}>{title}</h3>
+        <div className="mt-3 space-y-3">
+          {body.map((p, i) => (
+            <p key={i} className="text-[14.5px] leading-relaxed" style={{ color: "#4a463e" }}>{p}</p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Landing() {
   const [lang, setLang] = useLang();
   const [demo, setDemo] = useState(false);
+  const [help, setHelp] = useState<null | "how" | "who">(null);
   const t = L[lang] || L.fr;
 
   return (
@@ -117,10 +205,20 @@ export default function Landing() {
               <div className="text-[11px] font-bold tracking-[0.15em] uppercase" style={{ color: "#9a8f2e" }}>{t.tag}</div>
               <LangToggle lang={lang} setLang={setLang} />
             </div>
-            <h1 style={{ ...serif, fontWeight: 600, color: EM, fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.1, whiteSpace: "pre-line" }} className="mt-3">
-              {t.h1a}<em className="not-italic" style={{ color: "#b58a00" }}>A*</em>
+            <h1 style={{ ...serif, fontWeight: 600, color: EM, fontSize: "clamp(26px, 3vw, 36px)", lineHeight: 1.12, whiteSpace: "pre-line" }} className="mt-3">
+              {t.h1a}<em className="not-italic" style={{ color: "#b58a00" }}>A*</em>{t.h1b}
             </h1>
-            <p className="text-[16px] leading-relaxed mt-4 max-w-[480px]" style={{ color: "#5b574e" }}>{t.sub}</p>
+            <p className="text-[15px] leading-relaxed mt-4 max-w-[520px]" style={{ color: "#5b574e" }}>{t.sub}</p>
+            <div className="mt-4 space-y-2 max-w-[520px]">
+              {t.features.map(([ic, tt, d]) => (
+                <div key={tt} className="flex gap-2.5 items-start">
+                  <span className="text-[15px] leading-6">{ic}</span>
+                  <p className="text-[13.5px] leading-snug" style={{ color: "#5b574e" }}>
+                    <b style={{ color: EM }}>{tt}.</b> {d}
+                  </p>
+                </div>
+              ))}
+            </div>
             <div className="flex flex-wrap items-center gap-3 mt-7">
               <Link href="/login?register=1" className="cta-glow relative overflow-hidden font-extrabold rounded-2xl no-underline" style={{ background: GOLD_GRAD, color: EM, padding: "15px 28px", boxShadow: GLOW_CTA }}>
                 {t.ctaStart}
@@ -153,7 +251,10 @@ export default function Landing() {
 
       {/* ============ COMMENT ÇA MARCHE ============ */}
       <section className="max-w-5xl mx-auto px-5 pt-11 pb-12">
-        <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">{t.howTitle}</h2>
+        <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">
+          {t.howTitle}
+          <PulseHelp onClick={() => setHelp("how")} label={t.howHelp.title} />
+        </h2>
         <div className="cards-grid grid grid-cols-2 gap-3 mt-7">
           {t.steps.map((s, idx, arr) => {
             const last = idx === arr.length - 1;
@@ -174,7 +275,17 @@ export default function Landing() {
                 >
                   {idx + 1}
                 </span>
-                <span className="text-[14px] leading-snug self-center" style={{ color: last ? "#eaf3ee" : "#4a463e" }}>{s}</span>
+                <div>
+                  <p className="text-[14.5px] font-bold leading-snug" style={{ color: last ? "#fff" : EM }}>{s.t}</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {s.b.map((line, i) => (
+                      <li key={i} className="flex gap-1.5 text-[13px] leading-snug" style={{ color: last ? "#cfe6da" : "#5b574e" }}>
+                        <span style={{ color: last ? GOLD : "#b58a00" }}>•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             );
           })}
@@ -189,7 +300,10 @@ export default function Landing() {
       {/* ============ POUR QUI ============ */}
       <section style={{ background: "#fff", borderTop: "1px solid #ece7db", borderBottom: "1px solid #ece7db" }}>
         <div className="max-w-5xl mx-auto px-5 py-11">
-          <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">{t.whoTitle}</h2>
+          <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">
+            {t.whoTitle}
+            <PulseHelp onClick={() => setHelp("who")} label={t.whoHelp.title} />
+          </h2>
           <div className="cards-grid3 grid grid-cols-3 gap-4 mt-7">
             {t.who.map((p) => (
               <div key={p.t} className="lift rounded-2xl p-5" style={{ background: CREAM, border: "1px solid #efeadf", boxShadow: CARD_GLOW }}>
@@ -207,43 +321,28 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ============ MATIÈRES ============ */}
-      <section className="max-w-5xl mx-auto px-5 py-11">
-        <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">{t.subjTitle}</h2>
-        <div className="cards-grid grid grid-cols-2 gap-4 mt-7">
-          {t.subjects.map((s) => (
-            <div key={s.t} className="lift rounded-2xl p-5 bg-white" style={{ border: "1px solid #efeadf", boxShadow: CARD_GLOW }}>
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold" style={{ color: EM }}>{s.t}</h3>
-                <span className="chip-acquis">{s.tag}</span>
-              </div>
-              <p className="font-mono text-[11px] text-faint mt-1">{s.b}</p>
-              <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: "#5b574e" }}>{s.d}</p>
-            </div>
-          ))}
-        </div>
-        <p className="text-[13px] text-faint text-center mt-4">{t.subjNote}</p>
-      </section>
-
-      {/* ============ CTA FINAL ============ */}
-      <section className="max-w-3xl mx-auto px-5 pb-14 text-center">
-        <div className="rounded-3xl bg-white p-10" style={{ border: "1px solid #efeadf", boxShadow: CARD_GLOW }}>
-          <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 27, lineHeight: 1.25 }}>
-            {t.closeTitle1}<br />{t.closeTitle2}<span style={{ color: "#b58a00", fontWeight: 900 }}>A*</span>.
+      {/* ============ CTA FINAL — panneau émeraude ============ */}
+      <section className="max-w-3xl mx-auto px-5 py-14 text-center">
+        <div className="relative overflow-hidden rounded-3xl p-10" style={{ background: "linear-gradient(150deg,#053f30,#0a6a4e)", boxShadow: "0 34px 70px -34px rgba(6,78,59,.75)" }}>
+          <div className="stats-aura" aria-hidden="true" />
+          <h2 className="relative z-10" style={{ ...serif, fontWeight: 600, color: "#eaf3ee", fontSize: 27, lineHeight: 1.25 }}>
+            {t.closeTitle1}<br />{t.closeTitle2}<span style={{ color: GOLD, fontWeight: 900, textShadow: "0 0 18px rgba(250,204,21,.5)" }}>A*</span>.
           </h2>
-          <div className="flex justify-center gap-3 mt-6 flex-wrap">
+          <div className="relative z-10 flex justify-center gap-3 mt-6 flex-wrap">
             <Link href="/login?register=1" className="cta-glow relative overflow-hidden font-extrabold rounded-2xl no-underline" style={{ background: GOLD_GRAD, color: EM, padding: "14px 30px", boxShadow: GLOW_CTA }}>
               {t.closeCta}
             </Link>
-            <button onClick={() => setDemo(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: `1.5px solid ${EM}`, color: EM, background: "none", padding: "13px 26px" }}>
+            <button onClick={() => setDemo(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: "1.5px solid rgba(255,255,255,.75)", color: "#eaf3ee", background: "none", padding: "13px 26px" }}>
               {t.ctaDemo}
             </button>
           </div>
-          <p className="text-xs text-faint mt-5">{t.beta}</p>
+          <p className="relative z-10 text-xs mt-5" style={{ color: "#9fc9b6" }}>{t.beta}</p>
         </div>
       </section>
 
       {demo && <DemoStudio lang={lang} onClose={() => setDemo(false)} />}
+      {help === "how" && <HelpModal title={t.howHelp.title} body={t.howHelp.body} onClose={() => setHelp(null)} />}
+      {help === "who" && <HelpModal title={t.whoHelp.title} body={t.whoHelp.body} onClose={() => setHelp(null)} />}
 
       <style>{`
         @media(max-width:760px){.hero-grid{grid-template-columns:1fr!important}.cards-grid{grid-template-columns:1fr!important}.cards-grid3{grid-template-columns:1fr!important}.stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:18px!important}}
@@ -258,7 +357,10 @@ export default function Landing() {
         .stats-aura{position:absolute;top:-70px;left:28%;width:420px;height:320px;background:radial-gradient(circle,rgba(250,204,21,.20),transparent 60%);pointer-events:none}
         .lift{transition:transform .18s, box-shadow .18s}
         .lift:hover{transform:translateY(-4px)}
-        @media(prefers-reduced-motion:reduce){.cta-glow::after,.hero-aura::after{animation:none}}
+        .pulse-help{animation:pulsehelp 1.8s ease-in-out infinite;box-shadow:0 0 0 0 rgba(250,204,21,.65)}
+        .pulse-help:hover{animation-play-state:paused}
+        @keyframes pulsehelp{0%{box-shadow:0 0 0 0 rgba(250,204,21,.65)}70%{box-shadow:0 0 0 14px rgba(250,204,21,0)}100%{box-shadow:0 0 0 0 rgba(250,204,21,0)}}
+        @media(prefers-reduced-motion:reduce){.cta-glow::after,.hero-aura::after,.pulse-help{animation:none}}
       `}</style>
     </main>
   );

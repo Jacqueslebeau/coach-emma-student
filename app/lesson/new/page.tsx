@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { compressImage } from "@/lib/compressImage";
 import { SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
+import BackLink from "@/components/BackLink";
 
 export default function NewLessonPage() {
   return (
@@ -67,7 +68,8 @@ function NewLesson() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="font-serif font-black text-3xl text-indigo-deep">Nouvelle leçon</h1>
+      <BackLink />
+      <h1 className="font-serif font-black text-3xl text-indigo-deep mt-2">Nouvelle leçon</h1>
       <p className="text-muted mt-2">
         Entre ce que tu as — le titre suffit, mais plus tu en donnes, plus le cours collera à ce que
         ton prof a fait. Emma identifie les concepts du programme de l'exam board.

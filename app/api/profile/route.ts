@@ -17,6 +17,8 @@ export async function GET() {
     baseline_grade: auth.baselineGrade,
     target_grade: auth.targetGrade,
     content_lang: auth.contentLang,
+    parent_email: auth.parentEmail,
+    parent_consent_at: auth.parentConsentAt,
   });
 }
 
@@ -34,6 +36,9 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.target_grade === "string" && GRADES.has(body.target_grade)) updates.target_grade = body.target_grade;
   if (typeof body.first_name === "string" && body.first_name.trim()) updates.first_name = body.first_name.trim().slice(0, 60);
   if (body.content_lang === "en" || body.content_lang === "fr") updates.content_lang = body.content_lang;
+  if (typeof body.parent_email === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.parent_email.trim())) {
+    updates.parent_email = body.parent_email.trim().slice(0, 200);
+  }
   if (!Object.keys(updates).length) return NextResponse.json({ error: "rien à mettre à jour" }, { status: 400 });
 
   const { error } = await auth.sb.from("student_profiles").update(updates).eq("user_id", auth.user.id);
