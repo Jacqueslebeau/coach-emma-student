@@ -78,6 +78,23 @@ function LoginInner() {
     <div className="max-w-md mx-auto py-10">
       <Link href="/" className="text-sm text-faint hover:text-indigo font-semibold">← Back to site</Link>
       <div className="card p-8 mt-3">
+        {/* Start mène ici : l'élève choisit — créer un compte ou se connecter */}
+        <div className="grid grid-cols-2 rounded-xl border border-line overflow-hidden text-sm font-bold mb-5">
+          <button
+            type="button"
+            onClick={() => { setMode("register"); setError(null); setNotice(null); }}
+            className={mode === "register" ? "py-2.5 bg-indigo text-white" : "py-2.5 bg-white text-muted hover:text-indigo"}
+          >
+            Create an account
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("login"); setError(null); setNotice(null); }}
+            className={mode === "login" ? "py-2.5 bg-indigo text-white" : "py-2.5 bg-white text-muted hover:text-indigo"}
+          >
+            Sign in
+          </button>
+        </div>
         <h1 className="font-serif font-black text-2xl text-indigo-deep">
           {mode === "login" ? "Sign in" : "Create an account"}
         </h1>

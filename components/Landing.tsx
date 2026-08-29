@@ -258,9 +258,6 @@ export default function Landing() {
                 <span className="inline-flex items-center justify-center rounded-full text-white" style={{ width: 22, height: 22, background: EM, fontSize: 10, paddingLeft: 2 }}>▶</span>
                 {t.ctaDemo}
               </button>
-              <Link href="/login" className="font-bold underline underline-offset-4 py-3 px-1" style={{ color: EM }}>
-                {t.ctaLogin}
-              </Link>
             </div>
           </div>
           <HeroDemo lang={lang} />

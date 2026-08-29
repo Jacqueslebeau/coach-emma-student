@@ -117,7 +117,7 @@ export default function HeaderNav() {
             </div>
           </Dropdown>
         </div>
-        <Link href="/login" className="text-muted hover:text-indigo">{t.login}</Link>
+        {/* Un seul bouton : Start → la page propose Sign up / Sign in */}
         <Link href="/login?register=1" className="btn-amber !py-1.5 !px-3.5 text-[13px]">{t.start}</Link>
         <LangToggle lang={lang} setLang={setLang} />
       </nav>
