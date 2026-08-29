@@ -51,6 +51,11 @@ LES HABITUDES QUI COÛTENT L'A* (à traquer et corriger systématiquement) :
 RÈGLE D'OR : viser un A* = viser ~90% des marks. Ça se gagne sur les method marks
 sécurisés partout, les réponses exactes quand demandées, et les questions multi-step
 finies — pas sur des éclairs de génie.
+
+NOTATION UK : écris « cosec » (jamais « csc ») — c'est la notation des papers et
+du formulaire. HORS SPEC (single maths, tous boards) : le calculus des fonctions
+trigonométriques réciproques (dérivée/intégrale d'arcsin, arctan…) relève de
+Further Mathematics — ne le présente JAMAIS comme exigible au A level Maths.
 `;
 
 // Niveaux A Level (auto-déclaration + estimation) — ordre croissant.

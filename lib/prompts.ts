@@ -141,6 +141,7 @@ Règles :
 - Questions courtes, réponse tapable dans un champ texte. Pas de QCM : on veut voir SA méthode / son raisonnement.
 - Formule avec les VRAIS command words du board — dès la vérification, il s'habitue au langage de l'examen.
 - Difficulté progressive : la première met en confiance, la DERNIÈRE est une vraie discriminante A* (celle que seuls les meilleurs réussissent).
+- VÉRIFIE CHAQUE ÉNONCÉ AVANT DE LE PUBLIER : résous toi-même la question — l'énoncé doit être mathématiquement/factuellement cohérent (pas de valeurs incompatibles, pas de point qui n'est pas sur la courbe) et la réponse doit tomber proprement.
 - BARÈME OBLIGATOIRE : chaque question porte "marks" et "tariff" — ${subject.kind === "calculation" ? "la répartition M/A mark par mark (ex. « M1: sets up chain rule; A1: correct derivative »)" : "pour les petites questions, 1 point par élément valide ; à partir du seuil de niveaux du board, des NIVEAUX + contenu indicatif (jamais de M1/A1 dans une matière à essais)"}. Les "marks" appartiennent aux ALLOCATIONS RÉELLES du board (voir STRUCTURE) — n'invente jamais une allocation. Pour la discriminante A* finale, tu peux poser un extrait d'une vraie question longue traité en plan (dis-le dans l'énoncé). C'est CE barème que tu utiliseras pour corriger.
 
 ${subject.technique}
@@ -163,7 +164,8 @@ TÂCHE : corrige les réponses de ${firstName || "l'élève"} aux questions de v
 MÉTHODE OBLIGATOIRE (garde-fou justesse) :
 1. Pour CHAQUE question, établis d'abord TOI-MÊME la réponse attendue (résous le calcul / rédige la réponse modèle) et vérifie-la.
 2. NOTE contre le "tariff" fourni avec chaque question, dans la CONVENTION DU BOARD : ${subject.kind === "calculation" ? "mark par mark M/A — dis quel mark est gagné, quel mark est perdu et pourquoi" : "par points pour les petites questions, PAR NIVEAUX (« Level 2, 4/6 — parce que… ») dès le seuil de niveaux — jamais de M1/A1 dans une matière à essais"}. "marks_awarded"/"marks_total" sur chaque item.
-2bis. INTÉGRITÉ DE NOTATION (non négociable) : CHAQUE question reçoit sa notation ET son model answer — aucun item manquant ; la somme de ta lecture du barème = "marks_awarded" ; le verdict est cohérent (full marks → "correct", sinon "partial"/"wrong") ; tu n'accordes aucun point qui n'est pas dans le tariff ; et SÉVÉRITÉ D'EXAMINATEUR : dans le doute, le mark n'est PAS accordé — full marks = réponse réellement irréprochable, la complaisance est une faute.
+2bis. LE BARÈME PUBLIÉ EST INTOUCHABLE : chaque question arrive avec son « BARÈME PUBLIÉ » — tu corriges CONTRE LUI, tel quel. "marks_total" = exactement les marks publiés (jamais un autre total) ; les labels du tariff (M1, A1, B1, niveaux) sont repris À L'IDENTIQUE, même ordre, même intitulé — tu ne fusionnes, n'ajoutes, ne renommes ni ne supprimes AUCUN mark au moment de corriger. Un mark scheme qui change entre la question et la correction détruit la confiance de l'élève.
+2ter. INTÉGRITÉ DE NOTATION : CHAQUE question reçoit sa notation ET son model answer — aucun item manquant ; le verdict est cohérent (full marks → "correct", sinon "partial"/"wrong") ; et SÉVÉRITÉ D'EXAMINATEUR : un critère du tariff non explicitement satisfait par SA copie = mark non accordé ; full marks = réponse réellement irréprochable, la complaisance est une faute.
 3. Compare avec sa réponse : accepte les formulations équivalentes et les méthodes alternatives valides — sauf si le command word l'interdisait.
 4. Si la réponse est fausse ou partielle, NOMME la méprise exacte en citant SES mots — pas juste "faux".
 5. Juge AUSSI la technique d'examen : command word respecté ? niveau de détail attendu ? format demandé ?
@@ -466,7 +468,8 @@ export function formatAnswers(questions: QuizQuestion[], answers: { id: string; 
   return questions
     .map((q) => {
       const a = answers.find((x) => x.id === q.id);
-      return `QUESTION ${q.id} [concept: ${q.concept_key}] : ${q.question}\nSA RÉPONSE : ${a?.answer?.trim() || "(pas de réponse)"}`;
+      const bareme = q.marks ? `\nBARÈME PUBLIÉ : ${q.marks} marks — ${q.tariff || "(non précisé)"}` : "";
+      return `QUESTION ${q.id} [concept: ${q.concept_key}] : ${q.question}${bareme}\nSA RÉPONSE : ${a?.answer?.trim() || "(pas de réponse)"}`;
     })
     .join("\n\n");
 }

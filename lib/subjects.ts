@@ -114,12 +114,12 @@ STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and 
     {
       board: "aqa", label: "AQA", spec: "7136",
       structure: `
-STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. ALLOCATIONS RÉELLES AQA : 2, 4, 9, 15 et 25 marks — AUCUNE autre (jamais de question à 3, 5, 6 ou 8 marks). En diagnostic rapide, utilise 2 et 4 marks ; 9/15/25 = questions longues notées PAR NIVEAUX. COMMAND WORDS AQA ÉCO : Define, Calculate, Explain, Analyse, Assess, Evaluate, To what extent — « Examine » n'existe PAS chez AQA. AQA note par NIVEAUX holistiques.`,
+STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. N'emploie JAMAIS la nomenclature « Theme 1/2/3/4 » (c'est Edexcel) : chez AQA on dit section 4.1.x / 4.2.x ou le nom du chapitre. ALLOCATIONS RÉELLES AQA : 2, 4, 9, 15 et 25 marks — AUCUNE autre (jamais de question à 3, 5, 6 ou 8 marks). En diagnostic rapide, utilise 2 et 4 marks ; 9/15/25 = questions longues notées PAR NIVEAUX. COMMAND WORDS AQA ÉCO : Define, Calculate, Explain, Analyse, Assess, Evaluate, To what extent — « Examine » n'existe PAS chez AQA. AQA note par NIVEAUX holistiques.`,
     },
     {
       board: "ocr", label: "OCR", spec: "H460",
       structure: `
-STRUCTURE OCR H460 : Paper 1 Microeconomics ; Paper 2 Macroeconomics ; Paper 3 Themes in economics — 2h, 80 marks chacun. Mélange de questions courtes, réponses sur données et essais longs (20-25 marks) exigeant analyse ET évaluation ; le jugement final doit s'appuyer sur un critère explicite (magnitude, horizon temporel, hypothèses).`,
+STRUCTURE OCR H460 : Paper 1 Microeconomics ; Paper 2 Macroeconomics ; Paper 3 Themes in economics — 2h, 80 marks chacun. N'emploie JAMAIS la nomenclature « Theme 1/2/3/4 » d'Edexcel : chez OCR, désigne les contenus par leur nom de chapitre/section. Mélange de questions courtes, réponses sur données et essais longs (20-25 marks) exigeant analyse ET évaluation ; le jugement final doit s'appuyer sur un critère explicite (magnitude, horizon temporel, hypothèses).`,
     },
   ],
   geo: [
