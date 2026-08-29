@@ -10,6 +10,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import RichText from "@/components/RichText";
+import EmmaFace from "@/components/EmmaFace";
+import StudentFace from "@/components/StudentFace";
 import type { Lang } from "@/lib/i18n";
 
 const EM = "#064E3B";
@@ -20,20 +22,25 @@ const serif = { fontFamily: "Fraunces, Georgia, serif" } as const;
 type Shot = { cap: string; secs: number; scene: React.ReactNode };
 export type Chapter = "product" | "tutoring" | "coaching";
 
+// LE visage de Coach Emma — le même avatar animé que Coach Emma, pour que
+// tout le monde sache à quoi elle ressemble (aucune surprise).
 function EmmaMark() {
   return (
-    <div className="flex items-center justify-center gap-2">
-      <span className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: EM, border: `3px solid ${GOLD}` }}>
-        <span style={{ ...serif, color: "#FAF8F3", fontSize: 26, fontWeight: 900 }}>E</span>
-      </span>
+    <div className="flex items-center justify-center">
+      <EmmaFace size={112} state="speaking" />
     </div>
   );
 }
 
+// Bulles de dialogue AVEC AVATARS : l'avatar de Coach Emma pose la question,
+// l'avatar de l'ado répond — on voit que Coach Emma est un avatar.
 function Bubble({ who, name, children }: { who: "emma" | "max"; name?: string; children: React.ReactNode }) {
+  const avatar =
+    who === "emma" ? <EmmaFace size={44} state="speaking" /> : <StudentFace size={44} state="speaking" />;
   return (
-    <div className={who === "max" ? "flex justify-end" : "flex justify-start"}>
-      <div className="max-w-[92%]">
+    <div className={who === "max" ? "flex justify-end items-end gap-2" : "flex justify-start items-end gap-2"}>
+      {who === "emma" && <div className="shrink-0 mb-0.5">{avatar}</div>}
+      <div className="max-w-[80%]">
         {name && (
           <p className={`text-[10.5px] font-bold uppercase tracking-wider text-faint mb-0.5 ${who === "max" ? "text-right" : ""}`}>{name}</p>
         )}
@@ -48,6 +55,7 @@ function Bubble({ who, name, children }: { who: "emma" | "max"; name?: string; c
           {children}
         </div>
       </div>
+      {who === "max" && <div className="shrink-0 mb-0.5">{avatar}</div>}
     </div>
   );
 }
