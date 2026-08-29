@@ -53,7 +53,10 @@ ${GUARDRAILS}
 ${langRules(subject)}
 
 ${notationRule(subject)}
-JUSTESSE ABSOLUE (garde-fou) : avant d'affirmer un fait, un résultat ou un jugement, vérifie-le toi-même (refais le calcul, contrôle la définition, la date, la citation). Une affirmation fausse et confiante est PIRE que pas d'aide. Si un point est incertain ou qu'un énoncé est ambigu, dis-le au lieu d'inventer.
+JUSTESSE ABSOLUE (garde-fou) : avant d'affirmer un fait, un résultat ou un jugement, vérifie-le toi-même (refais le calcul, contrôle la définition, la date, la citation). Une affirmation fausse et confiante est PIRE que pas d'aide. Si un point est incertain ou qu'un énoncé est ambigu, dis-le au lieu d'inventer. Trois règles NON NÉGOCIABLES :
+1. RÉFÉRENCES DE SPEC : ne cite un code de section (ex. « 1.3.2 », « 4.1.5 ») que si tu en es CERTAIN. Dans le doute, désigne le thème par son NOM en toutes lettres — un code inventé est une faute grave, un nom de thème n'est jamais faux.
+2. CHIFFRES ET DONNÉES (case studies, taux, dates, statistiques) : n'avance un chiffre précis que si tu en es sûr ; sinon donne un ordre de grandeur EXPLICITEMENT approximatif (« de l'ordre de 2 m/an en moyenne, avec des pics ponctuels bien plus élevés ») — jamais un chiffre exceptionnel présenté comme un taux courant.
+3. FORMATS D'ÉPREUVE : seuls les formats listés dans la STRUCTURE de ton board existent. N'invente JAMAIS une tâche, une section ou un paper qui n'y figure pas ; si l'élève en demande un, dis-lui qu'il n'existe pas dans SON board et redirige vers le format réel.
 
 MISSION : un A* = maîtrise du contenu × technique d'examen × pratique constante en conditions d'examen. Tu entraînes les trois, tout le temps.`;
 }
@@ -106,8 +109,8 @@ export function courseSystem(firstName: string, style: TutorStyle, subject: Subj
 TÂCHE : écris le cours de la leçon, découpé par concept, dans l'ordre logique d'apprentissage.
 
 MODE : ${mode === "full"
-    ? `COURS COMPLET — pour chaque concept : l'idée expliquée simplement (avec une intuition ou une image mentale), les termes exacts, UN exemple travaillé en style examen, et « à l'examen » : sous quel command word / format ce concept tombe, où sont les marks, le piège classique qui les fait perdre.`
-    : `CONCEPTS CLÉS — révision rapide : pour chaque concept, l'essentiel en quelques lignes percutantes : ce qu'il faut retenir, quand l'utiliser, le réflexe d'examen (command word + où sont les marks), le piège n°1.`}
+    ? `COURS COMPLET — pour chaque concept : l'idée expliquée simplement (avec une intuition ou une image mentale), les termes exacts, UN exemple travaillé en style examen, « à l'examen » : sous quel command word / format ce concept tombe, où sont les marks, le piège classique qui les fait perdre — et une ligne « A* edge » : la nuance de précision qui sépare la bonne réponse de la réponse à full marks.`
+    : `CONCEPTS CLÉS — révision rapide : pour chaque concept, l'essentiel en quelques lignes percutantes : ce qu'il faut retenir, quand l'utiliser, le réflexe d'examen (command word + où sont les marks), le piège n°1 — et une ligne « A* edge » : ce que le candidat A* fait en plus.`}
 
 ${subject.technique}
 
@@ -135,7 +138,8 @@ Règles :
 - Couvre TOUS les concepts listés (chaque concept a au moins une question ; les plus importants peuvent en avoir deux).
 - Questions courtes, réponse tapable dans un champ texte. Pas de QCM : on veut voir SA méthode / son raisonnement.
 - Formule avec les VRAIS command words du board — dès la vérification, il s'habitue au langage de l'examen.
-- Difficulté progressive : la première met en confiance, la dernière est niveau grade A.
+- Difficulté progressive : la première met en confiance, la DERNIÈRE est une vraie discriminante A* (celle que seuls les meilleurs réussissent).
+- BARÈME OBLIGATOIRE : chaque question porte "marks" (1 à 4) et "tariff" — la répartition mark par mark comme un vrai mark scheme (${subject.kind === "calculation" ? "ex. « M1: sets up chain rule; A1: correct derivative »" : "ex. « 1: precise definition; 1: applied to the context; 1: developed chain of reasoning »"}). C'est CE barème que tu utiliseras pour corriger.
 
 ${subject.technique}
 
@@ -143,7 +147,7 @@ CONCEPTS (garde exactement ces keys) :
 ${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
-{ "questions": [ { "id": "q1", "concept_key": "...", "question": "..." } ] }`;
+{ "questions": [ { "id": "q1", "concept_key": "...", "question": "...", "marks": 2, "tariff": "M1: ... ; A1: ..." } ] }`;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,9 +160,13 @@ TÂCHE : corrige les réponses de ${firstName || "l'élève"} aux questions de v
 
 MÉTHODE OBLIGATOIRE (garde-fou justesse) :
 1. Pour CHAQUE question, établis d'abord TOI-MÊME la réponse attendue (résous le calcul / rédige la réponse modèle) et vérifie-la.
-2. Compare ensuite avec sa réponse : accepte les formulations équivalentes et les méthodes alternatives valides — sauf si le command word l'interdisait.
-3. Si la réponse est fausse ou partielle, NOMME la méprise ou l'erreur de méthode exacte — pas juste "faux".
-4. Juge AUSSI la technique d'examen : command word respecté ? niveau de détail attendu ? format demandé ?
+2. NOTE MARK PAR MARK contre le "tariff" fourni avec chaque question : dis quel mark est gagné, quel mark est perdu et POURQUOI — exactement comme un examinateur. "marks_awarded"/"marks_total" sur chaque item.
+3. Compare avec sa réponse : accepte les formulations équivalentes et les méthodes alternatives valides — sauf si le command word l'interdisait.
+4. Si la réponse est fausse ou partielle, NOMME la méprise exacte en citant SES mots — pas juste "faux".
+5. Juge AUSSI la technique d'examen : command word respecté ? niveau de détail attendu ? format demandé ?
+6. ADAPTE LE REGISTRE AU NIVEAU RÉVÉLÉ PAR SES RÉPONSES :
+   - S'il a presque tout juste : ne réexplique RIEN de ce qu'il maîtrise. Ton feedback l'ÉTIRE vers l'A* — la nuance de précision qui manque, la version la plus dure de la question, le réflexe d'examinateur supérieur.
+   - S'il est en difficulté : méprise nommée, ré-explication courte, un pas à la fois.
 
 ${subject.technique}
 
@@ -167,14 +175,14 @@ VERDICTS par concept :
 - "fragile" : proche mais méthode hésitante, imprécision, ou une juste une fausse.
 - "non_acquis" : méthode absente ou méprise de fond. Réponse vide = non_acquis.
 
-Feedback : dans ton style, 2-3 phrases par question — où c'est juste, où ça casse, jamais humiliant. "encouragement" : une phrase honnête sur l'ensemble (pas de flatterie creuse).
+Feedback : dans ton style, 2-3 phrases par question — où c'est juste, où ça casse, jamais humiliant. "encouragement" : une phrase honnête sur l'ensemble (pas de flatterie creuse). "model_answer" : la réponse à FULL MARKS, impeccable, celle qu'écrirait le candidat A*.
 
 CONCEPTS (rends un verdict pour CHAQUE key testée) :
 ${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
 {
-  "items": [ { "id": "q1", "verdict": "correct|partial|wrong", "feedback": "...", "misconception": "… ou null", "model_answer": "réponse modèle courte" } ],
+  "items": [ { "id": "q1", "verdict": "correct|partial|wrong", "marks_awarded": 1, "marks_total": 2, "mark_by_mark": "M1 ✓ (…) ; A1 ✗ (…)", "feedback": "...", "misconception": "… ou null", "model_answer": "réponse à full marks" } ],
   "concepts": [ { "concept_key": "...", "status": "acquis|fragile|non_acquis", "note": "une phrase" } ],
   "encouragement": "..."
 }`;
@@ -233,13 +241,14 @@ ${subject.technique}
 Règles :
 ${exerciseShape(subject)}
 - Chaque exercice : "command_word", "question_type", "marks", "time_min" (budget temps réaliste), et "exam_expectation" en ${teachLangName(subject)} : ce que l'examinateur attend concrètement pour donner TOUS les marks (méthode/structure à montrer, où sont les marks, le piège du barème).
-- Vérifie toi-même que chaque exercice a une réponse/un corrigé propre.
+- BARÈME OBLIGATOIRE : "mark_scheme" pour chaque exercice — ${subject.kind === "calculation" ? "la répartition M/A/B mark par mark (ex. « M1: separates variables; A1: correct integral; A1: applies limits, exact value »)" : "les niveaux du barème + le contenu indicatif (ce qu'un Level 3 contient que le Level 2 n'a pas)"} — exactement comme la colonne mark scheme d'un vrai past paper. C'est CE barème qui servira à la correction.
+- Vérifie toi-même que chaque exercice a une réponse/un corrigé propre et que le barème totalise bien "marks".
 
 CONCEPTS (keys autorisées) :
 ${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}` + jsonRule(subject) + `
 
 FORMAT :
-{ "exercises": [ { "id": "e1", "concept_keys": ["..."], "statement": "...", "marks": 4, "command_word": "...", "question_type": "...", "time_min": 5, "exam_expectation": "..." } ] }`;
+{ "exercises": [ { "id": "e1", "concept_keys": ["..."], "statement": "...", "marks": 4, "command_word": "...", "question_type": "...", "time_min": 5, "exam_expectation": "...", "mark_scheme": "M1: … ; A1: … ; A1: …" } ] }`;
 }
 
 // ---------------------------------------------------------------------------
@@ -256,7 +265,7 @@ ${subject.technique}
 
 MÉTHODE OBLIGATOIRE (garde-fou justesse) :
 1. Établis d'abord TOI-MÊME le corrigé de chaque exercice et vérifie-le.
-2. Note ensuite sa copie selon la logique du board (${subject.kind === "calculation" ? "M/A/B marks — la bonne méthode garde ses M marks même avec une erreur de calcul, dis-le explicitement" : "niveaux et Assessment Objectives — dis quel AO gagne et quel AO manque"}).
+2. Note ensuite sa copie CONTRE LE "mark_scheme" fourni avec chaque exercice, mark par mark (${subject.kind === "calculation" ? "M/A/B marks — la bonne méthode garde ses M marks même avec une erreur de calcul, dis-le explicitement, et dis quel mark précis du barème est gagné/perdu" : "niveaux et Assessment Objectives — dis à quel niveau la réponse se situe, quel AO gagne et quel AO manque"}).
 3. Contrôle la TECHNIQUE D'EXAMEN autant que le fond : command word respecté ? structure attendue ? format/limites respectés ? Signale chaque habitude de la liste « qui coûtent l'A* » repérée — c'est l'or de cette correction.
 4. Pour chaque erreur, NOMME la méprise ou le défaut de méthode exact et reprends le concept fautif avec un mini-exemple.
 5. "model_solution" : le corrigé propre, présenté comme une copie parfaite au mark scheme, avec la répartition des marks/critères.

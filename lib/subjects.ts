@@ -75,6 +75,8 @@ CE QUE NOTE L'EXAMINATEUR :
 
 CE QUI COÛTE L'A* AU CANDIDAT LIBRE : essais hors méthode (brillants mais non structurés selon le barème du board), traductions paraphrasées, dépassement des limites de mots, œuvre/film mal choisis ou connus superficiellement (citations approximatives), speaking : ne pas défendre l'IRP avec des sources.
 
+GARDE-FOU ŒUVRES (absolu) : n'invente JAMAIS un fait d'intrigue, un personnage, un chapitre ou une CITATION d'une œuvre. Tu ne cites entre guillemets que si tu es certain du mot à mot ; sinon tu décris la scène ou l'idée SANS guillemets et tu invites l'élève à retrouver le passage exact dans son édition. Une citation inventée à l'examen est éliminatoire pour la crédibilité.
+
 SPÉCIFICITÉ : les consignes et essais sont EN FRANÇAIS ; les traductions travaillent les DEUX sens. Le tuteur explique la MÉTHODE en français et entraîne au format exact des papers.`;
 
 // ---------------------------------------------------------------------------
@@ -91,7 +93,7 @@ STRUCTURE EDEXCEL 9MA0 : Paper 1 & Paper 2 Pure Mathematics (2h, 100 marks chacu
     {
       board: "aqa", label: "AQA", spec: "7357",
       structure: `
-STRUCTURE AQA 7357 : Paper 1 Pure (2h, 100 marks) ; Paper 2 Pure + Mechanics (2h, 100 marks) ; Paper 3 Pure + Statistics (2h, 100 marks — avec le Large Data Set). AQA ouvre souvent par quelques questions à choix multiple (1-2 marks) : rapides, ne pas y perdre de temps. Mark scheme M/A/B/ft ; "Fully justify" = chaque étape écrite.`,
+STRUCTURE AQA 7357 (FAITS VÉRIFIÉS) : 3 papers de 2h, 100 marks chacun. Paper 1 : PURE uniquement. Paper 2 : Pure + MÉCANIQUE. Paper 3 : Pure + STATISTIQUES (avec le Large Data Set). Ne place JAMAIS la mécanique dans le Paper 3 ni les stats dans le Paper 2. Mark scheme M/A/B/ft ; "Fully justify" = chaque étape écrite.`,
     },
     {
       board: "ocr", label: "OCR", spec: "H240",
@@ -103,12 +105,12 @@ STRUCTURE OCR (Mathematics A) H240 : Paper 1 Pure (2h, 100 marks) ; Paper 2 Pure
     {
       board: "edexcel", label: "Edexcel", spec: "9EC0",
       structure: `
-STRUCTURE EDEXCEL 9EC0 (Economics A) : Paper 1 Markets and business behaviour (thèmes 1 & 3) ; Paper 2 The national and global economy (thèmes 2 & 4) ; Paper 3 synoptique — 2h, 100 marks chacun. Questions de 5 à 25 marks sur données ; le 25-marker (choix entre deux) se gagne en KAA + E avec diagramme exploité. Grille AO1-AO4 par niveaux.`,
+STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and business behaviour = MICRO (thèmes 1 & 3) ; Paper 2 The national and global economy = MACRO (thèmes 2 & 4) ; Paper 3 synoptique — 2h, 100 marks chacun. Références spec au format thème.section.item (ex. 1.3.2 = thème 1) : le premier chiffre EST le thème — jamais de code « 3.x » pour un contenu du thème 1, et ne cite un code précis que si tu en es CERTAIN, sinon nomme le thème en toutes lettres. Le 25-marker (choix entre deux) se gagne en KAA + E avec diagramme exploité. Grille AO1-AO4 par niveaux.`,
     },
     {
       board: "aqa", label: "AQA", spec: "7136",
       structure: `
-STRUCTURE AQA 7136 : Paper 1 Markets and market failure ; Paper 2 National and international economy ; Paper 3 Economic principles and issues (30 QCM + étude de cas) — 2h, 80 marks chacun. Formats clés : 9-markers (chaîne d'analyse), 15-markers, 25-markers (essai au choix, évaluation substantielle + jugement final). AQA note par NIVEAUX holistiques : une bonne chaîne logique complète bat une liste de points.`,
+STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. Formats clés : 9-markers (chaîne d'analyse), 15-markers, 25-markers (essai au choix, évaluation substantielle + jugement final). AQA note par NIVEAUX holistiques.`,
     },
     {
       board: "ocr", label: "OCR", spec: "H460",
@@ -125,7 +127,7 @@ STRUCTURE OCR H481 : Paper 1 Physical systems (1h30, 66 marks) ; Paper 2 Human i
     {
       board: "aqa", label: "AQA", spec: "7037",
       structure: `
-STRUCTURE AQA 7037 : Paper 1 Physical geography (2h30, 120 marks) ; Paper 2 Human geography (2h30, 120 marks) ; + NEA (20%). Formats clés : 4/6 marks (précis, pas d'essai), 9-markers (analyse appliquée au stimulus) et essais de 20 marks (argumentation équilibrée + conclusion qui tranche). AQA valorise fortement les liens explicites au matériel fourni (figures, cartes).`,
+STRUCTURE AQA 7037 (FAITS VÉRIFIÉS) : Paper 1 Physical geography (2h30, 120 marks) ; Paper 2 Human geography (2h30, 120 marks) ; + NEA (20%). AQA n'a PAS de Paper 3 écrit — ne l'invente jamais. Formats clés : 4/6 marks (précis, pas d'essai), 9-markers (analyse appliquée, souvent synoptiques entre option et cœur) et essais de 20 marks notés AO1 10 + AO2 10 (argumentation équilibrée + conclusion qui tranche). AQA valorise fortement les liens explicites au matériel fourni (figures, cartes).`,
     },
     {
       board: "edexcel", label: "Edexcel", spec: "9GE0",
@@ -137,12 +139,15 @@ STRUCTURE EDEXCEL 9GE0 : Paper 1 (physique, 2h15, 105 marks) ; Paper 2 (humaine,
     {
       board: "aqa", label: "AQA", spec: "7652",
       structure: `
-STRUCTURE AQA 7652 : Paper 1 Listening, reading and writing (2h30, 100 marks — dont TRADUCTIONS FR↔EN et résumé à nombre de mots strict) ; Paper 2 Writing (2h, 80 marks — 2 essais d'environ 300 mots sur œuvre littéraire et/ou film étudiés, notés AO3 langue + AO4 analyse) ; Paper 3 Speaking (stimulus card + Independent Research Project). Candidat libre : l'inscription inclut l'épreuve orale dans un centre agréé.`,
+STRUCTURE AQA 7652 (FAITS VÉRIFIÉS) : Paper 1 Listening, reading and writing (2h30, 100 marks) ; Paper 2 Writing (2h, 80 marks — 2 essais d'environ 300 mots sur œuvre littéraire et/ou film étudiés, notés langue + analyse critique) ; Paper 3 Speaking (stimulus card + Independent Research Project).
+TÂCHES EXIGIBLES AU PAPER 1 — LISTE FERMÉE : compréhension de l'oral et de l'écrit (réponses en français), TRADUCTION anglais→français ET français→anglais, et RÉSUMÉ (écoute ou lecture) à 90-100 mots STRICT (au-delà de 100 mots, la suite n'est pas lue). AUCUNE autre tâche n'existe : n'invente jamais un format.
+Candidat libre : l'inscription inclut l'épreuve orale dans un centre agréé.`,
     },
     {
       board: "edexcel", label: "Edexcel", spec: "9FR0",
       structure: `
-STRUCTURE EDEXCEL 9FR0 : Paper 1 Listening, reading and translation into English (2h, 80 marks) ; Paper 2 Written response to works and translation into French (2h40, 120 marks — traduction EN→FR + 2 essais sur œuvres/films, ~300 mots conseillés chacun) ; Paper 3 Speaking (discussion sur thème + Independent Research Project). Les deux essais du Paper 2 pèsent lourd : méthode dissertation stricte, citations précises.`,
+STRUCTURE EDEXCEL 9FR0 (FAITS VÉRIFIÉS) : Paper 1 Listening, reading and translation (2h, 80 marks — compréhension orale et écrite + TRADUCTION français→anglais UNIQUEMENT) ; Paper 2 Written response to works and translation (2h40, 120 marks — Section A : traduction anglais→français de 20 marks ; Sections B/C : 2 essais sur œuvres/films de 50 marks chacun, 300-350 mots) ; Paper 3 Speaking (discussion + Independent Research Project).
+ATTENTION — LISTE FERMÉE : il n'y a PAS d'épreuve de résumé chez Edexcel. Si l'élève travaille « le résumé », dis-lui clairement que ce format n'existe pas dans SON board et entraîne-le sur les tâches réelles (compréhension, traductions, essais).`,
     },
   ],
 };

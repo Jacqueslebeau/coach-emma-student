@@ -29,11 +29,16 @@ export type QuizQuestion = {
   id: string;
   concept_key: string;
   question: string;
+  marks?: number;      // barème de la question (mark scheme dès le diagnostic)
+  tariff?: string;     // répartition mark par mark (ex. "M1: … ; A1: …")
 };
 
 export type QuizGradeItem = {
   id: string;
   verdict: "correct" | "partial" | "wrong";
+  marks_awarded?: number;
+  marks_total?: number;
+  mark_by_mark?: string; // lecture examinateur du tariff (M1 ✓ ; A1 ✗ …)
   feedback: string;
   misconception: string | null;
   model_answer: string;
@@ -66,6 +71,7 @@ export type Exercise = {
   question_type?: string;   // fluency | standard | multi-step | show-that | proof | modelling
   time_min?: number;        // budget temps examen (~marks + 1)
   exam_expectation?: string; // ce que l'examinateur attend pour donner tous les marks
+  mark_scheme?: string;     // barème mark par mark / niveaux, comme un vrai past paper
   method_note?: string;     // (legacy) où sont les method marks
 };
 
