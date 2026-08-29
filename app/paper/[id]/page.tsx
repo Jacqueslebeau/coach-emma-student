@@ -22,6 +22,33 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveLink, setDriveLink] = useState<string | null>(null);
+  const [driveMsg, setDriveMsg] = useState<string | null>(null);
+
+  async function saveToDrive() {
+    setDriveBusy(true); setDriveMsg(null);
+    try {
+      const r = await fetch("/api/google/save-paper", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ attempt_id: id }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 428 || d.error === "not_connected") {
+        setDriveMsg("Connect your Google Drive first — from the dashboard, Integrations section.");
+      } else if (r.status === 503) {
+        setDriveMsg("Google Drive integration is coming very soon.");
+      } else if (!r.ok) {
+        throw new Error(d.error || "Drive save failed");
+      } else {
+        setDriveLink(d.link);
+      }
+    } catch (e) {
+      setDriveMsg((e as Error).message);
+    } finally {
+      setDriveBusy(false);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/attempts/${id}`)
@@ -47,6 +74,17 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           <button onClick={() => window.print()} className="btn-ghost !py-2 !px-4 text-[13.5px]">
             🖨️ Download / print the blank paper
           </button>
+          {data?.attempt.result && (
+            driveLink || (data.attempt.result as { drive_link?: string }).drive_link ? (
+              <a href={driveLink || (data.attempt.result as { drive_link?: string }).drive_link} target="_blank" rel="noreferrer" className="btn-ghost !py-2 !px-4 text-[13.5px]">
+                📁 Open in Google Drive
+              </a>
+            ) : (
+              <button onClick={saveToDrive} disabled={driveBusy} className="btn-ghost !py-2 !px-4 text-[13.5px]">
+                {driveBusy ? "Saving…" : "📁 Save to Google Drive"}
+              </button>
+            )
+          )}
           {!mark && data.lesson && (
             <Link href={`/lesson/${data.lesson.id}`} className="btn-primary !py-2 !px-4 text-[13.5px]">
               Answer online →
@@ -54,6 +92,8 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           )}
         </div>
       </div>
+
+      {driveMsg && <p className="no-print text-sm text-learning font-semibold mt-2">{driveMsg}</p>}
 
       {/* ============ EN-TÊTE FAÇON PAPER ============ */}
       <div className="card p-6 mt-4 paper-sheet">

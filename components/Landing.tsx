@@ -180,6 +180,8 @@ function PulseHelp({ onClick, label }: { onClick: () => void; label: string }) {
   );
 }
 
+// La fiche du « ? » : ÉMERAUDE premium (halo doré, filet or, texte menthe) —
+// c'est elle qui porte le vert, pas la section.
 function HelpModal({ title, body, onClose }: { title: string; body: string[]; onClose: () => void }) {
   return (
     <div
@@ -189,15 +191,28 @@ function HelpModal({ title, body, onClose }: { title: string; body: string[]; on
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg bg-white rounded-3xl p-7 relative"
-        style={{ boxShadow: "0 40px 90px -30px rgba(6,78,59,.7)" }}
+        className="w-full max-w-lg rounded-3xl p-8 relative overflow-hidden"
+        style={{ background: "linear-gradient(150deg,#04382b,#0a6a4e 88%)", boxShadow: "0 40px 90px -30px rgba(2,20,14,.85)" }}
       >
-        <button onClick={onClose} aria-label="Fermer" className="absolute top-3 right-3 w-8 h-8 rounded-lg text-lg leading-none text-muted bg-paper hover:bg-line">×</button>
-        <h3 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 22 }}>{title}</h3>
-        <div className="mt-3 space-y-3">
-          {body.map((p, i) => (
-            <p key={i} className="text-[14.5px] leading-relaxed" style={{ color: "#4a463e" }}>{p}</p>
-          ))}
+        <div className="stats-aura" aria-hidden="true" />
+        <button onClick={onClose} aria-label="Close" className="absolute top-3 right-3 w-8 h-8 rounded-lg text-lg leading-none text-white/80 bg-white/10 hover:bg-white/20 z-10">×</button>
+        <div className="relative z-10">
+          <span
+            className="inline-flex items-center justify-center rounded-full font-black"
+            style={{ ...serif, width: 34, height: 34, fontSize: 19, color: EM, background: GOLD_GRAD, boxShadow: "0 8px 22px -6px rgba(250,204,21,.75)" }}
+          >
+            ?
+          </span>
+          <h3 className="mt-3" style={{ ...serif, fontWeight: 600, color: "#f3f8f5", fontSize: 24, lineHeight: 1.2 }}>{title}</h3>
+          <div className="mt-2 h-[3px] w-14 rounded-full" style={{ background: GOLD_GRAD, boxShadow: "0 0 14px rgba(250,204,21,.55)" }} />
+          <div className="mt-4 space-y-3.5">
+            {body.map((p, i) => (
+              <p key={i} className="flex gap-2.5 text-[14.5px] leading-relaxed" style={{ color: "#d5e8dd" }}>
+                <span style={{ color: GOLD }} className="shrink-0">✦</span>
+                <span>{p}</span>
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -265,54 +280,44 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ============ COMMENT ÇA MARCHE — bande émeraude premium ============ */}
-      <section className="relative overflow-hidden" style={{ background: "linear-gradient(150deg,#04382b,#0a6a4e 88%)" }}>
-        <div className="stats-aura" aria-hidden="true" />
-        <div className="how-aura" aria-hidden="true" />
-        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-12 pb-14">
-          <h2 style={{ ...serif, fontWeight: 600, color: "#f3f8f5", fontSize: 30 }} className="text-center">
-            {t.howTitle}
-            <PulseHelp onClick={() => setHelp("how")} label={t.howHelp.title} />
-          </h2>
-          <div className="mx-auto mt-3 h-[3px] w-16 rounded-full" style={{ background: GOLD_GRAD, boxShadow: "0 0 16px rgba(250,204,21,.6)" }} />
-          <div className="cards-grid grid grid-cols-2 gap-4 mt-8">
-            {t.steps.map((s, idx) => (
-              <div
-                key={idx}
-                className="lift flex gap-3.5 items-start rounded-2xl"
-                style={{
-                  padding: 20,
-                  background: "rgba(255,255,255,.055)",
-                  border: "1px solid rgba(255,255,255,.14)",
-                  backdropFilter: "blur(2px)",
-                  boxShadow: "0 24px 50px -34px rgba(0,0,0,.55)",
-                }}
+      {/* ============ COMMENT ÇA MARCHE — blanc, comme le reste de la page ;
+           le « ? » ouvre la fiche VERTE bien designée ============ */}
+      <section className="max-w-5xl mx-auto px-5 pt-11 pb-12">
+        <h2 style={{ ...serif, fontWeight: 600, color: EM, fontSize: 30 }} className="text-center">
+          {t.howTitle}
+          <PulseHelp onClick={() => setHelp("how")} label={t.howHelp.title} />
+        </h2>
+        <div className="cards-grid grid grid-cols-2 gap-4 mt-7">
+          {t.steps.map((s, idx) => (
+            <div
+              key={idx}
+              className="lift flex gap-3.5 items-start rounded-2xl bg-white"
+              style={{ padding: 20, border: "1px solid #efeadf", boxShadow: CARD_GLOW }}
+            >
+              <span
+                className="inline-flex items-center justify-center flex-none rounded-xl font-extrabold"
+                style={{ ...serif, fontSize: 16, color: EM, background: GOLD_GRAD, width: 34, height: 34, boxShadow: "0 8px 20px -6px rgba(250,204,21,.75)" }}
               >
-                <span
-                  className="inline-flex items-center justify-center flex-none rounded-xl font-extrabold"
-                  style={{ ...serif, fontSize: 16, color: EM, background: GOLD_GRAD, width: 34, height: 34, boxShadow: "0 8px 20px -6px rgba(250,204,21,.75)" }}
-                >
-                  {idx + 1}
-                </span>
-                <div>
-                  <p className="text-[15px] font-bold leading-snug text-white">{s.t}</p>
-                  <ul className="mt-2 space-y-1.5">
-                    {s.b.map((line, i) => (
-                      <li key={i} className="flex gap-2 text-[13px] leading-snug" style={{ color: "#c8e2d5" }}>
-                        <span style={{ color: GOLD }}>✦</span>
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {idx + 1}
+              </span>
+              <div>
+                <p className="text-[15px] font-bold leading-snug" style={{ color: EM }}>{s.t}</p>
+                <ul className="mt-2 space-y-1.5">
+                  {s.b.map((line, i) => (
+                    <li key={i} className="flex gap-2 text-[13px] leading-snug" style={{ color: "#5b574e" }}>
+                      <span style={{ color: "#b58a00" }}>✦</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <button onClick={() => setChooser(true)} className="cta-glow relative overflow-hidden font-extrabold rounded-2xl cursor-pointer" style={{ background: GOLD_GRAD, color: EM, padding: "13px 26px", border: "none", boxShadow: GLOW_CTA }}>
-              {t.seeDemo}
-            </button>
-          </div>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-7">
+          <button onClick={() => setChooser(true)} className="font-bold rounded-2xl cursor-pointer" style={{ border: `1.5px solid ${EM}`, color: EM, background: "none", padding: "12px 24px" }}>
+            {t.seeDemo}
+          </button>
         </div>
       </section>
 
@@ -340,8 +345,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ============ CTA FINAL — panneau émeraude ============ */}
-      <section className="max-w-3xl mx-auto px-5 py-14 text-center">
+      {/* ============ CTA FINAL — panneau émeraude, pleine largeur du site ============ */}
+      <section className="max-w-5xl mx-auto px-5 py-14 text-center">
         <div className="relative overflow-hidden rounded-3xl p-10" style={{ background: "linear-gradient(150deg,#053f30,#0a6a4e)", boxShadow: "0 34px 70px -34px rgba(6,78,59,.75)" }}>
           <div className="stats-aura" aria-hidden="true" />
           <h2 className="relative z-10" style={{ ...serif, fontWeight: 600, color: "#eaf3ee", fontSize: 27, lineHeight: 1.25 }}>

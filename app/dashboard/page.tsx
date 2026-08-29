@@ -10,6 +10,7 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 import ActivityHistory from "@/components/ActivityHistory";
 import ParentPanel from "@/components/ParentPanel";
+import IntegrationsPanel from "@/components/IntegrationsPanel";
 
 type Enrolment = {
   id: string; subject: string; board: string; spec: string;
@@ -192,6 +193,9 @@ export default function Dashboard() {
 
       {/* ============ SUIVI PARENT & CONNEXIONS ============ */}
       <ParentPanel />
+
+      {/* ============ INTEGRATIONS (Google Drive) ============ */}
+      <IntegrationsPanel />
 
       {/* ============ HISTORIQUE DES SÉANCES (filtrable) ============ */}
       <section className="mt-8">
