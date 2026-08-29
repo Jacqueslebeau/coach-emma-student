@@ -16,7 +16,8 @@ import type {
 
 type Detail = {
   lesson: {
-    id: string; title: string; spec_topic: string | null; stage: string;
+    id: string; title: string; subject: string; exam_board: string | null;
+    spec_topic: string | null; stage: string;
     concepts: Concept[]; course: Record<string, Course>;
   };
   mastery: { concept_key: string; label: string; status: string }[];
@@ -158,7 +159,9 @@ export default function LessonPage() {
       {/* En-tête leçon + barre de maîtrise (toujours visible) */}
       <div className="mb-6">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <p className="font-mono text-[11px] text-faint">{lesson.spec_topic || "Maths · Edexcel 9MA0"}</p>
+          <p className="font-mono text-[11px] text-faint">
+            {[lesson.exam_board, lesson.spec_topic].filter(Boolean).join(" · ") || "A Level"}
+          </p>
           <SessionTimer />
         </div>
         <h1 className="font-serif font-black text-2xl text-indigo-deep mt-0.5">{lesson.title}</h1>
@@ -365,7 +368,7 @@ export default function LessonPage() {
       {phase === "exercises" && ex && (
         <div className="space-y-4">
           <p className="text-muted text-sm">
-            Style past paper Edexcel. Fais-les <strong>en ligne</strong> ou <strong>sur papier</strong> — dans ce cas,
+            Style past paper {lesson.exam_board || "de ton board"}. Fais-les <strong>en ligne</strong> ou <strong>sur papier</strong> — dans ce cas,
             prends ta copie en photo et uploade-la en bas : Emma corrige le manuscrit au mark scheme.
           </p>
           {ex.exercises.map((e, i) => (
