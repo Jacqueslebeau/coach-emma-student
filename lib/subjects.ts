@@ -46,7 +46,9 @@ STRUCTURE GAGNANTE D'UN ESSAI LONG : KAA + E par paragraphe (Knowledge → Appli
 
 COMMAND WORDS : "Define" (précis), "Calculate" (formule + unités), "Explain" (chaîne causale), "Examine" (analyse + un peu d'évaluation), "Discuss" / "Evaluate" / "To what extent" (évaluation substantielle obligatoire), "Assess" (jugement pesé).
 
-CE QUI COÛTE L'A* : diagramme absent ou non commenté, évaluation plaquée en fin de copie ("however it depends" sans développement), pas d'application au contexte, définitions floues, conclusion qui ne tranche pas, gestion du temps (essai long ≈ 30 min).`;
+CE QUI COÛTE L'A* : diagramme absent ou non commenté, évaluation plaquée en fin de copie ("however it depends" sans développement), pas d'application au contexte, définitions floues, conclusion qui ne tranche pas, gestion du temps (essai long ≈ 30 min).
+
+CONVENTION DE NOTATION (absolue) : l'économie se note PAR NIVEAUX (level descriptors adossés aux AO) pour toute question d'analyse/évaluation — JAMAIS en points M1/A1 (c'est une convention de maths qui n'existe pas ici). Un barème d'éco = les niveaux + le contenu indicatif ; seules les petites questions (définition, calcul) se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words qui existent réellement chez CE board (voir STRUCTURE) — n'en invente jamais.`;
 
 const CORE_GEO = `
 === TECHNIQUE D'EXAMEN — A LEVEL GEOGRAPHY (cœur, tous boards) ===
@@ -60,7 +62,9 @@ COMMAND WORDS (chacun est un contrat) : "Describe" (quoi, pas pourquoi), "Explai
 
 STRUCTURE D'ESSAI GAGNANTE : plan en 30 secondes ; paragraphes PEEL (Point, Evidence — case study précise avec CHIFFRES, Explain, Link à la question) ; évaluation FILÉE dans les paragraphes, pas plaquée à la fin ; conclusion qui répond littéralement à la question posée.
 
-CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur l'essai le plus long.`;
+CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur l'essai le plus long.
+
+CONVENTION DE NOTATION (absolue) : la géographie se note PAR NIVEAUX (level descriptors adossés aux AO) dès ~6 marks — JAMAIS en points M1/A1 (convention de maths inexistante ici). Un barème de géo = les niveaux + le contenu indicatif ; seules les très petites questions factuelles se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words réels de CE board (voir STRUCTURE).`;
 
 const CORE_FRENCH = `
 === TECHNIQUE D'EXAMEN — A LEVEL FRENCH (cœur) — élève francophone en candidat libre ===
@@ -110,7 +114,7 @@ STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and 
     {
       board: "aqa", label: "AQA", spec: "7136",
       structure: `
-STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. Formats clés : 9-markers (chaîne d'analyse), 15-markers, 25-markers (essai au choix, évaluation substantielle + jugement final). AQA note par NIVEAUX holistiques.`,
+STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. ALLOCATIONS RÉELLES AQA : 2, 4, 9, 15 et 25 marks — AUCUNE autre (jamais de question à 3, 5, 6 ou 8 marks). En diagnostic rapide, utilise 2 et 4 marks ; 9/15/25 = questions longues notées PAR NIVEAUX. COMMAND WORDS AQA ÉCO : Define, Calculate, Explain, Analyse, Assess, Evaluate, To what extent — « Examine » n'existe PAS chez AQA. AQA note par NIVEAUX holistiques.`,
     },
     {
       board: "ocr", label: "OCR", spec: "H460",
@@ -127,7 +131,7 @@ STRUCTURE OCR H481 : Paper 1 Physical systems (1h30, 66 marks) ; Paper 2 Human i
     {
       board: "aqa", label: "AQA", spec: "7037",
       structure: `
-STRUCTURE AQA 7037 (FAITS VÉRIFIÉS) : Paper 1 Physical geography (2h30, 120 marks) ; Paper 2 Human geography (2h30, 120 marks) ; + NEA (20%). AQA n'a PAS de Paper 3 écrit — ne l'invente jamais. Formats clés : 4/6 marks (précis, pas d'essai), 9-markers (analyse appliquée, souvent synoptiques entre option et cœur) et essais de 20 marks notés AO1 10 + AO2 10 (argumentation équilibrée + conclusion qui tranche). AQA valorise fortement les liens explicites au matériel fourni (figures, cartes).`,
+STRUCTURE AQA 7037 (FAITS VÉRIFIÉS) : Paper 1 Physical geography (2h30, 120 marks) ; Paper 2 Human geography (2h30, 120 marks) ; + NEA (20%). AQA n'a PAS de Paper 3 écrit — ne l'invente jamais. ALLOCATIONS ET NOTATION : 4 marks (points), 6 marks (NIVEAUX 1-2), 9 marks (NIVEAUX 1-3, souvent synoptiques), 20 marks (essai par NIVEAUX, AO1 10 + AO2 10) — les 6/9/20-markers ne se notent JAMAIS en points cochés. AQA valorise fortement les liens explicites au matériel fourni (figures, cartes).`,
     },
     {
       board: "edexcel", label: "Edexcel", spec: "9GE0",

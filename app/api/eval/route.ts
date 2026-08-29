@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           `LEÇON : ${extraction.lesson_title}\n\n` +
           formatAnswers(quiz.questions, studentAnswers.answers) +
           `\n\nCorrige, diagnostique par concept, nomme les méprises.`,
-        maxTokens: 4000, workflow: "eval-grade",
+        maxTokens: 16000, workflow: "eval-grade",
       })
     );
 
@@ -115,10 +115,10 @@ export async function POST(req: NextRequest) {
         model: "claude-opus-5", // le juge doit être plus fort que le tuteur qu'il audite
         content:
           `DOSSIER DE LA SÉANCE (élève simulé niveau ${level}, topic « ${topic} ») :\n\n` +
-          `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(course).slice(0, 6000)}\n\n` +
-          `2. QUESTIONS DE VÉRIFICATION :\n${quiz.questions.map((q) => `${q.id}: ${q.question}`).join("\n")}\n\n` +
+          `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(course).slice(0, 9000)}\n\n` +
+          `2. QUESTIONS DE VÉRIFICATION (avec barèmes) :\n${quiz.questions.map((q) => `${q.id} [${q.marks ?? "?"} marks — ${q.tariff || ""}]: ${q.question}`).join("\n")}\n\n` +
           `3. RÉPONSES DE L'ÉLÈVE (niveau ${level}) :\n${studentAnswers.answers.map((a) => `${a.id}: ${a.answer}`).join("\n")}\n\n` +
-          `4. CORRECTION & DIAGNOSTIC D'EMMA :\n${JSON.stringify(grade).slice(0, 6000)}\n\n` +
+          `4. CORRECTION & DIAGNOSTIC D'EMMA (intégral) :\n${JSON.stringify(grade).slice(0, 16000)}\n\n` +
           `5. COACHING — message de l'élève : « ${opener} »\nRÉPONSE D'EMMA : ${coachingReply.slice(0, 2500)}\n\n` +
           `Rends ton audit.`,
         maxTokens: 3000, workflow: "eval-judge",

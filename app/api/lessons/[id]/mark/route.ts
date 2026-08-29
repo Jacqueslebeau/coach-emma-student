@@ -88,7 +88,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     const raw = await askClaude({
       system: markSystem(auth.firstName, auth.style, subj, concepts, exercises) + sessionClock("tutoring", elapsed),
       content: blocks,
-      maxTokens: 6000,
+      maxTokens: 16000,
       workflow: "exercise-mark",
       lessonId: id,
       userId: auth.user.id,

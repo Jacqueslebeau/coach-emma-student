@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
         `LEÇON : ${lesson.title}\n\n` +
         formatAnswers(questions, answers) +
         `\n\nCorrige, diagnostique par concept, nomme les méprises.`,
-      maxTokens: 4000,
+      maxTokens: 14000,
       workflow: attempt.kind === "quiz" ? "quiz-grade" : "remediation-grade",
       lessonId: id,
       userId: auth.user.id,
