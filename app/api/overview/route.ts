@@ -109,6 +109,7 @@ export async function GET() {
       current_grade: auth.currentGrade,
       baseline_grade: auth.baselineGrade,
       target_grade: auth.targetGrade,
+      content_lang: auth.contentLang,
     },
     enrolments: enrolments || [],
     by_subject: Object.fromEntries(roll),

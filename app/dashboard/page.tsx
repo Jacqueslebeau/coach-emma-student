@@ -22,7 +22,7 @@ type Roll = {
 };
 type Overview = {
   first_name: string;
-  profile: { tutor_style: string; target_grade: string };
+  profile: { tutor_style: string; target_grade: string; content_lang?: string };
   enrolments: Enrolment[];
   by_subject: Record<string, Roll>;
   lessons: { id: string; subject: string }[];
@@ -161,25 +161,50 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* ============ RÉGLAGES : style d'Emma ============ */}
+      {/* ============ RÉGLAGES : style + langue d'Emma ============ */}
       <section className="card mt-6 p-5">
-        <p className="text-sm font-semibold mb-2">Ton Emma <span className="text-faint font-normal">(le ton change, pas l'exigence)</span></p>
-        <div className="flex flex-wrap gap-2">
-          {STYLES.map((s) => (
-            <button
-              key={s.key}
-              onClick={() => patchProfile({ tutor_style: s.key })}
-              disabled={saving}
-              title={s.hint}
-              className={
-                p.tutor_style === s.key
-                  ? "btn-primary !py-1.5 !px-3.5 text-[13px]"
-                  : "btn-ghost !py-1.5 !px-3.5 text-[13px]"
-              }
-            >
-              {s.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-start gap-x-10 gap-y-4">
+          <div>
+            <p className="text-sm font-semibold mb-2">Ton Emma <span className="text-faint font-normal">(le ton change, pas l'exigence)</span></p>
+            <div className="flex flex-wrap gap-2">
+              {STYLES.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => patchProfile({ tutor_style: s.key })}
+                  disabled={saving}
+                  title={s.hint}
+                  className={
+                    p.tutor_style === s.key
+                      ? "btn-primary !py-1.5 !px-3.5 text-[13px]"
+                      : "btn-ghost !py-1.5 !px-3.5 text-[13px]"
+                  }
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Langue d'Emma <span className="text-faint font-normal">(l'A Level se passe en anglais)</span></p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => patchProfile({ content_lang: "en" })}
+                disabled={saving}
+                title="Cours, exercices, corrections et coaching en anglais — comme le jour J"
+                className={(p.content_lang || "en") === "en" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
+              >
+                English 🇬🇧 (défaut)
+              </button>
+              <button
+                onClick={() => patchProfile({ content_lang: "fr" })}
+                disabled={saving}
+                title="Explications en français — les énoncés, command words et corrigés restent en anglais"
+                className={p.content_lang === "fr" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
+              >
+                Explications en français
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

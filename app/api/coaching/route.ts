@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
         progressSummary,
         weakPointsSummary,
         subjectsLine,
+        lang: auth.contentLang,
       }),
       content:
         (convo ? `CONVERSATION JUSQU'ICI :\n${convo}\n\n` : "") +

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     .eq("user_id", auth.user.id)
     .eq("subject", subjectKey)
     .maybeSingle();
-  const subj = getSubjectBoard(subjectKey, enr?.board);
+  const subj = getSubjectBoard(subjectKey, enr?.board, auth.contentLang);
   const title = String(form.get("title") || "").trim().slice(0, 300);
   const notes = String(form.get("notes") || "").trim().slice(0, 12000);
   const photo = form.get("photo");

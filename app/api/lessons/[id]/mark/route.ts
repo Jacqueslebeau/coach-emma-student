@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const lesson = await getOwnedLesson(auth.sb, id, auth.user.id);
   if (!lesson) return NextResponse.json({ error: "leçon introuvable" }, { status: 404 });
-  const subj = getSubjectBoard(lesson.subject, lesson.exam_board);
+  const subj = getSubjectBoard(lesson.subject, lesson.exam_board, auth.contentLang);
 
   const { data: attempt } = await auth.sb
     .from("attempts")

@@ -52,6 +52,7 @@ TÂCHE : réponds aux questions comme CET élève répondrait — ni mieux, ni p
 - Reproduis les erreurs TYPIQUES de ce niveau (pas des erreurs absurdes) : méprises classiques, étapes sautées, imprécisions, réponses partielles.
 - Le niveau ${level} détermine la proportion de réponses justes/partielles/fausses. Niveau 5 ≈ 1-2 justes sur 5 ; niveau 7 ≈ 3-4 justes avec des pertes de technique ; niveau 9 ≈ quasi tout juste avec de petites imperfections.
 - Écris comme un élève écrit (concis, parfois brouillon), pas comme un manuel.
+- Réponds dans la LANGUE DES QUESTIONS : en anglais pour les matières examinées en anglais (c'est un A Level), en français pour le français.
 
 RÉPONDS UNIQUEMENT en JSON : { "answers": [ { "id": "q1", "answer": "..." } ] }`;
 }

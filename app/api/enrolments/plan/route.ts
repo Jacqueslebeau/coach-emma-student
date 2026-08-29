@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ plan: enrolment.action_plan, cached: true });
   }
 
-  const subj = getSubjectBoard(enrolment.subject, enrolment.board);
+  const subj = getSubjectBoard(enrolment.subject, enrolment.board, auth.contentLang);
   try {
     const raw = await askClaude({
       system: actionPlanSystem(auth.firstName, auth.style, subj, {

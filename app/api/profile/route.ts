@@ -16,6 +16,7 @@ export async function GET() {
     current_grade: auth.currentGrade,
     baseline_grade: auth.baselineGrade,
     target_grade: auth.targetGrade,
+    content_lang: auth.contentLang,
   });
 }
 
@@ -32,6 +33,7 @@ export async function PATCH(req: NextRequest) {
   }
   if (typeof body.target_grade === "string" && GRADES.has(body.target_grade)) updates.target_grade = body.target_grade;
   if (typeof body.first_name === "string" && body.first_name.trim()) updates.first_name = body.first_name.trim().slice(0, 60);
+  if (body.content_lang === "en" || body.content_lang === "fr") updates.content_lang = body.content_lang;
   if (!Object.keys(updates).length) return NextResponse.json({ error: "rien à mettre à jour" }, { status: 400 });
 
   const { error } = await auth.sb.from("student_profiles").update(updates).eq("user_id", auth.user.id);

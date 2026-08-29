@@ -24,6 +24,7 @@ export type Subject = {
   boardKey: BoardKey;
   spec: string;
   examLang: "en" | "fr";  // langue des copies le jour J
+  teachLang: "en" | "fr"; // langue d'enseignement — ANGLAIS par défaut (c'est un A Level)
   kind: "calculation" | "essay" | "language";
   technique: string;      // cœur matière + structure du board
 };
@@ -165,7 +166,7 @@ const SUBJECT_BASE: Record<SubjectKey, SubjectBase> = {
 
 export const SUBJECT_KEYS: SubjectKey[] = ["maths", "eco", "geo", "french"];
 
-function buildSubject(base: SubjectBase, opt: BoardOption): Subject {
+function buildSubject(base: SubjectBase, opt: BoardOption, teachLang?: string | null): Subject {
   return {
     key: base.key,
     labelFr: base.labelFr,
@@ -174,6 +175,9 @@ function buildSubject(base: SubjectBase, opt: BoardOption): Subject {
     boardKey: opt.board,
     spec: opt.spec,
     examLang: base.examLang,
+    // Un A Level se passe en anglais : l'enseignement est en ANGLAIS par
+    // défaut. Le français A Level s'enseigne en français, toujours.
+    teachLang: base.examLang === "fr" ? "fr" : teachLang === "fr" ? "fr" : "en",
     kind: base.kind,
     technique: `${base.core}\n${opt.structure}\n`,
   };
@@ -181,12 +185,13 @@ function buildSubject(base: SubjectBase, opt: BoardOption): Subject {
 
 // La matière calibrée sur un board précis. `board` accepte la key ("aqa") ou
 // le label ("AQA") — tombe sur le board par défaut de la matière sinon.
-export function getSubjectBoard(key: string, board?: string | null): Subject {
+// `teachLang` : préférence de langue d'enseignement de l'élève ("en" défaut).
+export function getSubjectBoard(key: string, board?: string | null, teachLang?: string | null): Subject {
   const k = (SUBJECT_KEYS.includes(key as SubjectKey) ? key : "maths") as SubjectKey;
   const options = BOARD_OPTIONS[k];
   const wanted = String(board || "").trim().toLowerCase();
   const opt = options.find((o) => o.board === wanted || o.label.toLowerCase() === wanted) || options[0];
-  return buildSubject(SUBJECT_BASE[k], opt);
+  return buildSubject(SUBJECT_BASE[k], opt, teachLang);
 }
 
 // Compat : la matière sur son board par défaut (premier de la liste).
