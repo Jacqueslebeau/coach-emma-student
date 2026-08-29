@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       await call({
         system: conceptExtractionSystem("Alex", "sympa", subject),
         content: `CE QUE L'ÉLÈVE DONNE SUR SA LEÇON DU JOUR :\nTITRE DE LA LEÇON : ${topic}\n\nIdentifie la leçon dans le programme et découpe-la en concepts.`,
-        maxTokens: 2000, workflow: "eval-extract",
+        maxTokens: 2000, effort: "low", workflow: "eval-extract",
       })
     );
     const concepts = extraction.concepts.slice(0, 5);
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       await call({
         system: courseSystem("Alex", "sympa", subject, "key", concepts),
         content: `LEÇON : ${extraction.lesson_title}\nTOPIC : ${extraction.spec_topic}\n\nÉcris le cours (concepts clés).`,
-        maxTokens: 3500, workflow: "eval-course",
+        maxTokens: 3500, effort: "medium", workflow: "eval-course",
       })
     );
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       await call({
         system: quizSystem("Alex", "sympa", subject, concepts),
         content: `LEÇON : ${extraction.lesson_title}\nTOPIC : ${extraction.spec_topic}\n\nÉcris les 5 questions de vérification.`,
-        maxTokens: 2500, temperature: 0.4, workflow: "eval-quiz",
+        maxTokens: 2500, temperature: 0.4, effort: "medium", workflow: "eval-quiz",
       })
     );
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         content:
           `LE COURS QUE TU VIENS DE LIRE (concepts clés) :\n${JSON.stringify(course).slice(0, 4000)}\n\n` +
           `QUESTIONS :\n${quiz.questions.map((q) => `${q.id} [${q.concept_key}] : ${q.question}`).join("\n")}`,
-        maxTokens: 1500, temperature: 0.6, workflow: "eval-student",
+        maxTokens: 1500, temperature: 0.6, effort: "low", workflow: "eval-student",
       })
     );
 
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         subjectsLine: `${subject.labelEn} (${subject.board})`,
       }),
       content: `NEW MESSAGE FROM ALEX: ${opener}`,
-      maxTokens: 700, temperature: 0.6, workflow: "eval-coaching",
+      maxTokens: 700, temperature: 0.6, effort: "medium", workflow: "eval-coaching",
     });
 
     // 7 · Le JURY audite tout le dossier.

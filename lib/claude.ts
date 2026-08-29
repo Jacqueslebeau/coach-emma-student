@@ -26,6 +26,9 @@ export async function askClaude(opts: {
   userId?: string | null;
   sb?: SupabaseClient;
   model?: string; // ex. claude-opus-5 pour le jury du harnais qualité
+  // Profondeur de réflexion (output_config.effort) : "low"/"medium" accélèrent
+  // nettement les étapes simples sans toucher au budget de sortie ; défaut high.
+  effort?: "low" | "medium" | "high";
 }): Promise<string> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY manquante");
@@ -49,6 +52,7 @@ export async function askClaude(opts: {
     body: JSON.stringify({
       model: opts.model || MODEL,
       max_tokens: Math.max(opts.maxTokens ?? 4000, MIN_MAX_TOKENS),
+      ...(opts.effort ? { output_config: { effort: opts.effort } } : {}),
       system: opts.system,
       messages,
     }),
