@@ -64,27 +64,32 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // 2bis · Relecture factuelle du cours (identique au produit) — best-effort.
-    let auditedCourse = course;
-    try {
-      const ac = extractJson<Course>(
-        await call({
-          system: courseAuditSystem("Alex", "sympa", subject),
-          content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
-          maxTokens: 4500, effort: "low", workflow: "eval-course-audit",
-        })
-      );
-      if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) auditedCourse = ac;
-    } catch { /* on garde le cours initial */ }
-
-    // 3 · La vérification de maîtrise.
-    const quiz = extractJson<{ questions: QuizQuestion[] }>(
-      await call({
-        system: quizSystem("Alex", "sympa", subject, concepts, level),
-        content: `LEÇON : ${extraction.lesson_title}\nTOPIC : ${extraction.spec_topic}\n\nÉcris les 5 questions de vérification.`,
-        maxTokens: 2500, temperature: 0.4, effort: "medium", workflow: "eval-quiz",
-      })
-    );
+    // 2bis ∥ 3 · Relecture factuelle du cours ET vérification de maîtrise en
+    // PARALLÈLE (le quiz ne lit pas le cours : concepts + titre suffisent) —
+    // indispensable pour tenir les 300 s du plan Hobby avec les deux passes.
+    const [auditedCourse, quiz] = await Promise.all([
+      (async () => {
+        try {
+          const ac = extractJson<Course>(
+            await call({
+              system: courseAuditSystem("Alex", "sympa", subject),
+              content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
+              maxTokens: 4500, effort: "low", workflow: "eval-course-audit",
+            })
+          );
+          if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) return ac;
+        } catch { /* on garde le cours initial */ }
+        return course;
+      })(),
+      (async () =>
+        extractJson<{ questions: QuizQuestion[] }>(
+          await call({
+            system: quizSystem("Alex", "sympa", subject, concepts, level),
+            content: `LEÇON : ${extraction.lesson_title}\nTOPIC : ${extraction.spec_topic}\n\nÉcris les 5 questions de vérification.`,
+            maxTokens: 2500, temperature: 0.4, effort: "medium", workflow: "eval-quiz",
+          })
+        ))(),
+    ]);
 
     // 4 · L'agent ÉLÈVE (niveau simulé) répond.
     const studentAnswers = extractJson<{ answers: { id: string; answer: string }[] }>(
@@ -97,44 +102,46 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // 5 · Emma corrige et diagnostique.
-    let grade = extractJson<QuizGrade>(
-      await call({
-        system: gradeSystem("Alex", "sympa", subject, concepts),
-        content:
-          `LEÇON : ${extraction.lesson_title}\n\n` +
-          formatAnswers(quiz.questions, studentAnswers.answers) +
-          `\n\nCorrige, diagnostique par concept, nomme les méprises.`,
-        maxTokens: 16000, effort: "medium", workflow: "eval-grade",
-      })
-    );
-
-    // 5bis · Relecture d'examinateur (identique au produit) — best-effort.
-    try {
-      const audited = extractJson<QuizGrade>(
-        await call({
-          system: gradeAuditSystem("Alex", "sympa", subject),
-          content:
-            formatAnswers(quiz.questions, studentAnswers.answers) +
-            `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(grade)}`,
-          maxTokens: 16000, effort: "medium", workflow: "eval-grade-audit",
-        })
-      );
-      if (Array.isArray(audited?.items) && audited.items.length === grade.items?.length) grade = audited;
-    } catch { /* on garde la correction initiale */ }
-
-    // 6 · Une séance de coaching (l'élève ouvre selon son niveau, Emma répond).
+    // 5+5bis ∥ 6 · Correction (puis relecture d'examinateur) EN PARALLÈLE du
+    // coaching — les deux fils sont indépendants.
     const opener = coachingOpener(level);
-    const coachingReply = await call({
-      system: coachingSystem("Alex", "sympa", {
-        currentGrade: level,
-        targetGrade: "A*",
-        progressSummary: `a ${subject.labelEn} session just finished`,
-        subjectsLine: `${subject.labelEn} (${subject.board})`,
+    const [grade, coachingReply] = await Promise.all([
+      (async () => {
+        let g = extractJson<QuizGrade>(
+          await call({
+            system: gradeSystem("Alex", "sympa", subject, concepts),
+            content:
+              `LEÇON : ${extraction.lesson_title}\n\n` +
+              formatAnswers(quiz.questions, studentAnswers.answers) +
+              `\n\nCorrige, diagnostique par concept, nomme les méprises.`,
+            maxTokens: 16000, effort: "medium", workflow: "eval-grade",
+          })
+        );
+        try {
+          const audited = extractJson<QuizGrade>(
+            await call({
+              system: gradeAuditSystem("Alex", "sympa", subject),
+              content:
+                formatAnswers(quiz.questions, studentAnswers.answers) +
+                `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(g)}`,
+              maxTokens: 16000, effort: "medium", workflow: "eval-grade-audit",
+            })
+          );
+          if (Array.isArray(audited?.items) && audited.items.length === g.items?.length) g = audited;
+        } catch { /* on garde la correction initiale */ }
+        return g;
+      })(),
+      call({
+        system: coachingSystem("Alex", "sympa", {
+          currentGrade: level,
+          targetGrade: "A*",
+          progressSummary: `a ${subject.labelEn} session just finished`,
+          subjectsLine: `${subject.labelEn} (${subject.board})`,
+        }),
+        content: `NEW MESSAGE FROM ALEX: ${opener}`,
+        maxTokens: 700, temperature: 0.6, effort: "medium", workflow: "eval-coaching",
       }),
-      content: `NEW MESSAGE FROM ALEX: ${opener}`,
-      maxTokens: 700, temperature: 0.6, effort: "medium", workflow: "eval-coaching",
-    });
+    ]);
 
     // 7 · Le JURY audite tout le dossier.
     const judged = extractJson<Record<string, unknown>>(
