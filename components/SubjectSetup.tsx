@@ -27,6 +27,7 @@ export default function SubjectSetup({ subject, subjectLabel, onDone }: {
   const [placement, setPlacement] = useState<PlacementResult | null>(null);
   const [target, setTarget] = useState("A*");
   const [examDate, setExamDate] = useState("");
+  const [prepChoice, setPrepChoice] = useState(""); // "1"|"2"|"3"|"6"|"9"|"12" mois, ou "date"
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -254,16 +255,44 @@ export default function SubjectSetup({ subject, subjectLabel, onDone }: {
             <span className="block text-[11px] text-faint font-normal mt-0.5">Can&apos;t be below where you already are.</span>
           </label>
           <label className="text-sm font-semibold">
-            Exam session
-            <input type="month" className="input mt-1 !py-1.5" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+            How long do you have to prepare?
+            <select
+              className="input mt-1 !py-1.5"
+              value={prepChoice}
+              onChange={(e) => {
+                const v = e.target.value;
+                setPrepChoice(v);
+                if (v && v !== "date") {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() + Number(v));
+                  setExamDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+                }
+              }}
+            >
+              <option value="">—</option>
+              <option value="1">1 month</option>
+              <option value="2">2 months</option>
+              <option value="3">3 months</option>
+              <option value="6">6 months</option>
+              <option value="9">9 months</option>
+              <option value="12">A year or more</option>
+              <option value="date">I know my exam session</option>
+            </select>
+            <span className="block text-[11px] text-faint font-normal mt-0.5">The plan is sized to the time you actually have.</span>
           </label>
+          {prepChoice === "date" && (
+            <label className="text-sm font-semibold">
+              Exam session
+              <input type="month" className="input mt-1 !py-1.5" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+            </label>
+          )}
         </div>
       )}
 
       {error && <p className="text-sm text-gap font-semibold mt-3">{error}</p>}
       {readyToSave && (
         <button type="button" onClick={save} disabled={busy === "save"} className="btn-primary w-full !py-3 mt-5">
-          {busy === "save" ? "Saving…" : "Confirm — build my work plan →"}
+          {busy === "save" ? "Generating…" : "Generate my Tutoring Plan →"}
         </button>
       )}
     </div>

@@ -80,88 +80,113 @@ export default function Dashboard() {
     <div>
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-serif font-black text-3xl text-indigo-deep">Hi {data.first_name || "champ"} 👋</h1>
-          <p className="text-muted mt-1">Each subject has its own dashboard, exam board and action plan.</p>
+          <p className="text-[11px] font-mono uppercase tracking-wider text-amber font-semibold">Your dashboard</p>
+          <h1 className="font-serif font-black text-3xl text-indigo-deep">My space</h1>
+          <p className="text-muted mt-1">Hi {data.first_name || "champ"} 👋 — your tutorings, your coaching, your progress.</p>
         </div>
         <button onClick={logout} className="text-sm text-faint hover:text-indigo font-semibold">Sign out</button>
       </div>
 
-      {/* ============ MES MATIÈRES ============ */}
-      <section className="mt-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-serif font-semibold text-xl">My subjects</h2>
-          <Link href="/onboarding" className="text-sm font-semibold text-indigo hover:text-indigo-deep">
-            {data.enrolments.length ? "Edit my subjects" : "Set up"}
-          </Link>
+      {/* ============ CARTE HÉRO — démarrer (façon « Préparez un entretien ») ============ */}
+      <div className="card p-6 mt-6 flex items-center gap-5 flex-wrap">
+        <span className="text-3xl">🎯</span>
+        <div className="flex-1 min-w-[220px]">
+          <h2 className="font-serif font-semibold text-xl">Start your tutoring</h2>
+          <p className="text-sm text-muted mt-0.5">
+            A subject to master? Emma finds your real starting point, you set the goal — and she
+            builds your Tutoring Plan.
+          </p>
+        </div>
+        <Link href="/tutoring/new" className="btn-amber !py-2.5 !px-5 shrink-0">New tutoring</Link>
+      </div>
+
+      {/* ============ MY TUTORINGS — façon « Vos préparations » ============ */}
+      <section className="mt-6 rounded-2xl overflow-hidden border border-line">
+        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between">
+          <h2 className="font-serif font-semibold text-lg">My tutorings</h2>
+          <span className="text-xs opacity-80">
+            {data.enrolments.length} subject{data.enrolments.length === 1 ? "" : "s"}
+          </span>
         </div>
 
         {data.enrolments.length === 0 && legacyKeys.length === 0 ? (
-          <div className="card p-8 mt-4 text-center">
+          <div className="bg-white p-8 text-center">
             <p className="text-muted">
-              Start by choosing your subjects, your exam board and your target — Emma will put together
-              an action plan for each subject.
+              Nothing here yet — start your first tutoring: Emma finds your starting point and writes
+              your Tutoring Plan.
             </p>
-            <Link href="/onboarding" className="btn-amber mt-4 inline-block">Set up my subjects →</Link>
+            <Link href="/tutoring/new" className="btn-amber mt-4 inline-block">New tutoring →</Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4 mt-4">
+          <div className="bg-white divide-y divide-line">
             {data.enrolments.map((e) => {
               const s = SUBJECTS[e.subject as SubjectKey];
               const r = data.by_subject[e.subject];
-              const shown = r?.estimated_grade || e.current_grade || "—";
+              const shown = r?.estimated_grade || e.current_grade || e.baseline_grade || "—";
               return (
-                <Link key={e.id} href={`/matiere/${e.subject}`} className="card p-5 hover:border-indigo transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-serif font-semibold text-lg">{s?.labelEn || e.subject}</h3>
-                    <span className="chip-todo shrink-0">{e.board} · {e.spec}</span>
+                <div key={e.id} className="p-5 border-l-4 border-l-indigo">
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-[220px]">
+                      <h3 className="font-serif font-semibold text-xl">{s?.labelEn || e.subject}</h3>
+                      <p className="text-xs text-faint mt-0.5">
+                        {e.board} · {e.spec}{e.exam_date ? ` · exam ${e.exam_date.slice(0, 7)}` : ""}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="chip-todo">Level &amp; goal: {e.baseline_grade || "—"} → {e.target_grade || "A*"}</span>
+                        {r?.estimated_grade && <span className="chip-acquis">Currently ~{r.estimated_grade}</span>}
+                        {r && r.open_weak_points > 0 && <span className="chip-fragile">{r.open_weak_points} point{r.open_weak_points === 1 ? "" : "s"} to work on</span>}
+                        {r && <span className="chip bg-white border border-line text-faint">{r.lessons} lesson{r.lessons === 1 ? "" : "s"} · {Math.round(r.minutes / 6) / 10} h</span>}
+                      </div>
+                    </div>
+                    {/* Cercle de progression (façon score d'adéquation) */}
+                    <div className="text-center shrink-0">
+                      <div className="relative h-16 w-16">
+                        <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+                          <circle cx="18" cy="18" r="15.5" fill="none" stroke="#E5E7EB" strokeWidth="3" />
+                          <circle
+                            cx="18" cy="18" r="15.5" fill="none" stroke="#064E3B" strokeWidth="3"
+                            strokeDasharray={`${Math.max(4, r?.avg_pct ?? 8)} 100`} strokeLinecap="round"
+                            pathLength={100}
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center font-serif font-black text-xl text-indigo-deep">
+                          {shown}
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-faint mt-1">
+                        {r?.avg_pct !== null && r?.avg_pct !== undefined ? `${r.avg_pct}% marks` : "progress"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-3">
-                    <span className="font-serif font-black text-2xl text-muted">{e.baseline_grade || "—"}</span>
-                    <span className="text-faint">→</span>
-                    <span className="font-serif font-black text-2xl text-indigo">{shown}</span>
-                    <span className="text-faint">→</span>
-                    <span className="font-serif font-black text-2xl text-amber">{e.target_grade || "A*"}</span>
-                    {r?.avg_pct !== null && r?.avg_pct !== undefined && (
-                      <span className="font-mono text-[11px] text-faint self-end pb-1">{r.avg_pct}% of marks</span>
-                    )}
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <Link href={`/matiere/${e.subject}`} className="btn-ghost !py-1.5 !px-3.5 text-[13px]">Tutoring Plan &amp; reports</Link>
+                    <Link href={`/matiere/${e.subject}#papers`} className="btn-ghost !py-1.5 !px-3.5 text-[13px]">Past-paper practice</Link>
+                    <Link href="/coaching" className="btn-ghost !py-1.5 !px-3.5 text-[13px]">Coaching</Link>
+                    <Link href={`/lesson/new?subject=${e.subject}`} className="btn-amber !py-1.5 !px-4 text-[13px] ml-auto">Start a lesson</Link>
                   </div>
-                  <p className="text-sm text-muted mt-3">
-                    {r ? `${r.lessons} lesson${r.lessons === 1 ? "" : "s"} · ${r.open_weak_points} point${r.open_weak_points === 1 ? "" : "s"} to work on · ${Math.round(r.minutes / 6) / 10} h` : "No lessons yet — your action plan is waiting"}
-                    {e.exam_date ? ` · exam ${e.exam_date.slice(0, 7)}` : ""}
-                  </p>
-                </Link>
+                </div>
               );
             })}
             {legacyKeys.map((k) => {
               const s = SUBJECTS[k as SubjectKey];
               const r = data.by_subject[k];
               return (
-                <Link key={k} href={`/matiere/${k}`} className="card p-5 hover:border-indigo transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-serif font-semibold text-lg">{s?.labelEn || k}</h3>
-                    <span className="chip-non_acquis shrink-0">board to set up</span>
+                <div key={k} className="p-5 border-l-4 border-l-amber">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div>
+                      <h3 className="font-serif font-semibold text-xl">{s?.labelEn || k}</h3>
+                      <p className="text-sm text-muted mt-1">
+                        {r.lessons} lesson{r.lessons === 1 ? "" : "s"} · {r.open_weak_points} point{r.open_weak_points === 1 ? "" : "s"} to work on
+                      </p>
+                    </div>
+                    <Link href={`/tutoring/new?subject=${k}`} className="btn-primary !py-1.5 !px-4 text-[13px]">Set up →</Link>
                   </div>
-                  <p className="text-sm text-muted mt-3">
-                    {r.lessons} lesson{r.lessons === 1 ? "" : "s"} · {r.open_weak_points} point{r.open_weak_points === 1 ? "" : "s"} to work on
-                  </p>
-                </Link>
+                </div>
               );
             })}
           </div>
         )}
       </section>
-
-      {/* ============ ACTIONS ============ */}
-      <div className="grid sm:grid-cols-2 gap-4 mt-6">
-        <Link href="/lesson/new" className="card p-5 hover:border-indigo transition">
-          <h2 className="font-serif font-semibold text-lg">📚 New lesson</h2>
-          <p className="text-sm text-muted mt-1">A title, your notes or a photo of the lesson — the full loop through to marked exercises.</p>
-        </Link>
-        <Link href="/coaching" className="card p-5 hover:border-amber transition">
-          <h2 className="font-serif font-semibold text-lg">🎯 Exam coaching</h2>
-          <p className="text-sm text-muted mt-1">No content here: stress, strategy, the big day. Emma listens and gets you ready.</p>
-        </Link>
-      </div>
 
       {/* ============ RÉGLAGES : style + langue d'Emma ============ */}
       <section className="card mt-6 p-5">

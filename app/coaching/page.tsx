@@ -9,10 +9,12 @@ import BackLink from "@/components/BackLink";
 type Msg = { role: string; message: string };
 
 const OPENERS = [
-  "How are you feeling about your exams at the moment?",
-  "What stresses you most when you think about the big day?",
-  "Tell me about your last study session — how did it go?",
-  "Shall we work on your time management strategy for the exam?",
+  "How does the exam day actually unfold?",
+  "What do examiners expect from me on the day?",
+  "How should I prepare the day before the exam?",
+  "I'm feeling stressed about my exams — what do I do?",
+  "Help me build a revision timetable",
+  "How do I manage my time during the paper?",
 ];
 
 export default function CoachingPage() {

@@ -158,7 +158,11 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             <div className="text-center">
               <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Start</p>
               <p className="font-serif font-black text-3xl text-muted">{e?.baseline_grade || (e?.gcse_grade ? gcseToStart(e.gcse_grade) : "—")}</p>
-              {e?.gcse_grade && <p className="font-mono text-[11px] text-faint">GCSE {e.gcse_grade}{e.gcse_note ? " ·" : ""}</p>}
+              {e?.gcse_grade ? (
+                <p className="font-mono text-[11px] text-faint" title={e.gcse_note || undefined}>GCSE {e.gcse_grade}</p>
+              ) : e?.gcse_note ? (
+                <p className="font-mono text-[11px] text-faint" title={e.gcse_note}>level check</p>
+              ) : null}
             </div>
             <span className="text-faint text-xl">→</span>
             <div className="text-center">
@@ -198,6 +202,11 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             </div>
           )}
         </div>
+        {e?.gcse_note && (
+          <p className="text-xs text-faint mt-3">
+            <span className="font-semibold text-muted">Why this starting level:</span> {e.gcse_note}
+          </p>
+        )}
         <p className="text-sm text-muted mt-4">
           {data.mastery.length > 0
             ? `${acquis}/${data.mastery.length} concepts secure · ${data.weak_points.length} point${data.weak_points.length === 1 ? "" : "s"} to work on`
@@ -208,12 +217,31 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
       {/* ============ PLAN D'ACTION ============ */}
       <section className="mt-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-serif font-semibold text-xl">Your action plan</h2>
+        <div className="flex items-baseline justify-between flex-wrap gap-2">
+          <h2 className="font-serif font-semibold text-xl">Your Tutoring Plan</h2>
           {e && plan && (
-            <button onClick={() => genPlan(true)} disabled={planBusy} className="text-sm font-semibold text-indigo hover:text-indigo-deep disabled:opacity-50">
-              {planBusy ? "Regenerating…" : "Regenerate"}
-            </button>
+            <div className="flex gap-4">
+              <a
+                href={(() => {
+                  const lines: string[] = [];
+                  if (plan.headline) lines.push(plan.headline, "");
+                  if (plan.weekly_rhythm) lines.push(`Rhythm: ${plan.weekly_rhythm.sessions_per_week ?? 3} sessions/week · ${plan.weekly_rhythm.minutes_per_session ?? 45} min`, "");
+                  if (plan.priorities?.length) { lines.push("Priorities:"); plan.priorities.forEach((pr, i) => lines.push(`${i + 1}. ${pr.title || ""}${pr.why ? ` — ${pr.why}` : ""}`)); lines.push(""); }
+                  if (plan.milestones?.length) { lines.push("Milestones:"); plan.milestones.forEach((m) => lines.push(`• ${m.when || ""} — ${m.goal || ""}`)); lines.push(""); }
+                  if (plan.first_actions?.length) { lines.push("This week:"); plan.first_actions.forEach((a) => lines.push(`☐ ${a}`)); }
+                  lines.push("", `Follow the progress: https://coach-emma-student.vercel.app/matiere/${subject}`);
+                  const body = `Coach Emma Student — Tutoring Plan (${subjectLabel}, ${data.subject.board} ${data.subject.spec})\n\n` + lines.join("\n");
+                  return `mailto:?subject=${encodeURIComponent(`Tutoring Plan — ${subjectLabel} (${e.baseline_grade || "start"} → ${e.target_grade})`)}&body=${encodeURIComponent(body)}`;
+                })()}
+                className="text-sm font-semibold text-indigo hover:text-indigo-deep"
+                title="Send the full plan to yourself or your parents"
+              >
+                ✉ Email the plan
+              </a>
+              <button onClick={() => genPlan(true)} disabled={planBusy} className="text-sm font-semibold text-indigo hover:text-indigo-deep disabled:opacity-50">
+                {planBusy ? "Regenerating…" : "Regenerate"}
+              </button>
+            </div>
           )}
         </div>
 
