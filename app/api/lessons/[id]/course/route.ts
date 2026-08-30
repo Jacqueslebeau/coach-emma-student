@@ -58,6 +58,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
           maxTokens: mode === "full" ? 9000 : 4500,
           effort: "medium",
+          model: "claude-opus-5", // la relectrice a le calibre du jury
           workflow: `course-${mode}-audit`,
           lessonId: id,
           userId: auth.user.id,

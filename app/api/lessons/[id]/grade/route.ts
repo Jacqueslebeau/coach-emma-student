@@ -78,6 +78,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
             `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(grade)}`,
           maxTokens: 16000,
           effort: "medium",
+          model: "claude-opus-5", // la relectrice a le calibre du jury
           workflow: attempt.kind === "quiz" ? "quiz-grade-audit" : "remediation-grade-audit",
           lessonId: id,
           userId: auth.user.id,

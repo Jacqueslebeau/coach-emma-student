@@ -13,8 +13,8 @@ import {
 } from "@/lib/evalHarness";
 import type { Concept, Course, QuizQuestion, QuizGrade } from "@/lib/types";
 
-// 8 appels séquentiels (dont 2 relectures) — plafond du plan Vercel Hobby.
-export const maxDuration = 300;
+// 8 appels séquentiels (dont 2 relectures sur Opus) — plan Pro : 600 s.
+export const maxDuration = 600;
 const ADMIN_EMAILS = new Set(["jacques@mindsearch.net"]);
 
 export async function GET() {
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
               content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
               // medium « gratuit » en horloge murale : cette passe court en
               // parallèle du quiz, qui prend à peu près le même temps.
-              maxTokens: 4500, effort: "medium", workflow: "eval-course-audit",
+              maxTokens: 4500, effort: "medium", model: "claude-opus-5", workflow: "eval-course-audit",
             })
           );
           if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) return ac;
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
               content:
                 formatAnswers(quiz.questions, studentAnswers.answers) +
                 `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(g)}`,
-              maxTokens: 16000, effort: "medium", workflow: "eval-grade-audit",
+              maxTokens: 16000, effort: "medium", model: "claude-opus-5", workflow: "eval-grade-audit",
             })
           );
           if (Array.isArray(audited?.items) && audited.items.length === g.items?.length) g = audited;
