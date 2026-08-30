@@ -8,6 +8,7 @@ import Link from "next/link";
 import RichText from "@/components/RichText";
 import ActivityHistory from "@/components/ActivityHistory";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
+import { gcseToStart, allowedTargets } from "@/lib/grades";
 
 type Plan = {
   headline?: string;
@@ -25,6 +26,7 @@ type Data = {
   enrolment: {
     id: string; board: string; spec: string; current_grade: string | null;
     baseline_grade: string | null; target_grade: string; exam_date: string | null;
+    gcse_grade?: string | null; gcse_note?: string | null;
     action_plan: Plan | null;
   } | null;
   lessons: { id: string; title: string; spec_topic: string | null; stage: string; concepts: { key: string }[] | null; created_at: string }[];
@@ -49,6 +51,8 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
+  const [targetBusy, setTargetBusy] = useState(false);
+  const [shownLessons, setShownLessons] = useState(6); // pagination des leçons
   const planRequested = useRef(false);
 
   const load = useCallback(() => {
@@ -71,6 +75,24 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         load();
       } finally {
         setPlanBusy(false);
+      }
+    },
+    [subject, load]
+  );
+
+  // L'objectif est modifiable depuis la console — re-borné, plan régénéré.
+  const changeTarget = useCallback(
+    async (target: string) => {
+      setTargetBusy(true);
+      try {
+        const r = await fetch("/api/enrolments", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ subject, target_grade: target }),
+        });
+        if (r.ok) { planRequested.current = false; load(); }
+      } finally {
+        setTargetBusy(false);
       }
     },
     [subject, load]
@@ -113,7 +135,10 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             {e?.exam_date ? ` — exam ${e.exam_date.slice(0, 7)}` : ""}
           </p>
         </div>
-        <Link href={`/lesson/new?subject=${subject}`} className="btn-amber !py-2 !px-4">＋ New lesson</Link>
+        <div className="flex gap-2">
+          <Link href="/coaching" className="btn-primary !py-2 !px-4">Coaching</Link>
+          <Link href={`/lesson/new?subject=${subject}`} className="btn-amber !py-2 !px-4">＋ New lesson</Link>
+        </div>
       </div>
 
       {!e && (
@@ -132,7 +157,8 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
           <div className="flex items-center gap-5">
             <div className="text-center">
               <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Start</p>
-              <p className="font-serif font-black text-3xl text-muted">{e?.baseline_grade || "—"}</p>
+              <p className="font-serif font-black text-3xl text-muted">{e?.baseline_grade || (e?.gcse_grade ? gcseToStart(e.gcse_grade) : "—")}</p>
+              {e?.gcse_grade && <p className="font-mono text-[11px] text-faint">GCSE {e.gcse_grade}{e.gcse_note ? " ·" : ""}</p>}
             </div>
             <span className="text-faint text-xl">→</span>
             <div className="text-center">
@@ -143,7 +169,21 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             <span className="text-faint text-xl">→</span>
             <div className="text-center">
               <p className="text-[11px] font-mono uppercase tracking-wider text-amber">Target</p>
-              <p className="font-serif font-black text-3xl text-amber">{e?.target_grade || "A*"}</p>
+              {e ? (
+                <select
+                  value={e.target_grade || "A*"}
+                  disabled={targetBusy}
+                  onChange={(ev) => changeTarget(ev.target.value)}
+                  className="font-serif font-black text-3xl text-amber bg-transparent cursor-pointer disabled:opacity-50 text-center"
+                  title="Change your target — the action plan adapts"
+                >
+                  {(allowedTargets(e.current_grade || (e.gcse_grade ? gcseToStart(e.gcse_grade) : null)) as string[]).map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="font-serif font-black text-3xl text-amber">A*</p>
+              )}
             </div>
           </div>
           {lastScores.length > 0 && (
@@ -264,7 +304,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4 mt-4">
-            {data.lessons.map((l) => {
+            {data.lessons.slice(0, shownLessons).map((l) => {
               const m = masteryByLesson.get(l.id);
               const nConcepts = Array.isArray(l.concepts) ? l.concepts.length : 0;
               return (
@@ -283,6 +323,15 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
               );
             })}
           </div>
+        )}
+        {data.lessons.length > shownLessons && (
+          <button
+            type="button"
+            onClick={() => setShownLessons((n) => n + 6)}
+            className="mt-3 w-full text-sm font-semibold text-indigo hover:text-indigo-deep"
+          >
+            Show more lessons ({data.lessons.length - shownLessons} left) ↓
+          </button>
         )}
       </section>
 

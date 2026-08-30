@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/routeAuth";
 import { askClaude, extractJson } from "@/lib/claude";
 import { actionPlanSystem } from "@/lib/prompts";
 import { getSubjectBoard } from "@/lib/subjects";
+import { monthsToExam } from "@/lib/grades";
 
 export const maxDuration = 120;
 
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   const { data: enrolment } = await auth.sb
     .from("subject_enrolments")
-    .select("id, subject, board, current_grade, target_grade, exam_date, action_plan")
+    .select("id, subject, board, current_grade, target_grade, exam_date, gcse_grade, gcse_note, action_plan")
     .eq("user_id", auth.user.id)
     .eq("subject", subjectKey)
     .maybeSingle();
@@ -36,6 +37,9 @@ export async function POST(req: NextRequest) {
         currentGrade: enrolment.current_grade,
         targetGrade: enrolment.target_grade,
         examDate: enrolment.exam_date,
+        gcseGrade: enrolment.gcse_grade,
+        gcseNote: enrolment.gcse_note,
+        monthsToExam: monthsToExam(enrolment.exam_date),
       }),
       content: subj.teachLang === "fr"
         ? `Écris le plan d'action de ${auth.firstName || "l'élève"} en ${subj.labelFr} (${subj.board} ${subj.spec}).`

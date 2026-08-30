@@ -17,7 +17,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
   const [{ data: enrolment }, { data: lessons }] = await Promise.all([
     auth.sb
       .from("subject_enrolments")
-      .select("id, subject, board, spec, current_grade, baseline_grade, target_grade, exam_date, action_plan")
+      .select("id, subject, board, spec, current_grade, baseline_grade, target_grade, exam_date, gcse_grade, gcse_note, action_plan")
       .eq("user_id", auth.user.id)
       .eq("subject", key)
       .maybeSingle(),

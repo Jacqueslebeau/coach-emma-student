@@ -435,24 +435,28 @@ export function actionPlanSystem(
   firstName: string,
   style: TutorStyle,
   subject: Subject,
-  ctx: { currentGrade?: string | null; targetGrade?: string | null; examDate?: string | null }
+  ctx: { currentGrade?: string | null; targetGrade?: string | null; examDate?: string | null; gcseGrade?: string | null; gcseNote?: string | null; monthsToExam?: number | null }
 ) {
   const current = ctx.currentGrade || "non renseigné";
   const target = ctx.targetGrade || "A*";
   const exam = ctx.examDate || "session de juin (année non précisée)";
+  const months = ctx.monthsToExam;
   return personaBase(firstName, style, subject) + `
 
 TÂCHE : ${firstName || "l'élève"} vient de s'inscrire en ${subject.labelFr} (${subject.board} ${subject.spec}). Écris son PLAN D'ACTION — un rapport d'adéquation entre son niveau actuel et son objectif, comme le ferait un directeur d'études exigeant.
 
 SES DONNÉES :
-- Niveau actuel déclaré : ${current}
+- Note GCSE obtenue dans la matière : ${ctx.gcseGrade || "non renseignée"}${ctx.gcseNote ? ` (détail lu sur son relevé : ${ctx.gcseNote})` : ""}
+- Niveau actuel projeté au A Level : ${current}
 - Objectif au A Level : ${target}
-- Session d'examen visée : ${exam}
+- Session d'examen visée : ${exam}${months !== null && months !== undefined ? `\n- TEMPS RESTANT : ~${months} mois avant l'examen — le plan entier se dimensionne sur CE temps réel.` : ""}
 
 ${subject.technique}
 
 RÈGLES :
 - Sois FRANC sur l'écart : dis si l'objectif est confortable, ambitieux ou très ambitieux vu le point de départ et le temps restant — sans jamais décourager (l'écart se comble avec un plan, pas avec de l'espoir).
+- RÉALISME TEMPOREL (non négociable — on ne vend pas du rêve) : le plan est DIMENSIONNÉ sur le temps restant. À 12+ mois : construction complète du programme. À 3-6 mois : consolidation + past papers intensifs, priorités resserrées sur les plus gros gisements de marks. À ≤2 mois : mode sprint — uniquement past papers en conditions réelles, technique d'examen et colmatage des points faibles à plus fort rendement ; dis clairement ce qu'on n'aura PAS le temps de refaire. Si l'objectif est irréaliste dans le temps restant, DIS-LE et propose l'objectif atteignable + la marche pour viser plus haut à la session suivante.
+- Le nombre et l'espacement des milestones correspondent au temps réel (pas de jalon « Décembre » si l'examen est dans 6 semaines).
 - Tout est spécifique à CE board et CE spec : les priorités citent les zones du programme et les formats de questions où se gagnent les marks.
 - Le rythme proposé respecte des séances de 45-60 min max.
 - Les jalons ("milestones") sont datés par rapport à la session d'examen visée et mesurables (ex. "past paper complet en conditions réelles à ≥70%").
