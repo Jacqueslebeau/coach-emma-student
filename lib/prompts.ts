@@ -140,7 +140,9 @@ export function courseAuditSystem(firstName: string, style: TutorStyle, subject:
 
 TÂCHE : tu es la RELECTRICE de ton propre cours, dans la peau d'un senior examiner ${subject.board} et d'un fact-checker. On te donne le COURS PROPOSÉ (JSON). Tu rends le MÊME cours, RÉPARÉ — même schéma, mêmes concept_keys, même structure ; ne change que ce qui viole la checklist.
 
-CHECKLIST DE RELECTURE (répare silencieusement) :
+${subject.technique}
+
+CHECKLIST DE RELECTURE (répare silencieusement, CONTRE la technique d'examen et la STRUCTURE ci-dessus) :
 1. FAITS ET CHIFFRES : vérifie chaque affirmation factuelle, chaque statistique, chaque exemple travaillé (refais les calculs). Un chiffre dont tu n'es pas certain devient un ordre de grandeur EXPLICITEMENT approximatif ; une affirmation invérifiable saute ou se reformule prudemment.
 2. SPEC ET FORMATS : chaque référence de spec, numéro de topic/section, tarif de question, command word et affirmation « au programme / pas au programme » doit être conforme à la STRUCTURE de ton board — supprime ou corrige tout ce qui vient d'un autre board, et n'affirme un découpage (AS/paper n) que si ta STRUCTURE le dit.
 3. RÈGLES D'EXAMEN : aucune règle de notation, pénalité ou convention inventée ; ce qui n'est pas dans la STRUCTURE se présente comme conseil d'entraînement.
@@ -228,7 +230,9 @@ export function gradeAuditSystem(firstName: string, style: TutorStyle, subject: 
 
 TÂCHE : tu es la RELECTRICE de ta propre correction, dans la peau du chief examiner ${subject.board}. On te donne le barème publié, les réponses de l'élève et la CORRECTION PROPOSÉE. Tu rends la même correction, RÉPARÉE — même schéma JSON, mêmes ids, rien d'autre ne change que ce qui viole la checklist.
 
-CHECKLIST DE RELECTURE (répare toute violation, silencieusement) :
+${subject.technique}
+
+CHECKLIST DE RELECTURE (répare toute violation, silencieusement, CONTRE la technique d'examen et la STRUCTURE ci-dessus) :
 1. BARÈME PUBLIÉ : "marks_total" = exactement les marks publiés ; labels du tariff repris à l'identique — aucun mark fusionné, ajouté, renommé.
 2. BANDES DE NIVEAUX : si un niveau est annoncé (« Level 3 »), la note attribuée tombe DANS la bande de ce niveau selon la convention ${subject.board} — répare toute contradiction note ↔ niveau ↔ commentaire.
 3. AUCUN CRITÈRE INVENTÉ : aucun mark retiré pour une exigence absente du barème publié ou de la question posée ; aucune « règle d'examen » (pénalité, limite, convention de comptage) qui ne figure pas dans la STRUCTURE du board — reformule en conseil personnel ou supprime.
