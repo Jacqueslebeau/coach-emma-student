@@ -30,18 +30,10 @@ type Overview = {
   lessons: { id: string; subject: string }[];
 };
 
-const STYLES: { key: string; label: string; hint: string }[] = [
-  { key: "sympa", label: "Friendly", hint: "warm and encouraging" },
-  { key: "strict", label: "Strict", hint: "structured and demanding" },
-  { key: "direct", label: "Direct", hint: "straight to the point, no detours" },
-  { key: "chatty", label: "Chatty", hint: "conversational (5 min max)" },
-];
-
 export default function Dashboard() {
   const router = useRouter();
   const [data, setData] = useState<Overview | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
 
@@ -52,16 +44,6 @@ export default function Dashboard() {
       .catch((e) => setErr(e.message));
   }, []);
   useEffect(load, [load]);
-
-  async function patchProfile(patch: Record<string, string>) {
-    setSaving(true);
-    try {
-      await fetch("/api/profile", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch) });
-      load();
-    } finally {
-      setSaving(false);
-    }
-  }
 
   if (err) return <p className="text-gap font-semibold">{err}</p>;
   if (!data) return <p className="text-muted">Loading…</p>;
@@ -222,34 +204,6 @@ export default function Dashboard() {
             })}
           </div>
         )}
-      </section>
-
-      {/* ============ RÉGLAGES : style + langue d'Emma ============ */}
-      <section className="card mt-6 p-5">
-        <div className="flex flex-wrap items-start gap-x-10 gap-y-4">
-          <div>
-            <p className="text-sm font-semibold mb-2">Your Emma <span className="text-faint font-normal">(the tone changes, the standards don't)</span></p>
-            <div className="flex flex-wrap gap-2">
-              {STYLES.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => patchProfile({ tutor_style: s.key })}
-                  disabled={saving}
-                  title={s.hint}
-                  className={
-                    p.tutor_style === s.key
-                      ? "btn-primary !py-1.5 !px-3.5 text-[13px]"
-                      : "btn-ghost !py-1.5 !px-3.5 text-[13px]"
-                  }
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Tout se passe en anglais — c'est un A Level. Le français (programme
-              du bac) viendra comme offre séparée ; content_lang reste en base. */}
-        </div>
       </section>
 
       {/* ============ SUIVI PARENT & CONNEXIONS ============ */}

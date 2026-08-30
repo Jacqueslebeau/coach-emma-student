@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { compressImage } from "@/lib/compressImage";
 import { SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
 import BackLink from "@/components/BackLink";
+import EmmaStyle from "@/components/EmmaStyle";
 
 export default function NewLessonPage() {
   return (
@@ -129,6 +130,7 @@ function NewLesson() {
           </p>
         )}
         {error && <p className="text-sm text-gap font-semibold">{error}</p>}
+        <EmmaStyle />
         <button className="btn-primary w-full !py-3" disabled={busy}>
           {busy ? "Emma is identifying the concepts…" : "Let's go →"}
         </button>

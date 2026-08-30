@@ -46,6 +46,34 @@ export default function ParentPanel() {
   }
 
   const site = typeof window !== "undefined" ? window.location.origin : "https://coach-emma-student.vercel.app";
+
+  // Rapport de progression pour les parents : chaque matière, départ → actuel → objectif.
+  const report = async () => {
+    const name = profile?.first_name || "the student";
+    let lines = "";
+    try {
+      const d = await fetch("/api/overview").then((r) => r.json());
+      lines = (d.enrolments || [])
+        .map((e: { subject: string; board: string; baseline_grade: string | null; gcse_grade?: string | null; target_grade: string; exam_date: string | null }) => {
+          const roll = (d.by_subject || {})[e.subject] || {};
+          const cur = roll.estimated_grade || e.baseline_grade || "—";
+          const startTxt = e.gcse_grade ? `GCSE ${e.gcse_grade}` : `level ${e.baseline_grade || "—"}`;
+          return `  • ${e.subject.toUpperCase()} (${e.board}) — start: ${startTxt} · current: ~${cur} · target: ${e.target_grade}` +
+            `${roll.lessons ? ` · ${roll.lessons} lessons, ${Math.round((roll.minutes || 0) / 6) / 10} h` : ""}` +
+            `${e.exam_date ? ` · exam ${String(e.exam_date).slice(0, 7)}` : ""}`;
+        })
+        .join("\n");
+    } catch { /* rapport minimal */ }
+    const subject = encodeURIComponent(`Coach Emma Student — ${name}'s progress report`);
+    const body = encodeURIComponent(
+      `Hello,\n\n` +
+      `Here is ${name}'s progress with Coach Emma Student:\n\n` +
+      `${lines || "  (subjects being set up)"}\n\n` +
+      `Every session is logged and reviewable on the console: ${site}\n\n` +
+      `Coach Emma Student`
+    );
+    window.location.href = `mailto:${profile?.parent_email || ""}?subject=${subject}&body=${body}`;
+  };
   const letter = () => {
     const name = profile?.first_name || "the student";
     const lines = logins.slice(0, 10).map((l) => `  - ${fmt(l.at)} (${device(l.user_agent)})`).join("\n");
@@ -76,7 +104,7 @@ export default function ParentPanel() {
         <span className="text-muted">Parent / legal guardian:</span>
         {editing ? (
           <span className="flex items-center gap-2">
-            <input className="input !py-1 !px-2 !text-[13px] w-64" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="parent@example.com" />
+            <input className="input !py-1 !px-2 !text-[13px] w-72" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="parent@example.com, parent2@example.com" title="One or several emails, separated by commas" />
             <button onClick={saveEmail} disabled={saving} className="btn-primary !py-1 !px-3 text-[12.5px]">OK</button>
           </span>
         ) : (
@@ -86,7 +114,10 @@ export default function ParentPanel() {
           </>
         )}
         {profile.parent_email && (
-          <button onClick={letter} className="btn-amber !py-1.5 !px-3.5 text-[13px]">✉️ Send the sign-in letter to the parent</button>
+          <>
+            <button onClick={letter} className="btn-ghost !py-1.5 !px-3.5 text-[13px]">✉️ Sign-in letter</button>
+            <button onClick={report} className="btn-amber !py-1.5 !px-3.5 text-[13px]">✉️ Send the progress report</button>
+          </>
         )}
       </div>
 

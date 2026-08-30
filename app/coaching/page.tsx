@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
+import EmmaStyle from "@/components/EmmaStyle";
 
 type Msg = { role: string; message: string };
 
@@ -112,7 +113,9 @@ export default function CoachingPage() {
         </div>
       )}
 
-      <div className="card mt-5 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">
+      <div className="mt-4"><EmmaStyle /></div>
+
+      <div className="card mt-3 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">
         {messages.length === 0 && !busy && (
           <div>
             <p className="text-muted text-sm">
