@@ -133,16 +133,17 @@ FORMAT :
 // ---------------------------------------------------------------------------
 // 3. Questions de vérification de maîtrise (diagnostic par concept)
 // ---------------------------------------------------------------------------
-export function quizSystem(firstName: string, style: TutorStyle, subject: Subject, concepts: Concept[]) {
+export function quizSystem(firstName: string, style: TutorStyle, subject: Subject, concepts: Concept[], currentGrade?: string | null) {
   return personaBase(firstName, style, subject) + `
 
 TÂCHE : écris 5 questions de VÉRIFICATION DE MAÎTRISE pour cette leçon. But : diagnostiquer concept par concept (acquis / fragile / non acquis), pas donner une note globale.
-
+${currentGrade ? `\nNIVEAU ACTUEL DE L'ÉLÈVE : ${currentGrade}, objectif A*. Calibre pour DIAGNOSTIQUER À CE NIVEAU : un élève ${currentGrade} qui répond à tout sans effort n'apprend rien de la séance — les questions hautes doivent le faire travailler au-dessus de son niveau actuel.\n` : ""}
 Règles :
 - Couvre TOUS les concepts listés (chaque concept a au moins une question ; les plus importants peuvent en avoir deux).
 - Questions courtes, réponse tapable dans un champ texte. Pas de QCM : on veut voir SA méthode / son raisonnement.
 - Formule avec les VRAIS command words du board — dès la vérification, il s'habitue au langage de l'examen.
 - Difficulté progressive : la première met en confiance, la DERNIÈRE est une vraie discriminante A* (celle que seuls les meilleurs réussissent). POUVOIR DIAGNOSTIQUE : au moins DEUX questions au niveau de difficulté du vrai examen (multi-step / haut de bande) — un jeu de questions que même un élève déjà fort réussit sans se faire étirer ne diagnostique rien.
+- TRANSFERT OBLIGATOIRE : une question à laquelle on répond en RECOPIANT le cours ne diagnostique rien — au moins DEUX questions appliquent le concept à un contexte que le cours n'a PAS traité (situation nouvelle, valeurs nouvelles, exemple inédit), pour tester la compréhension et non la mémoire immédiate.
 - VÉRIFIE CHAQUE ÉNONCÉ AVANT DE LE PUBLIER : résous toi-même la question — l'énoncé doit être mathématiquement/factuellement cohérent (pas de valeurs incompatibles, pas de point qui n'est pas sur la courbe) et la réponse doit tomber proprement.
 - BARÈME OBLIGATOIRE : chaque question porte "marks" et "tariff" — ${subject.kind === "calculation" ? "la répartition M/A mark par mark (ex. « M1: sets up chain rule; A1: correct derivative »)" : "pour les petites questions, 1 point par élément valide ; à partir du seuil de niveaux du board, des NIVEAUX + contenu indicatif (jamais de M1/A1 dans une matière à essais)"}. Les "marks" appartiennent aux ALLOCATIONS RÉELLES du board (voir STRUCTURE) — n'invente jamais une allocation. Pour la discriminante A* finale, tu peux poser un extrait d'une vraie question longue traité en plan (dis-le dans l'énoncé). C'est CE barème que tu utiliseras pour corriger.
 
@@ -174,7 +175,7 @@ MÉTHODE OBLIGATOIRE (garde-fou justesse) :
 4. Si la réponse est fausse ou partielle, NOMME la méprise exacte en citant SES mots — pas juste "faux".
 5. Juge AUSSI la technique d'examen : command word respecté ? niveau de détail attendu ? format demandé ?
 6. ADAPTE LE REGISTRE AU NIVEAU RÉVÉLÉ PAR SES RÉPONSES :
-   - S'il a presque tout juste : ne réexplique RIEN de ce qu'il maîtrise. Ton feedback l'ÉTIRE vers l'A* — la nuance de précision qui manque, la version la plus dure de la question, le réflexe d'examinateur supérieur.
+   - S'il a presque tout juste : ne réexplique RIEN de ce qu'il maîtrise. Ton feedback l'ÉTIRE vers l'A* — la nuance de précision qui manque, la version la plus dure de la question, le réflexe d'examinateur supérieur. Et s'il dépasse ~85 % : l'"encouragement" se termine par un DÉFI CONCRET immédiat (la version examen la plus dure du même contenu : un vrai extrait de question longue à planifier, une tâche à refaire en conditions chronométrées) — jamais un simple bravo, et questionne la calibration (« trop facile pour toi ? on monte d'un cran »).
    - S'il est en difficulté : méprise nommée, ré-explication courte, un pas à la fois.
 
 ${subject.technique}

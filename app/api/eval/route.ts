@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     // 3 · La vérification de maîtrise.
     const quiz = extractJson<{ questions: QuizQuestion[] }>(
       await call({
-        system: quizSystem("Alex", "sympa", subject, concepts),
+        system: quizSystem("Alex", "sympa", subject, concepts, level),
         content: `LEÇON : ${extraction.lesson_title}\nTOPIC : ${extraction.spec_topic}\n\nÉcris les 5 questions de vérification.`,
         maxTokens: 2500, temperature: 0.4, effort: "medium", workflow: "eval-quiz",
       })

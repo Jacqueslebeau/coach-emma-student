@@ -24,7 +24,7 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
 
   try {
     const raw = await askClaude({
-      system: quizSystem(auth.firstName, auth.style, subj, concepts) + sessionClock("tutoring", elapsed),
+      system: quizSystem(auth.firstName, auth.style, subj, concepts, auth.currentGrade) + sessionClock("tutoring", elapsed),
       content: `LEÇON : ${lesson.title}\nTOPIC : ${lesson.spec_topic || "—"}\n\nÉcris les 5 questions de vérification.`,
       maxTokens: 2500,
       // un peu de variété pour ne pas retomber sur les mêmes questions au 2e passage
