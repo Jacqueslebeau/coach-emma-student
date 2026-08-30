@@ -2,7 +2,7 @@
 // Emma écoute, guide, motive, et repart toujours sur des actions concrètes.
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/routeAuth";
-import { askClaude } from "@/lib/claude";
+import { askClaude, extractJson } from "@/lib/claude";
 import { coachingSystem, sessionClock } from "@/lib/prompts";
 import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { estimateGrade } from "@/lib/examTechnique";
@@ -21,6 +21,58 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(40);
   return NextResponse.json({ messages: (data || []).reverse(), first_name: auth.firstName, style: auth.style });
+}
+
+// Fin de séance — le DÉBRIEF façon Coach Emma : ce qu'on a travaillé, les
+// actions décidées, le mot du coach. Loggé dans l'historique + envoyable
+// par email depuis le dashboard.
+export async function PATCH() {
+  const auth = await requireUser();
+  if (!auth) return NextResponse.json({ error: "non authentifié" }, { status: 401 });
+
+  const { data: history } = await auth.sb
+    .from("coaching_messages")
+    .select("role, message, created_at")
+    .eq("user_id", auth.user.id)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (!history?.length) return NextResponse.json({ error: "aucune séance à débriefer" }, { status: 400 });
+
+  const convo = history
+    .reverse()
+    .map((h) => (h.role === "user" ? "STUDENT: " : "EMMA: ") + h.message)
+    .join("\n")
+    .slice(0, 8000);
+
+  try {
+    const raw = await askClaude({
+      system: coachingSystem(auth.firstName, auth.style, {
+        currentGrade: auth.currentGrade,
+        targetGrade: auth.targetGrade,
+        lang: auth.contentLang,
+      }) + `
+
+TÂCHE SPÉCIALE — FIN DE SÉANCE : écris le DÉBRIEF de la séance de coaching qui vient de se terminer, à partir de la conversation. RÉPONDS UNIQUEMENT en JSON :
+{ "covered": ["3-5 puces COURTES : ce qu'on a travaillé et les actions décidées — chaque action commence par un verbe"], "coach_note": "2 phrases chaleureuses du coach, dans ton style" }`,
+      content: `CONVERSATION DE LA SÉANCE :\n${convo}\n\nÉcris le débrief.`,
+      maxTokens: 800,
+      effort: "low",
+      workflow: "coaching-wrap",
+      userId: auth.user.id,
+      sb: auth.sb,
+    });
+    const recap = extractJson<{ covered: string[]; coach_note: string }>(raw);
+    const covered = (recap.covered || []).slice(0, 6).map((c) => String(c).slice(0, 160));
+
+    // Le débrief remplace le résumé générique de la séance en cours.
+    const sessionId = await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "coaching", subject: "general", covered: "Coaching d'examen" });
+    if (sessionId) {
+      await auth.sb.from("study_sessions").update({ summary: { covered } }).eq("id", sessionId);
+    }
+    return NextResponse.json({ covered, coach_note: recap.coach_note || "" });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message || "débrief impossible" }, { status: 502 });
+  }
 }
 
 export async function POST(req: NextRequest) {

@@ -114,7 +114,7 @@ COUVERTURE SPEC : avant d'écrire, passe en revue ce que le spec ${subject.board
 
 MODE : ${mode === "full"
     ? `COURS COMPLET — pour chaque concept : l'idée expliquée simplement (avec une intuition ou une image mentale), les termes exacts, UN exemple travaillé en style examen, « à l'examen » : sous quel command word / format ce concept tombe, où sont les marks, le piège classique qui les fait perdre — et une ligne « A* edge » : la nuance de précision qui sépare la bonne réponse de la réponse à full marks.`
-    : `CONCEPTS CLÉS — révision rapide : pour chaque concept, l'essentiel en quelques lignes percutantes (≤ ~170 mots par section — dense, complet, JAMAIS coupé en cours de phrase) : ce qu'il faut retenir, quand l'utiliser, le réflexe d'examen (command word + où sont les marks), le piège n°1 — et une ligne « A* edge » : ce que le candidat A* fait en plus.`}
+    : `CONCEPTS CLÉS — révision rapide, LISIBLE EN ≤ 15 MINUTES au total (la leçon est courte, la maîtrise se construit ensuite par les questions et les exercices) : pour chaque concept, l'essentiel en quelques lignes percutantes (≤ ~170 mots par section — dense, complet, JAMAIS coupé en cours de phrase) : ce qu'il faut retenir, quand l'utiliser, le réflexe d'examen (command word + où sont les marks), le piège n°1 — et une ligne « A* edge » : ce que le candidat A* fait en plus.`}
 
 ${subject.technique}
 
@@ -477,6 +477,42 @@ FORMAT :
 ${subject.teachLang === "fr"
     ? "RAPPEL FINAL : les valeurs du JSON sont en français."
     : "FINAL REMINDER: every string value in the JSON is written in ENGLISH — the field descriptions above are French, your output is not."}`;
+}
+
+// ---------------------------------------------------------------------------
+// 7bis. TEST DE NIVEAU (placement) — pour les matières SANS note GCSE (l'éco,
+// typiquement) : 8 questions calibrées board qui situent le point de départ
+// réel. Pas de note par défaut : on mesure.
+// ---------------------------------------------------------------------------
+export function placementSystem(firstName: string, style: TutorStyle, subject: Subject, mathsGcse?: string | null) {
+  return personaBase(firstName, style, subject) + `
+
+TÂCHE : ${firstName || "l'élève"} démarre le A Level ${subject.labelFr} (${subject.board} ${subject.spec}) SANS note GCSE dans cette matière${mathsGcse ? ` (indice : il a eu ${mathsGcse} au GCSE Maths — bon proxy de rigueur, pas de connaissance de la matière)` : ""}. Écris son TEST DE NIVEAU : 8 questions courtes qui situent son point de départ réel.
+
+Règles :
+- Éventail calibré : q1-q3 = fondamentaux accessibles à un débutant sérieux (bon sens + culture générale guidée) ; q4-q6 = premières notions du programme A Level (définitions, mécanismes de base) ; q7-q8 = niveau début de cours, avec un vrai command word du board.
+- Réponses TAPABLES en 1-4 phrases (ou un calcul court). Pas de QCM.
+- Chaque question porte "marks" (1 à 3) et "tariff" simple.
+- VÉRIFIE chaque énoncé (résous-le toi-même) — cohérent, sans ambiguïté.
+- Ce test doit être encourageant à passer : on mesure un point de départ, on ne piège pas.` + jsonRule(subject) + `
+
+FORMAT :
+{ "intro": "2 phrases chaleureuses : pourquoi ce petit test (situer le point de départ, pas juger)", "questions": [ { "id": "p1", "question": "...", "marks": 2, "tariff": "..." } ] }`;
+}
+
+export function placementGradeSystem(firstName: string, style: TutorStyle, subject: Subject) {
+  return personaBase(firstName, style, subject) + `
+
+TÂCHE : corrige le TEST DE NIVEAU de ${firstName || "l'élève"} (candidat SANS GCSE dans la matière) et estime son POINT DE DÉPART au A Level.
+
+MÉTHODE :
+1. Corrige chaque réponse contre son tariff (sévérité d'examinateur, bienveillance de formulation).
+2. Estime le point de départ sur l'échelle A Level : "E", "D", "C" ou "B" (un débutant ne démarre jamais au-dessus de B — même brillant, il n'a pas encore le contenu du programme).
+3. "rationale" : 2-3 phrases FRANCHES et encourageantes — ce qu'il a déjà (raisonnement, rigueur, intuitions) et ce qui manque (normal : c'est précisément ce qu'on va apprendre).
+4. Ce niveau est un POINT DE DÉPART pour dimensionner le plan — dis-le.` + jsonRule(subject) + `
+
+FORMAT :
+{ "items": [ { "id": "p1", "marks_awarded": 1, "marks_total": 2, "comment": "1 phrase" } ], "total_awarded": 9, "total": 16, "estimated_start": "C", "rationale": "..." }`;
 }
 
 // ---------------------------------------------------------------------------

@@ -21,7 +21,33 @@ export default function CoachingPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
+  const [wrap, setWrap] = useState<{ covered: string[]; coach_note: string } | null>(null);
+  const [wrapBusy, setWrapBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // Fin de séance : Emma écrit le débrief (loggé au dashboard + envoyable par email).
+  async function endSession() {
+    setWrapBusy(true); setError(null);
+    try {
+      const r = await fetch("/api/coaching", { method: "PATCH" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not build the recap");
+      setWrap(d);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setWrapBusy(false);
+    }
+  }
+
+  function wrapMailto() {
+    if (!wrap) return "#";
+    const body =
+      `Coach Emma Student — coaching session recap\n\n` +
+      `What we worked on:\n${wrap.covered.map((c) => `• ${c}`).join("\n")}\n\n` +
+      `${wrap.coach_note}\n\nFull history: https://coach-emma-student.vercel.app/dashboard`;
+    return `mailto:?subject=${encodeURIComponent("Coaching session recap — Coach Emma Student")}&body=${encodeURIComponent(body)}`;
+  }
 
   useEffect(() => {
     fetch("/api/coaching")
@@ -64,7 +90,25 @@ export default function CoachingPage() {
             how to perform on the big day. Ideal session: 15-20 min.
           </p>
         </div>
+        {messages.length > 1 && !wrap && (
+          <button type="button" onClick={endSession} disabled={wrapBusy} className="btn-ghost !py-1.5 !px-3 text-[13px] shrink-0">
+            {wrapBusy ? "Wrapping up…" : "End session — get my recap"}
+          </button>
+        )}
       </div>
+
+      {wrap && (
+        <div className="card p-5 mt-4 border-indigo bg-indigo-soft/40">
+          <p className="font-serif font-semibold text-indigo-deep">Session recap</p>
+          <ul className="mt-2 space-y-1">
+            {wrap.covered.map((c, i) => (
+              <li key={i} className="text-sm flex gap-2"><span className="text-amber">✔</span><span>{c}</span></li>
+            ))}
+          </ul>
+          {wrap.coach_note && <p className="text-sm text-muted mt-2 italic">{wrap.coach_note}</p>}
+          <a href={wrapMailto()} className="text-sm font-semibold text-indigo hover:text-indigo-deep inline-block mt-3">✉ Email me this recap</a>
+        </div>
+      )}
 
       <div className="card mt-5 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">
         {messages.length === 0 && !busy && (

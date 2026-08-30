@@ -127,6 +127,15 @@ export default function HeaderNav() {
   return (
     <nav className="flex items-center gap-3 text-sm font-semibold">
       <Link href="/dashboard" className="text-muted hover:text-indigo">{t.dash}</Link>
+      <Dropdown label={t.subjects}>
+        <div className="py-1">
+          {SUBJECT_KEYS.map((k) => (
+            <Link key={k} href={`/matiere/${k}`} className="block px-4 py-2 hover:bg-indigo-soft text-[13.5px]">
+              {lang === "fr" ? SUBJECTS[k].labelFr : SUBJECTS[k].labelEn}
+            </Link>
+          ))}
+        </div>
+      </Dropdown>
       <Link href="/coaching" className="text-muted hover:text-indigo">{t.coach}</Link>
       <Link href="/lesson/new" className="btn-primary !py-1.5 !px-3.5 text-[13px]">{t.newLesson}</Link>
     </nav>

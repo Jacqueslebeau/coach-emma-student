@@ -9,6 +9,7 @@ import RichText from "@/components/RichText";
 import ActivityHistory from "@/components/ActivityHistory";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 import { gcseToStart, allowedTargets } from "@/lib/grades";
+import SubjectSetup from "@/components/SubjectSetup";
 
 type Plan = {
   headline?: string;
@@ -142,16 +143,15 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
       </div>
 
       {!e && (
-        <div className="card p-5 mt-5 border-amber">
-          <p className="text-sm text-muted">
-            This subject isn't set up yet (board, starting grade, target) — without that, there's no
-            action plan and no calibration to your exam board.
-          </p>
-          <Link href="/onboarding" className="btn-primary mt-3 inline-block !py-2 !px-4">Set up →</Link>
-        </div>
+        <SubjectSetup
+          subject={subject as SubjectKey}
+          subjectLabel={subjectLabel}
+          onDone={() => { planRequested.current = false; load(); }}
+        />
       )}
 
-      {/* ============ PROGRESSION ============ */}
+      {/* ============ PROGRESSION (une fois la matière configurée) ============ */}
+      {e && (
       <section className="card mt-5 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-5">
@@ -204,6 +204,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             : "Concept-by-concept mastery will appear after your first lesson."}
         </p>
       </section>
+      )}
 
       {/* ============ PLAN D'ACTION ============ */}
       <section className="mt-6">
