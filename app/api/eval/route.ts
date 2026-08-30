@@ -13,8 +13,8 @@ import {
 } from "@/lib/evalHarness";
 import type { Concept, Course, QuizQuestion, QuizGrade } from "@/lib/types";
 
-// 8 appels séquentiels (dont 2 relectures) : Fluid compute permet ce budget.
-export const maxDuration = 600;
+// 8 appels séquentiels (dont 2 relectures) — plafond du plan Vercel Hobby.
+export const maxDuration = 300;
 const ADMIN_EMAILS = new Set(["jacques@mindsearch.net"]);
 
 export async function GET() {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         await call({
           system: courseAuditSystem("Alex", "sympa", subject),
           content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
-          maxTokens: 4500, effort: "medium", workflow: "eval-course-audit",
+          maxTokens: 4500, effort: "low", workflow: "eval-course-audit",
         })
       );
       if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) auditedCourse = ac;
