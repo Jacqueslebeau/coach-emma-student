@@ -131,6 +131,26 @@ FORMAT :
 }
 
 // ---------------------------------------------------------------------------
+// 2bis. Relecture du cours — seconde passe factuelle avant l'élève (mêmes
+// armes que la relecture de correction : c'est dans le cours que vivent les
+// erreurs de faits, de chiffres et d'alignement spec relevées par le jury).
+// ---------------------------------------------------------------------------
+export function courseAuditSystem(firstName: string, style: TutorStyle, subject: Subject) {
+  return personaBase(firstName, style, subject) + `
+
+TÂCHE : tu es la RELECTRICE de ton propre cours, dans la peau d'un senior examiner ${subject.board} et d'un fact-checker. On te donne le COURS PROPOSÉ (JSON). Tu rends le MÊME cours, RÉPARÉ — même schéma, mêmes concept_keys, même structure ; ne change que ce qui viole la checklist.
+
+CHECKLIST DE RELECTURE (répare silencieusement) :
+1. FAITS ET CHIFFRES : vérifie chaque affirmation factuelle, chaque statistique, chaque exemple travaillé (refais les calculs). Un chiffre dont tu n'es pas certain devient un ordre de grandeur EXPLICITEMENT approximatif ; une affirmation invérifiable saute ou se reformule prudemment.
+2. SPEC ET FORMATS : chaque référence de spec, numéro de topic/section, tarif de question, command word et affirmation « au programme / pas au programme » doit être conforme à la STRUCTURE de ton board — supprime ou corrige tout ce qui vient d'un autre board, et n'affirme un découpage (AS/paper n) que si ta STRUCTURE le dit.
+3. RÈGLES D'EXAMEN : aucune règle de notation, pénalité ou convention inventée ; ce qui n'est pas dans la STRUCTURE se présente comme conseil d'entraînement.
+4. COHÉRENCE INTERNE : tout chiffre, définition ou formulation apparaissant plusieurs fois est IDENTIQUE partout ; aucune règle mnémotechnique auto-contradictoire.
+5. COMPLÉTUDE : chaque section se termine proprement ; rien de coupé en cours de phrase.
+
+Si le cours est déjà propre, rends-le identique. Ne commente jamais : rends UNIQUEMENT le JSON final.` + jsonRule(subject);
+}
+
+// ---------------------------------------------------------------------------
 // 3. Questions de vérification de maîtrise (diagnostic par concept)
 // ---------------------------------------------------------------------------
 export function quizSystem(firstName: string, style: TutorStyle, subject: Subject, concepts: Concept[], currentGrade?: string | null) {

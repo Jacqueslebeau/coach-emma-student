@@ -5,10 +5,11 @@ import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { courseSystem , sessionClock } from "@/lib/prompts";
+import { courseSystem, courseAuditSystem , sessionClock } from "@/lib/prompts";
 import type { Concept, Course } from "@/lib/types";
 
-export const maxDuration = 180;
+// Deux passes (cours + relecture factuelle) : on prend de la marge.
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireUser();
@@ -46,7 +47,26 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       userId: auth.user.id,
       sb: auth.sb,
     });
-    const course = extractJson<Course>(raw);
+    let course = extractJson<Course>(raw);
+
+    // Relecture factuelle du cours (best-effort) : faits, chiffres, spec,
+    // cohérence — réparés avant l'élève ; en cas d'échec, le cours initial part.
+    try {
+      const audited = extractJson<Course>(
+        await askClaude({
+          system: courseAuditSystem(auth.firstName, auth.style, subj),
+          content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
+          maxTokens: mode === "full" ? 9000 : 4500,
+          effort: "medium",
+          workflow: `course-${mode}-audit`,
+          lessonId: id,
+          userId: auth.user.id,
+          sb: auth.sb,
+        })
+      );
+      if (Array.isArray(audited?.sections) && audited.sections.length === course.sections?.length) course = audited;
+    } catch { /* on garde le cours initial */ }
+
     await auth.sb
       .from("lessons")
       .update({ course: { ...existing, [mode]: course }, stage: lesson.stage === "captured" ? "course" : lesson.stage })

@@ -6,14 +6,15 @@ import { requireUser } from "@/lib/routeAuth";
 import { askClaude, extractJson } from "@/lib/claude";
 import { getSubjectBoard, type SubjectKey } from "@/lib/subjects";
 import {
-  conceptExtractionSystem, courseSystem, quizSystem, gradeSystem, gradeAuditSystem, coachingSystem, formatAnswers,
+  conceptExtractionSystem, courseSystem, courseAuditSystem, quizSystem, gradeSystem, gradeAuditSystem, coachingSystem, formatAnswers,
 } from "@/lib/prompts";
 import {
   studentAgentSystem, judgeSystem, coachingOpener, EVAL_TOPICS, type EvalLevel,
 } from "@/lib/evalHarness";
 import type { Concept, Course, QuizQuestion, QuizGrade } from "@/lib/types";
 
-export const maxDuration = 300;
+// 8 appels séquentiels (dont 2 relectures) : Fluid compute permet ce budget.
+export const maxDuration = 600;
 const ADMIN_EMAILS = new Set(["jacques@mindsearch.net"]);
 
 export async function GET() {
@@ -63,6 +64,19 @@ export async function POST(req: NextRequest) {
       })
     );
 
+    // 2bis · Relecture factuelle du cours (identique au produit) — best-effort.
+    let auditedCourse = course;
+    try {
+      const ac = extractJson<Course>(
+        await call({
+          system: courseAuditSystem("Alex", "sympa", subject),
+          content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
+          maxTokens: 4500, effort: "medium", workflow: "eval-course-audit",
+        })
+      );
+      if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) auditedCourse = ac;
+    } catch { /* on garde le cours initial */ }
+
     // 3 · La vérification de maîtrise.
     const quiz = extractJson<{ questions: QuizQuestion[] }>(
       await call({
@@ -77,7 +91,7 @@ export async function POST(req: NextRequest) {
       await call({
         system: studentAgentSystem(level, subject.labelFr),
         content:
-          `LE COURS QUE TU VIENS DE LIRE (concepts clés) :\n${JSON.stringify(course).slice(0, 4000)}\n\n` +
+          `LE COURS QUE TU VIENS DE LIRE (concepts clés) :\n${JSON.stringify(auditedCourse).slice(0, 4000)}\n\n` +
           `QUESTIONS :\n${quiz.questions.map((q) => `${q.id} [${q.concept_key}] : ${q.question}`).join("\n")}`,
         maxTokens: 1500, temperature: 0.6, effort: "low", workflow: "eval-student",
       })
@@ -129,7 +143,7 @@ export async function POST(req: NextRequest) {
         model: "claude-opus-5", // le juge doit être plus fort que le tuteur qu'il audite
         content:
           `DOSSIER DE LA SÉANCE (élève simulé niveau ${level}, topic « ${topic} ») :\n\n` +
-          `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(course).slice(0, 9000)}\n\n` +
+          `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(auditedCourse).slice(0, 9000)}\n\n` +
           `2. QUESTIONS DE VÉRIFICATION (avec barèmes) :\n${quiz.questions.map((q) => `${q.id} [${q.marks ?? "?"} marks — ${q.tariff || ""}]: ${q.question}`).join("\n")}\n\n` +
           `3. RÉPONSES DE L'ÉLÈVE (niveau ${level}) :\n${studentAnswers.answers.map((a) => `${a.id}: ${a.answer}`).join("\n")}\n\n` +
           `4. CORRECTION & DIAGNOSTIC D'EMMA (intégral) :\n${JSON.stringify(grade).slice(0, 16000)}\n\n` +
