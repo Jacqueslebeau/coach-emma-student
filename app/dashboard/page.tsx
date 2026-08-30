@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
+import { SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
 import ActivityHistory from "@/components/ActivityHistory";
 import ParentPanel from "@/components/ParentPanel";
 import IntegrationsPanel from "@/components/IntegrationsPanel";
@@ -42,6 +42,8 @@ export default function Dashboard() {
   const [data, setData] = useState<Overview | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerQuery, setPickerQuery] = useState("");
 
   const load = useCallback(() => {
     fetch("/api/overview")
@@ -88,16 +90,53 @@ export default function Dashboard() {
       </div>
 
       {/* ============ CARTE HÉRO — démarrer (façon « Préparez un entretien ») ============ */}
-      <div className="card p-6 mt-6 flex items-center gap-5 flex-wrap">
+      <div className="card p-6 mt-6 flex items-center gap-5 flex-wrap relative">
         <span className="text-3xl">🎯</span>
         <div className="flex-1 min-w-[220px]">
           <h2 className="font-serif font-semibold text-xl">Start your tutoring</h2>
           <p className="text-sm text-muted mt-0.5">
-            A subject to master? Emma finds your real starting point, you set the goal — and she
-            builds your Tutoring Plan.
+            Pick a subject — Emma finds your real starting point, you set the goal, and she builds
+            your Tutoring Plan.
           </p>
         </div>
-        <Link href="/tutoring/new" className="btn-amber !py-2.5 !px-5 shrink-0">New tutoring</Link>
+        <div className="relative shrink-0">
+          <button type="button" onClick={() => setPickerOpen((o) => !o)} className="btn-amber !py-2.5 !px-5">
+            New tutoring ▾
+          </button>
+          {pickerOpen && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden">
+              <input
+                autoFocus
+                className="w-full px-3.5 py-2.5 text-sm border-b border-line outline-none"
+                placeholder="Search a subject…"
+                value={pickerQuery}
+                onChange={(ev) => setPickerQuery(ev.target.value)}
+              />
+              <div className="max-h-64 overflow-y-auto py-1">
+                {SUBJECT_KEYS
+                  .filter((k) => SUBJECTS[k].labelEn.toLowerCase().includes(pickerQuery.toLowerCase()))
+                  .map((k) => {
+                    const taken = enrolledKeys.has(k);
+                    return taken ? (
+                      <div key={k} className="px-3.5 py-2 text-sm text-faint opacity-50 cursor-not-allowed flex justify-between">
+                        <span>{SUBJECTS[k].labelEn}</span>
+                        <span className="text-[11px]">already started</span>
+                      </div>
+                    ) : (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => { setPickerOpen(false); router.push(`/tutoring/new?subject=${k}`); }}
+                        className="w-full text-left px-3.5 py-2 text-sm font-semibold hover:bg-indigo-soft"
+                      >
+                        {SUBJECTS[k].labelEn}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ============ MY TUTORINGS — façon « Vos préparations » ============ */}
@@ -112,10 +151,9 @@ export default function Dashboard() {
         {data.enrolments.length === 0 && legacyKeys.length === 0 ? (
           <div className="bg-white p-8 text-center">
             <p className="text-muted">
-              Nothing here yet — start your first tutoring: Emma finds your starting point and writes
-              your Tutoring Plan.
+              Nothing here yet — your tutorings will appear here once you start one from
+              «&nbsp;Start your tutoring&nbsp;» above.
             </p>
-            <Link href="/tutoring/new" className="btn-amber mt-4 inline-block">New tutoring →</Link>
           </div>
         ) : (
           <div className="bg-white divide-y divide-line">
