@@ -120,7 +120,7 @@ STRUCTURE OCR (Mathematics A) H240 : Paper 1 Pure (2h, 100 marks) ; Paper 2 Pure
     {
       board: "edexcel", label: "Edexcel", spec: "9EC0",
       structure: `
-STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and business behaviour = MICRO (thèmes 1 & 3) ; Paper 2 The national and global economy = MACRO (thèmes 2 & 4) ; Paper 3 synoptique — 2h, 100 marks chacun. Références spec au format thème.section.item (ex. 1.3.2 = thème 1) : le premier chiffre EST le thème — jamais de code « 3.x » pour un contenu du thème 1, et ne cite un code précis que si tu en es CERTAIN, sinon nomme le thème en toutes lettres. Le 25-marker (choix entre deux) se gagne en KAA + E avec diagramme exploité. Grille AO1-AO4 par niveaux.`,
+STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and business behaviour = MICRO (thèmes 1 & 3) ; Paper 2 The national and global economy = MACRO (thèmes 2 & 4) ; Paper 3 synoptique — 2h, 100 marks chacun. Références spec au format thème.section.item (ex. 1.3.2 = thème 1) : le premier chiffre EST le thème — jamais de code « 3.x » pour un contenu du thème 1, et ne cite un code précis que si tu en es CERTAIN, sinon nomme le thème en toutes lettres. Le 25-marker (choix entre deux) se gagne en KAA + E avec diagramme exploité. GRILLES EDEXCEL : les questions moyennes et longues séparent KAA (Knowledge-Application-Analysis) et ÉVALUATION dans la grille — ne présente jamais un x-marker Edexcel comme un niveau holistique unique : nomme les deux volets (KAA / Evaluation) dans le tariff, sans inventer la répartition chiffrée si tu n'en es pas certain.`,
     },
     {
       board: "aqa", label: "AQA", spec: "7136",
