@@ -119,12 +119,12 @@ STRUCTURE EDEXCEL 9EC0 (Economics A — FAITS VÉRIFIÉS) : Paper 1 Markets and 
     {
       board: "aqa", label: "AQA", spec: "7136",
       structure: `
-STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. N'emploie JAMAIS la nomenclature « Theme 1/2/3/4 » (c'est Edexcel) : chez AQA on dit section 4.1.x / 4.2.x ou le nom du chapitre. ALLOCATIONS RÉELLES AQA : 2, 4, 9, 15 et 25 marks — AUCUNE autre (jamais de question à 3, 5, 6 ou 8 marks). En diagnostic rapide, utilise 2 et 4 marks ; 9/15/25 = questions longues notées PAR NIVEAUX. COMMAND WORDS AQA ÉCO : Define, Calculate, Explain, Analyse, Assess, Evaluate, To what extent — « Examine » n'existe PAS chez AQA. AQA note par NIVEAUX holistiques.`,
+STRUCTURE AQA 7136 (FAITS VÉRIFIÉS) : le spec est numéroté 4.1.x = MICRO (Individuals, firms, markets and market failure) et 4.2.x = MACRO (The national and international economy) — n'utilise jamais un code 4.1 pour un contenu macro ni l'inverse, et ne cite un code précis que si tu en es certain. Paper 1 ≈ section 4.1 ; Paper 2 ≈ section 4.2 ; Paper 3 les deux (dont 30 QCM + étude de cas) — 2h, 80 marks chacun. N'emploie JAMAIS la nomenclature « Theme 1/2/3/4 » (c'est Edexcel) : chez AQA on dit section 4.1.x / 4.2.x ou le nom du chapitre. ALLOCATIONS RÉELLES AQA : 2, 4, 9, 15 et 25 marks — AUCUNE autre (jamais de question à 3, 5, 6 ou 8 marks). En diagnostic rapide, utilise 2 et 4 marks ; 9/15/25 = questions longues notées PAR NIVEAUX. COMMAND WORDS AQA ÉCO : Define, Calculate, Explain, Analyse, Assess, Evaluate, To what extent — « Examine » n'existe PAS chez AQA. AQA note par NIVEAUX holistiques. RÉPARTITION DES AO : le 15-marker est une question d'EXPLICATION/ANALYSE (AO1-AO3, pas d'évaluation) ; l'ÉVALUATION (« To what extent », jugement AO4) appartient au 25-marker UNIQUEMENT — ne présente jamais un 15 marks comme une question d'évaluation.`,
     },
     {
       board: "ocr", label: "OCR", spec: "H460",
       structure: `
-STRUCTURE OCR H460 : Paper 1 Microeconomics ; Paper 2 Macroeconomics ; Paper 3 Themes in economics — 2h, 80 marks chacun. N'emploie JAMAIS la nomenclature « Theme 1/2/3/4 » d'Edexcel : chez OCR, désigne les contenus par leur nom de chapitre/section. Mélange de questions courtes, réponses sur données et essais longs (20-25 marks) exigeant analyse ET évaluation ; le jugement final doit s'appuyer sur un critère explicite (magnitude, horizon temporel, hypothèses).`,
+STRUCTURE OCR H460 : Component 01 Microeconomics ; Component 02 Macroeconomics ; Component 03 Themes in economics — 2h, 80 marks chacun. VOCABULAIRE OCR : on dit « Component 01/02/03 », JAMAIS « Theme 1/2/3/4 » (Edexcel) ni « section 4.1 » (AQA) : désigne les contenus par leur nom de chapitre. TARIFS : l'essai long OCR vaut 20 marks — le « 25-marker » n'existe PAS chez OCR (c'est Edexcel/AQA) ; pas non plus de « 9-marker AO1/AO2/AO3 » à l'AQA. En diagnostic, utilise des petits tarifs (2/4/6) et annonce l'essai de 20 marks comme l'objectif. Mélange de questions courtes, réponses sur données et essais longs (20-25 marks) exigeant analyse ET évaluation ; le jugement final doit s'appuyer sur un critère explicite (magnitude, horizon temporel, hypothèses).`,
     },
   ],
   geo: [
@@ -132,7 +132,8 @@ STRUCTURE OCR H460 : Paper 1 Microeconomics ; Paper 2 Macroeconomics ; Paper 3 T
       board: "ocr", label: "OCR", spec: "H481",
       structure: `
 STRUCTURE OCR H481 : Paper 1 Physical systems (1h30, 66 marks) ; Paper 2 Human interactions (1h30, 66 marks) ; Paper 3 Geographical debates (2h30, 108 marks) ; + investigation indépendante (NEA, 20%). Questions courtes → essais de 16 marks et le grand 33-marker synoptique du Paper 3 (planifier 5 min, PEEL, évaluation filée).
-ALLOCATIONS RÉELLES OCR : les questions étendues valent 8, 12, 16 marks (et le 33-marker du Paper 3) — n'invente pas d'autres tarifs d'essai (pas de « 9-marker » chez OCR). Les level descriptors OCR sont construits sur les AO : un barème par niveaux DOIT dire ce que chaque niveau exige en AO1 (connaissance) et AO2 (application/analyse), et en AO3 quand des données/figures sont exploitées.`,
+ALLOCATIONS RÉELLES OCR : les questions étendues valent 8, 12, 16 marks (et le 33-marker du Paper 3) — n'invente pas d'autres tarifs d'essai (pas de « 9-marker » chez OCR). Les level descriptors OCR sont construits sur les AO : un barème par niveaux DOIT dire ce que chaque niveau exige en AO1 (connaissance) et AO2 (application/analyse), et en AO3 quand des données/figures sont exploitées.
+CADRE SYSTÉMIQUE OBLIGATOIRE (Landscape Systems) : chez OCR, les paysages (côtes, glaciaires, dunes) s'enseignent en SYSTÈME — sediment cell, inputs/outputs/stores/flows (transfers), dynamic equilibrium et feedbacks — un cours de géographie physique OCR sans ce cadre n'est pas aligné sur le spec.`,
     },
     {
       board: "aqa", label: "AQA", spec: "7037",
@@ -142,7 +143,7 @@ STRUCTURE AQA 7037 (FAITS VÉRIFIÉS) : Paper 1 Physical geography (2h30, 120 ma
     {
       board: "edexcel", label: "Edexcel", spec: "9GE0",
       structure: `
-STRUCTURE EDEXCEL 9GE0 : Paper 1 (physique, 2h15, 105 marks) ; Paper 2 (humaine, 2h15, 105 marks) ; Paper 3 synoptique sur ressources (2h15, 70 marks) ; + NEA (20%). Essais de 12 et 20 marks ; le Paper 3 exige la synopticité via les lentilles officielles : players, attitudes and actions, futures and uncertainties — les citer et les utiliser rapporte.`,
+STRUCTURE EDEXCEL 9GE0 : Paper 1 (physique, 2h15, 105 marks) ; Paper 2 (humaine, 2h15, 105 marks) ; Paper 3 synoptique sur ressources (2h15, 70 marks) ; + NEA (20%). NUMÉROTATION DES TOPICS (FAITS VÉRIFIÉS) : Topic 1 Tectonic Processes and Hazards ; Topic 2A Glaciated Landscapes / 2B Coastal Landscapes and Change ; Topic 3 Globalisation ; Topic 4A Regenerating Places / 4B Diverse Places ; Topic 5 The Water Cycle and Water Insecurity ; Topic 6 The Carbon Cycle and Energy Security ; Topic 7 Superpowers ; Topic 8A Health, Human Rights and Intervention / 8B Migration, Identity and Sovereignty — les côtes sont le Topic 2B, JAMAIS « Topic 4 ». TARIFS : 4, 6, 12 et 20 marks (12 et 20 par niveaux) ; essais de 12 et 20 marks ; le Paper 3 exige la synopticité via les lentilles officielles : players, attitudes and actions, futures and uncertainties — les citer et les utiliser rapporte.`,
     },
   ],
   french: [
@@ -158,7 +159,8 @@ Candidat libre : l'inscription inclut l'épreuve orale dans un centre agréé.`,
       board: "edexcel", label: "Edexcel", spec: "9FR0",
       structure: `
 STRUCTURE EDEXCEL 9FR0 (FAITS VÉRIFIÉS) : Paper 1 Listening, reading and translation (2h, 80 marks — compréhension orale et écrite + TRADUCTION français→anglais UNIQUEMENT) ; Paper 2 Written response to works and translation (2h40, 120 marks — Section A : traduction anglais→français de 20 marks ; Sections B/C : 2 essais sur œuvres/films de 50 marks chacun, 300-350 mots) ; Paper 3 Speaking (discussion + Independent Research Project).
-ATTENTION — LISTE FERMÉE : il n'y a PAS d'épreuve de résumé chez Edexcel. Si l'élève travaille « le résumé », dis-lui clairement que ce format n'existe pas dans SON board et entraîne-le sur les tâches réelles (compréhension, traductions, essais).`,
+ATTENTION — LISTE FERMÉE : il n'y a PAS d'épreuve de résumé chez Edexcel. Si l'élève travaille « le résumé », dis-lui clairement que ce format n'existe pas dans SON board et entraîne-le sur les tâches réelles (compréhension, traductions, essais).
+NOTATION DU PAPER 1 : les réponses de compréhension sont notées sur le CONTENU (la compréhension) — la qualité de langue, la cohésion et les connecteurs n'y sont PAS notés ; la langue est notée dans les traductions et les essais du Paper 2. Ne présente jamais la cohésion comme un critère du Paper 1.`,
     },
   ],
 };
