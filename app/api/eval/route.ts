@@ -41,8 +41,64 @@ export async function POST(req: NextRequest) {
   const subject = getSubjectBoard(String(body?.subject || "maths"), String(body?.board || "") || null);
   const level = String(body?.level || "B") as EvalLevel;
   const topic = String(body?.topic || EVAL_TOPICS[subject.key as SubjectKey][0]).slice(0, 200);
+  // La cellule se joue en DEUX requêtes (stage "session" puis "judge") pour
+  // que chacune tienne largement sous le plafond de durée : la séance Opus
+  // complète + le jury Opus dépassaient les 800 s en une seule requête.
+  const stage = String(body?.stage || "full");
   const call = (opts: Parameters<typeof askClaude>[0]) =>
     askClaude({ ...opts, userId: auth.user.id, sb: auth.sb });
+
+  // Stage "judge" : reçoit les artefacts de la séance, fait juger et enregistre.
+  if (stage === "judge") {
+    const p = (body?.payload || {}) as {
+      lesson_title?: string; concepts?: string[]; course?: Course;
+      questions?: QuizQuestion[]; student_answers?: { id: string; answer: string }[];
+      grade?: QuizGrade; opener?: string; coaching_reply?: string;
+    };
+    if (!p.questions?.length || !p.grade) {
+      return NextResponse.json({ error: "payload de séance manquant" }, { status: 400 });
+    }
+    try {
+      const judged = extractJson<Record<string, unknown>>(
+        await call({
+          system: judgeSystem(subject.labelFr, `${subject.board} ${subject.spec}`, level),
+          model: "claude-opus-5", // le juge doit être plus fort que le tuteur qu'il audite
+          content:
+            `DOSSIER DE LA SÉANCE (élève simulé niveau ${level}, topic « ${topic} ») :\n\n` +
+            `1. COURS PRODUIT PAR EMMA :\n${JSON.stringify(p.course || {}).slice(0, 9000)}\n\n` +
+            `2. QUESTIONS DE VÉRIFICATION (avec barèmes) :\n${(p.questions || []).map((q) => `${q.id} [${q.marks ?? "?"} marks — ${q.tariff || ""}]: ${q.question}`).join("\n")}\n\n` +
+            `3. RÉPONSES DE L'ÉLÈVE (niveau ${level}) :\n${(p.student_answers || []).map((a) => `${a.id}: ${a.answer}`).join("\n")}\n\n` +
+            `4. CORRECTION & DIAGNOSTIC D'EMMA (intégral) :\n${JSON.stringify(p.grade || {}).slice(0, 16000)}\n\n` +
+            `5. COACHING — message de l'élève : « ${p.opener || ""} »\nRÉPONSE D'EMMA : ${String(p.coaching_reply || "").slice(0, 2500)}\n\n` +
+            `Rends ton audit.`,
+          maxTokens: 3000, workflow: "eval-judge",
+        })
+      );
+      const { data: saved } = await auth.sb
+        .from("eval_runs")
+        .insert({
+          user_id: auth.user.id,
+          subject: subject.key,
+          board: subject.board,
+          level,
+          topic,
+          scores: judged,
+          artifacts: {
+            lesson_title: p.lesson_title,
+            concepts: p.concepts || [],
+            questions: p.questions,
+            student_answers: p.student_answers,
+            grade: p.grade,
+            coaching: { opener: p.opener, reply: p.coaching_reply },
+          },
+        })
+        .select("id")
+        .single();
+      return NextResponse.json({ id: saved?.id, subject: subject.key, board: subject.board, level, topic, scores: judged });
+    } catch (e) {
+      return NextResponse.json({ error: (e as Error).message || "jury impossible" }, { status: 502 });
+    }
+  }
 
   try {
     // 1 · Capture : le topic devient une leçon découpée en concepts.
@@ -144,6 +200,23 @@ export async function POST(req: NextRequest) {
         maxTokens: 700, temperature: 0.6, effort: "medium", workflow: "eval-coaching",
       }),
     ]);
+
+    // Stage "session" : rend les artefacts au runner, qui rappellera en "judge".
+    if (stage === "session") {
+      return NextResponse.json({
+        stage: "session", subject: subject.key, board: subject.board, level, topic,
+        payload: {
+          lesson_title: extraction.lesson_title,
+          concepts: concepts.map((c) => c.label),
+          course: auditedCourse,
+          questions: quiz.questions,
+          student_answers: studentAnswers.answers,
+          grade,
+          opener,
+          coaching_reply: coachingReply,
+        },
+      });
+    }
 
     // 7 · Le JURY audite tout le dossier.
     const judged = extractJson<Record<string, unknown>>(
