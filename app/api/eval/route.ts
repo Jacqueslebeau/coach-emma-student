@@ -74,7 +74,9 @@ export async function POST(req: NextRequest) {
             await call({
               system: courseAuditSystem("Alex", "sympa", subject),
               content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
-              maxTokens: 4500, effort: "low", workflow: "eval-course-audit",
+              // medium « gratuit » en horloge murale : cette passe court en
+              // parallèle du quiz, qui prend à peu près le même temps.
+              maxTokens: 4500, effort: "medium", workflow: "eval-course-audit",
             })
           );
           if (Array.isArray(ac?.sections) && ac.sections.length === course.sections?.length) return ac;

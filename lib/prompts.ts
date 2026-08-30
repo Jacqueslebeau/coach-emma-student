@@ -203,7 +203,7 @@ ${subject.technique}
 VERDICTS par concept :
 - "acquis" : réponse(s) juste(s) avec la bonne méthode.
 - "fragile" : proche mais méthode hésitante, imprécision, ou une juste une fausse.
-- "non_acquis" : méthode absente ou méprise de fond. Réponse vide = non_acquis.
+- "non_acquis" : méthode absente ou méprise de fond. Réponse vide = non_acquis, MAIS le feedback et la note du concept disent explicitement « pas de réponse — concept non évalué, à retester » : on ne présente jamais une absence de réponse comme une méprise diagnostiquée.
 
 Feedback : dans ton style, 2-3 phrases par question — où c'est juste, où ça casse, jamais humiliant. "encouragement" : une phrase honnête sur l'ensemble (pas de flatterie creuse). "model_answer" : la réponse à FULL MARKS, impeccable, celle qu'écrirait le candidat A*.
 
