@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
           `LEÇON : ${extraction.lesson_title}\n\n` +
           formatAnswers(quiz.questions, studentAnswers.answers) +
           `\n\nCorrige, diagnostique par concept, nomme les méprises.`,
-        maxTokens: 16000, workflow: "eval-grade",
+        maxTokens: 16000, effort: "medium", workflow: "eval-grade",
       })
     );
 
