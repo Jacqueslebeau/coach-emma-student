@@ -15,7 +15,7 @@ import IntegrationsPanel from "@/components/IntegrationsPanel";
 type Enrolment = {
   id: string; subject: string; board: string; spec: string;
   current_grade: string | null; baseline_grade: string | null; target_grade: string;
-  exam_date: string | null; action_plan: unknown;
+  exam_date: string | null; gcse_grade?: string | null; gcse_note?: string | null; action_plan: unknown;
 };
 type Roll = {
   lessons: number; lessons_done: number; open_weak_points: number;
@@ -170,7 +170,11 @@ export default function Dashboard() {
                         {e.board} · {e.spec}{e.exam_date ? ` · exam ${e.exam_date.slice(0, 7)}` : ""}
                       </p>
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        <span className="chip-todo">Level &amp; goal: {e.baseline_grade || "—"} → {e.target_grade || "A*"}</span>
+                        <span className="chip-todo">
+                          {e.gcse_grade
+                            ? `Start: GCSE ${e.gcse_grade} (≈ ${e.baseline_grade || "—"})`
+                            : `Start: level ${e.baseline_grade || "—"}`} → target {e.target_grade || "A*"}
+                        </span>
                         {r?.estimated_grade && <span className="chip-acquis">Currently ~{r.estimated_grade}</span>}
                         {r && r.open_weak_points > 0 && <span className="chip-fragile">{r.open_weak_points} point{r.open_weak_points === 1 ? "" : "s"} to work on</span>}
                         {r && <span className="chip bg-white border border-line text-faint">{r.lessons} lesson{r.lessons === 1 ? "" : "s"} · {Math.round(r.minutes / 6) / 10} h</span>}

@@ -21,7 +21,7 @@ export async function GET() {
     await Promise.all([
       auth.sb
         .from("subject_enrolments")
-        .select("id, subject, board, spec, current_grade, baseline_grade, target_grade, exam_date, action_plan, created_at")
+        .select("id, subject, board, spec, current_grade, baseline_grade, target_grade, exam_date, gcse_grade, gcse_note, action_plan, created_at")
         .eq("user_id", auth.user.id)
         .order("created_at", { ascending: true }),
       auth.sb
