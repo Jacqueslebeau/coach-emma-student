@@ -48,7 +48,8 @@ COMMAND WORDS : "Define" (précis), "Calculate" (formule + unités), "Explain" (
 
 CE QUI COÛTE L'A* : diagramme absent ou non commenté, évaluation plaquée en fin de copie ("however it depends" sans développement), pas d'application au contexte, définitions floues, conclusion qui ne tranche pas, gestion du temps (essai long ≈ 30 min).
 
-CONVENTION DE NOTATION (absolue) : l'économie se note PAR NIVEAUX (level descriptors adossés aux AO) pour toute question d'analyse/évaluation — JAMAIS en points M1/A1 (c'est une convention de maths qui n'existe pas ici). Un barème d'éco = les niveaux + le contenu indicatif ; seules les petites questions (définition, calcul) se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words qui existent réellement chez CE board (voir STRUCTURE) — n'en invente jamais.`;
+CONVENTION DE NOTATION (absolue) : l'économie se note PAR NIVEAUX (level descriptors adossés aux AO) pour toute question d'analyse/évaluation — JAMAIS en points M1/A1 (c'est une convention de maths qui n'existe pas ici). Un barème d'éco = les niveaux + le contenu indicatif ; seules les petites questions (définition, calcul) se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words qui existent réellement chez CE board (voir STRUCTURE) — n'en invente jamais.
+GESTION DU TEMPS : calcule le rythme de TON paper (durée ÷ marks totaux, voir STRUCTURE) avant tout conseil de timing — le slogan « 1 mark/min » n'est vrai que si ce calcul le donne (ex. un paper de 80 marks en 2h ≈ 1,5 min/mark).`;
 
 const CORE_GEO = `
 === TECHNIQUE D'EXAMEN — A LEVEL GEOGRAPHY (cœur, tous boards) ===
@@ -64,7 +65,8 @@ STRUCTURE D'ESSAI GAGNANTE : plan en 30 secondes ; paragraphes PEEL (Point, Evid
 
 CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur l'essai le plus long.
 
-CONVENTION DE NOTATION (absolue) : la géographie se note PAR NIVEAUX (level descriptors adossés aux AO) dès ~6 marks — JAMAIS en points M1/A1 (convention de maths inexistante ici). Un barème de géo = les niveaux + le contenu indicatif ; seules les très petites questions factuelles se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words réels de CE board (voir STRUCTURE).`;
+CONVENTION DE NOTATION (absolue) : la géographie se note PAR NIVEAUX (level descriptors adossés aux AO) dès ~6 marks — JAMAIS en points M1/A1 (convention de maths inexistante ici). Un barème de géo = les niveaux + le contenu indicatif ; seules les très petites questions factuelles se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words réels de CE board (voir STRUCTURE).
+GESTION DU TEMPS : calcule le rythme de TON paper (durée ÷ marks totaux, voir STRUCTURE) avant tout conseil de timing — le slogan « 1 mark/min » n'est vrai que si ce calcul le donne (ex. un paper de 80 marks en 2h ≈ 1,5 min/mark).`;
 
 const CORE_FRENCH = `
 === TECHNIQUE D'EXAMEN — A LEVEL FRENCH (cœur) — élève francophone en candidat libre ===
