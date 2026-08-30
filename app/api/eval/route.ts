@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/routeAuth";
 import { askClaude, extractJson } from "@/lib/claude";
 import { getSubjectBoard, type SubjectKey } from "@/lib/subjects";
 import {
-  conceptExtractionSystem, courseSystem, quizSystem, gradeSystem, coachingSystem, formatAnswers,
+  conceptExtractionSystem, courseSystem, quizSystem, gradeSystem, gradeAuditSystem, coachingSystem, formatAnswers,
 } from "@/lib/prompts";
 import {
   studentAgentSystem, judgeSystem, coachingOpener, EVAL_TOPICS, type EvalLevel,
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     );
 
     // 5 · Emma corrige et diagnostique.
-    const grade = extractJson<QuizGrade>(
+    let grade = extractJson<QuizGrade>(
       await call({
         system: gradeSystem("Alex", "sympa", subject, concepts),
         content:
@@ -94,6 +94,20 @@ export async function POST(req: NextRequest) {
         maxTokens: 16000, workflow: "eval-grade",
       })
     );
+
+    // 5bis · Relecture d'examinateur (identique au produit) — best-effort.
+    try {
+      const audited = extractJson<QuizGrade>(
+        await call({
+          system: gradeAuditSystem("Alex", "sympa", subject),
+          content:
+            formatAnswers(quiz.questions, studentAnswers.answers) +
+            `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(grade)}`,
+          maxTokens: 16000, effort: "medium", workflow: "eval-grade-audit",
+        })
+      );
+      if (Array.isArray(audited?.items) && audited.items.length === grade.items?.length) grade = audited;
+    } catch { /* on garde la correction initiale */ }
 
     // 6 · Une séance de coaching (l'élève ouvre selon son niveau, Emma répond).
     const opener = coachingOpener(level);

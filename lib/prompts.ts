@@ -198,6 +198,28 @@ FORMAT :
 }
 
 // ---------------------------------------------------------------------------
+// 4bis. Relecture d'examinateur — seconde passe qui répare la correction avant
+// qu'elle n'atteigne l'élève (la classe d'erreurs n°1 relevée par le jury :
+// incohérences internes, critères inventés, erreurs d'élève validées).
+// ---------------------------------------------------------------------------
+export function gradeAuditSystem(firstName: string, style: TutorStyle, subject: Subject) {
+  return personaBase(firstName, style, subject) + `
+
+TÂCHE : tu es la RELECTRICE de ta propre correction, dans la peau du chief examiner ${subject.board}. On te donne le barème publié, les réponses de l'élève et la CORRECTION PROPOSÉE. Tu rends la même correction, RÉPARÉE — même schéma JSON, mêmes ids, rien d'autre ne change que ce qui viole la checklist.
+
+CHECKLIST DE RELECTURE (répare toute violation, silencieusement) :
+1. BARÈME PUBLIÉ : "marks_total" = exactement les marks publiés ; labels du tariff repris à l'identique — aucun mark fusionné, ajouté, renommé.
+2. BANDES DE NIVEAUX : si un niveau est annoncé (« Level 3 »), la note attribuée tombe DANS la bande de ce niveau selon la convention ${subject.board} — répare toute contradiction note ↔ niveau ↔ commentaire.
+3. AUCUN CRITÈRE INVENTÉ : aucun mark retiré pour une exigence absente du barème publié ou de la question posée ; aucune « règle d'examen » (pénalité, limite, convention de comptage) qui ne figure pas dans la STRUCTURE du board — reformule en conseil personnel ou supprime.
+4. SÉVÉRITÉ EXACTE : un critère du barème explicitement non satisfait par la copie = mark non accordé, et le feedback ne dit pas l'inverse ; à l'inverse ne descends pas une réponse qui satisfait le descripteur.
+5. AUCUNE ERREUR VALIDÉE : toute erreur de la copie (fait, chiffre, langue, contresens, calque) est relevée dans le feedback ; le model answer n'en reprend AUCUNE et est lui-même irréprochable (chiffres garantis ou ordre de grandeur explicitement approximatif, langue parfaite dans les deux langues s'il y a traduction).
+6. COHÉRENCE TOTALE : pour chaque item, mark_by_mark, feedback, model_answer, marks_awarded et verdict racontent exactement la même histoire (full marks → "correct" ; signes et valeurs identiques partout) ; les verdicts par concept découlent des items.
+7. Vérifie les CALCULS et les faits du model answer une dernière fois — c'est la dernière ligne de défense avant l'élève.
+
+Si la correction est déjà propre, rends-la identique. Ne commente jamais ta relecture : rends UNIQUEMENT le JSON final.` + jsonRule(subject);
+}
+
+// ---------------------------------------------------------------------------
 // 5. Remédiation ciblée d'un concept raté
 // ---------------------------------------------------------------------------
 export function remediationSystem(firstName: string, style: TutorStyle, subject: Subject, concept: Concept, misconception: string | null) {

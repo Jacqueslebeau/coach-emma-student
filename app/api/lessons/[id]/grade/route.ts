@@ -6,11 +6,12 @@ import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
 import { askClaude, extractJson } from "@/lib/claude";
-import { gradeSystem, formatAnswers , sessionClock } from "@/lib/prompts";
+import { gradeSystem, gradeAuditSystem, formatAnswers , sessionClock } from "@/lib/prompts";
 import { applyVerdicts } from "@/lib/mastery";
 import type { Concept, QuizGrade, QuizQuestion } from "@/lib/types";
 
-export const maxDuration = 180;
+// Deux passes (correction + relecture d'examinateur) : on prend de la marge.
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const auth = await requireUser();
@@ -63,7 +64,30 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       userId: auth.user.id,
       sb: auth.sb,
     });
-    const grade = extractJson<QuizGrade>(raw);
+    let grade = extractJson<QuizGrade>(raw);
+
+    // Relecture d'examinateur : seconde passe qui répare les incohérences de
+    // notation avant l'élève. Best-effort — si elle échoue, la correction
+    // initiale part telle quelle.
+    try {
+      const audited = extractJson<QuizGrade>(
+        await askClaude({
+          system: gradeAuditSystem(auth.firstName, auth.style, subj),
+          content:
+            formatAnswers(questions, answers) +
+            `\n\nCORRECTION PROPOSÉE (relis, répare, rends le JSON final) :\n${JSON.stringify(grade)}`,
+          maxTokens: 16000,
+          effort: "medium",
+          workflow: attempt.kind === "quiz" ? "quiz-grade-audit" : "remediation-grade-audit",
+          lessonId: id,
+          userId: auth.user.id,
+          sb: auth.sb,
+        })
+      );
+      if (Array.isArray(audited?.items) && audited.items.length === grade.items?.length) grade = audited;
+    } catch {
+      // on garde la correction initiale
+    }
 
     await auth.sb.from("attempts").update({ result: grade }).eq("id", attempt.id);
     await applyVerdicts({
