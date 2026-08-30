@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import EmmaStyle from "@/components/EmmaStyle";
+import EmmaFace from "@/components/EmmaFace";
 
 type Msg = { role: string; message: string };
 
@@ -26,7 +27,39 @@ export default function CoachingPage() {
   const [firstName, setFirstName] = useState("");
   const [wrap, setWrap] = useState<{ covered: string[]; coach_note: string } | null>(null);
   const [wrapBusy, setWrapBusy] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true); // le coaching est PARLÉ par défaut
+  const [speaking, setSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
+  // La voix d'Emma : chaque réponse est lue à voix haute (pause possible).
+  async function speak(text: string) {
+    if (!voiceOn) return;
+    try {
+      audioRef.current?.pause();
+      const clean = text
+        .replace(/\*\*|__|\*|#+\s?/g, "")
+        .replace(/\\\(|\\\)|\\\[|\\\]/g, " ")
+        .slice(0, 4500);
+      const r = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: clean }),
+      });
+      if (!r.ok) return; // la voix est un plus — jamais bloquant
+      const url = URL.createObjectURL(await r.blob());
+      const a = new Audio(url);
+      audioRef.current = a;
+      a.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
+      setSpeaking(true);
+      await a.play().catch(() => setSpeaking(false));
+    } catch { /* silencieux */ }
+  }
+  function toggleSpeech() {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) { a.play(); setSpeaking(true); } else { a.pause(); setSpeaking(false); }
+  }
 
   // Fin de séance : Emma écrit le débrief (loggé au dashboard + envoyable par email).
   async function endSession() {
@@ -75,6 +108,7 @@ export default function CoachingPage() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Something went wrong — try again.");
       setMessages((m) => [...m, { role: "assistant", message: d.reply }]);
+      speak(d.reply);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -86,12 +120,15 @@ export default function CoachingPage() {
     <div className="max-w-2xl mx-auto">
       <BackLink />
       <div className="flex items-end justify-between flex-wrap gap-3 mt-2">
-        <div>
+        <div className="flex items-center gap-4">
+          <div className="shrink-0"><EmmaFace state={speaking ? "speaking" : busy ? "listening" : "idle"} size={84} /></div>
+          <div>
           <h1 className="font-serif font-black text-2xl text-indigo-deep">Exam coaching</h1>
           <p className="text-muted text-sm mt-1">
             No maths here: we prepare the competitor. How you're feeling, how to get ready,
             how to perform on the big day. Ideal session: 15-20 min.
           </p>
+          </div>
         </div>
         {messages.length > 1 && !wrap && (
           <button type="button" onClick={endSession} disabled={wrapBusy} className="btn-ghost !py-1.5 !px-3 text-[13px] shrink-0">
@@ -113,7 +150,24 @@ export default function CoachingPage() {
         </div>
       )}
 
-      <div className="mt-4"><EmmaStyle /></div>
+      <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
+        <EmmaStyle />
+        <div className="flex items-center gap-2">
+          {speaking !== null && audioRef.current && (
+            <button type="button" onClick={toggleSpeech} className="btn-ghost !py-1 !px-3 text-[12.5px]" title="Pause / resume Emma's voice">
+              {speaking ? "❚❚ Pause voice" : "▶ Resume voice"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { if (voiceOn) audioRef.current?.pause(); setVoiceOn(!voiceOn); setSpeaking(false); }}
+            className={voiceOn ? "btn-primary !py-1 !px-3 text-[12.5px]" : "btn-ghost !py-1 !px-3 text-[12.5px]"}
+            title="Emma speaks her replies — the text stays as captions"
+          >
+            {voiceOn ? "🔊 Voice on" : "🔇 Voice off"}
+          </button>
+        </div>
+      </div>
 
       <div className="card mt-3 p-5 min-h-[300px] max-h-[55vh] overflow-y-auto space-y-3">
         {messages.length === 0 && !busy && (

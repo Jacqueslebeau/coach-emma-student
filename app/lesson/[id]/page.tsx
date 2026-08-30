@@ -10,6 +10,8 @@ import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import AskEmma from "@/components/AskEmma";
+import LessonVoice from "@/components/LessonVoice";
+import SpeakButton from "@/components/SpeakButton";
 import Whiteboard from "@/components/Whiteboard";
 import { compressImage } from "@/lib/compressImage";
 import type {
@@ -41,6 +43,7 @@ export default function LessonPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [spokenKey, setSpokenKey] = useState<string | null>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [quiz, setQuiz] = useState<{ attempt_id: string; questions: QuizQuestion[] } | null>(null);
@@ -210,13 +213,29 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ÉTAPE 2 — le cours */}
+      {/* ÉTAPE 2 — le cours : Emma le LIT (voix UK), le texte suit en sous-titres */}
       {phase === "course" && course && (
         <div>
-          <div className="card p-6">
-            <RichText text={course.intro} />
+          <LessonVoice
+            lessonId={lesson.id}
+            mode={course.mode === "full" ? "full" : "key"}
+            sections={[
+              { key: "intro", title: "Introduction" },
+              ...course.sections.map((s) => ({ key: s.concept_key, title: s.title })),
+              ...(course.recap ? [{ key: "recap", title: "One-minute recap" }] : []),
+            ]}
+            onSectionChange={setSpokenKey}
+            onAskEmma={() => document.getElementById("ask-emma-course")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+          />
+          <div className="card p-6 mt-4">
+            <div className={spokenKey === "intro" ? "rounded-xl bg-amber-soft/50 -m-2 p-2 transition" : "transition"}>
+              <RichText text={course.intro} />
+            </div>
             {course.sections.map((s) => (
-              <div key={s.concept_key} className="mt-5 pt-5 border-t border-line">
+              <div
+                key={s.concept_key}
+                className={`mt-5 pt-5 border-t border-line ${spokenKey === s.concept_key ? "rounded-xl bg-amber-soft/50 -mx-2 px-2 pb-2 transition" : "transition"}`}
+              >
                 <h2 className="font-serif font-semibold text-xl">{s.title}</h2>
                 <RichText text={s.body} className="mt-2" />
               </div>
@@ -229,8 +248,10 @@ export default function LessonPage() {
             )}
           </div>
 
-          {/* La main levée : questions APRÈS la lecture, avant la vérification */}
-          <AskEmma lessonId={lesson.id} stage="course" />
+          {/* La main levée : pause la lecture, pose ta question, on reprend */}
+          <div id="ask-emma-course">
+            <AskEmma lessonId={lesson.id} stage="course" />
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 mt-6">
             <button onClick={startQuiz} disabled={busy} className="btn-primary !py-3 !px-6">
@@ -253,7 +274,10 @@ export default function LessonPage() {
           </p>
           {quiz.questions.map((q, i) => (
             <div key={q.id} className="card p-5">
-              <p className="font-mono text-[11px] text-faint">Question {i + 1} · {concepts.find((c) => c.key === q.concept_key)?.label || q.concept_key}</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-mono text-[11px] text-faint">Question {i + 1} · {concepts.find((c) => c.key === q.concept_key)?.label || q.concept_key}</p>
+                <SpeakButton text={q.question} title="Emma asks it aloud" />
+              </div>
               <RichText text={q.question} className="mt-1.5" />
               <textarea
                 className="input mt-3 min-h-[70px] font-mono text-[14px]"
