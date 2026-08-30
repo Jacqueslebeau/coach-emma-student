@@ -238,6 +238,21 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
               >
                 ✉ Email the plan
               </a>
+              <button
+                type="button"
+                onClick={async () => {
+                  const r = await fetch("/api/google/save-plan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subject }) });
+                  const d = await r.json().catch(() => ({}));
+                  if (r.ok && d.link) window.open(d.link, "_blank");
+                  else if (r.status === 428) alert("Connect Google Drive first (My account → Integrations).");
+                  else if (r.status === 503) alert("Google Drive is being enabled — try again soon.");
+                  else alert(d.error || "Could not save to Drive");
+                }}
+                className="text-sm font-semibold text-indigo hover:text-indigo-deep"
+                title="Save the plan as a Google Doc in your Drive"
+              >
+                🗂 Save to Drive
+              </button>
               <button onClick={() => genPlan(true)} disabled={planBusy} className="text-sm font-semibold text-indigo hover:text-indigo-deep disabled:opacity-50">
                 {planBusy ? "Regenerating…" : "Regenerate"}
               </button>
