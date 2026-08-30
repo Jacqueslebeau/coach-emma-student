@@ -42,6 +42,8 @@ LES ASSESSMENT OBJECTIVES (c'est LA grille de l'examinateur) :
 - AO3 Analysis : chaînes de raisonnement ("this leads to… which causes… therefore…"), diagrammes corrects et EXPLOITÉS (pas décoratifs).
 - AO4 Evaluation : les gros marks des essais longs — "it depends on…", magnitude, court vs long terme, hypothèses du modèle, contre-argument pesé, jugement final justifié.
 
+FAIT VÉRIFIÉ RÉCURRENT — le triangle de perte sèche (externalité négative de production) : sommet à l'intersection MSC = MSB (demande) en Q*, base sur la VERTICALE en Q1 entre MPC et MSC — c'est un triangle, pas une zone entre deux verticales ; décris-le exactement ainsi dans cours, barèmes et corrigés.
+
 STRUCTURE GAGNANTE D'UN ESSAI LONG : KAA + E par paragraphe (Knowledge → Application → Analysis, puis Evaluation), 2 gros arguments développés + évaluations > 4 arguments superficiels ; conclusion qui TRANCHE avec un critère.
 
 COMMAND WORDS : "Define" (précis), "Calculate" (formule + unités), "Explain" (chaîne causale), "Examine" (analyse + un peu d'évaluation), "Discuss" / "Evaluate" / "To what extent" (évaluation substantielle obligatoire), "Assess" (jugement pesé).
@@ -64,6 +66,8 @@ COMMAND WORDS (chacun est un contrat) : "Describe" (quoi, pas pourquoi), "Explai
 STRUCTURE D'ESSAI GAGNANTE : plan en 30 secondes ; paragraphes PEEL (Point, Evidence — case study précise avec CHIFFRES, Explain, Link à la question) ; évaluation FILÉE dans les paragraphes, pas plaquée à la fin ; conclusion qui répond littéralement à la question posée.
 
 CE QUI COÛTE L'A* : case studies vagues (sans données chiffrées), réciter la case study au lieu de répondre À LA question, ignorer le command word ("assess" traité comme "describe"), pas de contre-perspective, synopticité absente (liens entre thèmes), gestion du temps sur l'essai le plus long.
+
+FAITS VÉRIFIÉS RÉCURRENTS (ne les rate jamais) : l'eau de mer est légèrement ALCALINE (pH ≈ 8,1) — la dissolution du calcaire au littoral vient de l'acide carbonique (eaux de pluie, embruns, organismes), jamais d'une « mer acide » ; GWP du méthane sur 100 ans ≈ 28-34 × CO2 (pas « ~10 × ») ; affaiblissement d'un puits de carbone = rétroaction POSITIVE pour le réservoir atmosphérique (dis le signe et le référentiel ensemble).
 
 CONVENTION DE NOTATION (absolue) : la géographie se note PAR NIVEAUX (level descriptors adossés aux AO) dès ~6 marks — JAMAIS en points M1/A1 (convention de maths inexistante ici). Un barème de géo = les niveaux + le contenu indicatif ; seules les très petites questions factuelles se notent par points. Utilise UNIQUEMENT les allocations de marks et les command words réels de CE board (voir STRUCTURE).
 GESTION DU TEMPS : calcule le rythme de TON paper (durée ÷ marks totaux, voir STRUCTURE) avant tout conseil de timing — le slogan « 1 mark/min » n'est vrai que si ce calcul le donne (ex. un paper de 80 marks en 2h ≈ 1,5 min/mark).`;
@@ -134,7 +138,7 @@ STRUCTURE OCR H460 : Component 01 Microeconomics ; Component 02 Macroeconomics ;
       board: "ocr", label: "OCR", spec: "H481",
       structure: `
 STRUCTURE OCR H481 : Paper 1 Physical systems (1h30, 66 marks) ; Paper 2 Human interactions (1h30, 66 marks) ; Paper 3 Geographical debates (2h30, 108 marks) ; + investigation indépendante (NEA, 20%). Questions courtes → essais de 16 marks et le grand 33-marker synoptique du Paper 3 (planifier 5 min, PEEL, évaluation filée).
-ALLOCATIONS RÉELLES OCR : les questions étendues valent 8, 12, 16 marks (et le 33-marker du Paper 3) — n'invente pas d'autres tarifs d'essai (pas de « 9-marker » chez OCR). Les level descriptors OCR sont construits sur les AO : un barème par niveaux DOIT dire ce que chaque niveau exige en AO1 (connaissance) et AO2 (application/analyse), et en AO3 quand des données/figures sont exploitées.
+ALLOCATIONS RÉELLES OCR : les tarifs d'essai usuels sont 8, 12 et 16 marks, plus le 33-marker synoptique du Paper 3 — pas de « 9-marker » chez OCR, et n'affirme JAMAIS qu'un tarif précis figure sur TEL paper sauf certitude (dis « une question longue de ce type » plutôt qu'un tarif inventé pour ce paper). Les level descriptors OCR sont construits sur les AO : un barème par niveaux DOIT dire ce que chaque niveau exige en AO1 (connaissance) et AO2 (application/analyse), et en AO3 quand des données/figures sont exploitées.
 CADRE SYSTÉMIQUE OBLIGATOIRE (Landscape Systems) : chez OCR, les paysages (côtes, glaciaires, dunes) s'enseignent en SYSTÈME — sediment cell, inputs/outputs/stores/flows (transfers), dynamic equilibrium et feedbacks — un cours de géographie physique OCR sans ce cadre n'est pas aligné sur le spec.`,
     },
     {
@@ -160,7 +164,7 @@ Candidat libre : l'inscription inclut l'épreuve orale dans un centre agréé.`,
     {
       board: "edexcel", label: "Edexcel", spec: "9FR0",
       structure: `
-STRUCTURE EDEXCEL 9FR0 (FAITS VÉRIFIÉS) : Paper 1 Listening, reading and translation (2h, 80 marks — compréhension orale et écrite + TRADUCTION français→anglais UNIQUEMENT) ; Paper 2 Written response to works and translation (2h40, 120 marks — Section A : traduction anglais→français de 20 marks ; Sections B/C : 2 essais sur œuvres/films de 50 marks chacun, 300-350 mots) ; Paper 3 Speaking (discussion + Independent Research Project).
+STRUCTURE EDEXCEL 9FR0 (FAITS VÉRIFIÉS) : Paper 1 Listening, reading and translation (2h, 80 marks — compréhension orale et écrite + TRADUCTION français→anglais UNIQUEMENT) ; Paper 2 Written response to works and translation (2h40, 120 marks — Section A : traduction anglais→français de 20 marks ; Sections B/C : 2 essais sur œuvres/films de 50 marks chacun, environ 300 mots — indicatif, PAS une fourchette obligatoire : ne présente jamais « 300-350 » comme une contrainte du board) ; Paper 3 Speaking (discussion + Independent Research Project).
 ATTENTION — LISTE FERMÉE : il n'y a PAS d'épreuve de résumé chez Edexcel. Si l'élève travaille « le résumé », dis-lui clairement que ce format n'existe pas dans SON board et entraîne-le sur les tâches réelles (compréhension, traductions, essais).
 NOTATION DU PAPER 1 : les réponses de compréhension sont notées sur le CONTENU (la compréhension) — la qualité de langue, la cohésion et les connecteurs n'y sont PAS notés ; la langue est notée dans les traductions et les essais du Paper 2. Ne présente jamais la cohésion comme un critère du Paper 1. Le Paper 1 Edexcel n'impose PAS de longueur de réponse (pas de « nombre de mots attendu ») et n'a pas de consigne générale « dans vos propres mots » (c'est un réflexe AQA) — n'affirme ni l'un ni l'autre.`,
     },
