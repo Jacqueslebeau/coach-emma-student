@@ -13,8 +13,8 @@ import {
 } from "@/lib/evalHarness";
 import type { Concept, Course, QuizQuestion, QuizGrade } from "@/lib/types";
 
-// 8 appels séquentiels (dont 2 relectures sur Opus) — plan Pro : 600 s.
-export const maxDuration = 600;
+// 8 appels séquentiels (dont 2 relectures sur Opus) — maximum du plan Pro.
+export const maxDuration = 800;
 const ADMIN_EMAILS = new Set(["jacques@mindsearch.net"]);
 
 export async function GET() {
