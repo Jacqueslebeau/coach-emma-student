@@ -52,6 +52,7 @@ function NewTutoring() {
         <span className="font-semibold text-ink"> Tutoring Plan</span>, sized to the time you have.
       </p>
 
+      {!subject && (
       <div className="grid sm:grid-cols-2 gap-3 mt-5">
         {SUBJECT_KEYS.map((k) => {
           const s = SUBJECTS[k];
@@ -81,6 +82,13 @@ function NewTutoring() {
           );
         })}
       </div>
+      )}
+
+      {subject && (
+        <button type="button" onClick={() => setSubject(null)} className="text-sm text-faint hover:text-indigo font-semibold mt-4">
+          ← Choose another subject
+        </button>
+      )}
 
       {subject && (
         <SubjectSetup

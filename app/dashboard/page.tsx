@@ -6,11 +6,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 import { SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
 import ActivityHistory from "@/components/ActivityHistory";
 import ParentPanel from "@/components/ParentPanel";
 import IntegrationsPanel from "@/components/IntegrationsPanel";
+import BackLink from "@/components/BackLink";
 
 type Enrolment = {
   id: string; subject: string; board: string; spec: string;
@@ -63,12 +63,6 @@ export default function Dashboard() {
     }
   }
 
-  async function logout() {
-    await supabaseBrowser().auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
-
   if (err) return <p className="text-gap font-semibold">{err}</p>;
   if (!data) return <p className="text-muted">Loading…</p>;
 
@@ -80,13 +74,13 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="flex items-end justify-between flex-wrap gap-3">
+      <BackLink fallback="/" />
+      <div className="flex items-end justify-between flex-wrap gap-3 mt-2">
         <div>
           <p className="text-[11px] font-mono uppercase tracking-wider text-amber font-semibold">Your dashboard</p>
           <h1 className="font-serif font-black text-3xl text-indigo-deep">My space</h1>
           <p className="text-muted mt-1">Hi {data.first_name || "champ"} 👋 — your tutorings, your coaching, your progress.</p>
         </div>
-        <button onClick={logout} className="text-sm text-faint hover:text-indigo font-semibold">Sign out</button>
       </div>
 
       {/* ============ CARTE HÉRO — démarrer (façon « Préparez un entretien ») ============ */}
