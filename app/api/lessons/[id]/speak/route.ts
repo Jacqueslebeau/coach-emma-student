@@ -70,6 +70,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
           `- The LAST slide is the takeaway: the one thing to remember + the classic exam trap ⚠️.\n` +
           `RULES for "say" (what Emma's voice says over the slide):\n` +
           `- 1-2 spoken sentences, natural and warm, formulas said in words ("x squared", "u times v"). Total narration across all slides UNDER 130 words.\n` +
+          `- UNHURRIED delivery: short sentences, and mark natural micro-pauses with an ellipsis "…" where a teacher would breathe ("So… here's the idea."). One or two per slide, no more.\n` +
           `- Teach the idea — don't read the slide out loud.\n` +
           `Keep the content faithful to the section (nothing invented).`,
         content: source.slice(0, 5000),
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       await askClaude({
         system:
           `You are Emma, a warm UK sixth-form tutor. Turn the written course section below into a natural SPOKEN script, ready to be read aloud by a text-to-speech voice, in ${lang}.\n` +
-          `RULES: keep EVERY piece of teaching content (nothing dropped, nothing added); say formulas and symbols in words (e.g. "x squared", "the derivative of y with respect to x", "pi over 3"); no markdown, no headings, no bullets — flowing sentences with natural transitions; keep exam terms as they are said aloud (command words, "mark scheme"); speak directly to the student ("you"). Output ONLY the script text.`,
+          `RULES: keep EVERY piece of teaching content (nothing dropped, nothing added); say formulas and symbols in words (e.g. "x squared", "the derivative of y with respect to x", "pi over 3"); no markdown, no headings, no bullets — flowing sentences with natural transitions; keep exam terms as they are said aloud (command words, "mark scheme"); speak directly to the student ("you"). UNHURRIED, pleasant delivery: short sentences; insert <break time="0.6s" /> between distinct ideas (about 1 per 3-4 sentences) and an ellipsis "…" for a micro-pause before an important formula or result. Output ONLY the script text.`,
         content: source.slice(0, 6000),
         maxTokens: 1500,
         effort: "low",

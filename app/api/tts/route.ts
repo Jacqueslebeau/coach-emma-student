@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       text = (
         await askClaude({
           system:
-            "Turn the text below into a natural SPOKEN script for a UK tutor's voice, in the same language as the text. Say every formula and symbol in words (\"x squared\", \"pi over three\"). Keep ALL the content, add nothing. No markdown. Output only the script.",
+            "Turn the text below into a natural SPOKEN script for a UK tutor's voice, in the same language as the text. Say every formula and symbol in words (\"x squared\", \"pi over three\"). Keep ALL the content, add nothing. No markdown. Unhurried pace: short sentences, and insert <break time=\"0.5s\" /> between distinct ideas (sparingly, 1 per 2-3 sentences). Output only the script.",
           content: text,
           maxTokens: 800,
           effort: "low",
@@ -49,7 +49,9 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         text,
         model_id: "eleven_turbo_v2_5",
-        voice_settings: { stability: 0.7, similarity_boost: 0.85, style: 0.25, use_speaker_boost: true },
+        // speed 0.9 : débit posé, agréable pour suivre un cours (vérifié 200
+        // sur l'API avant déploiement — plage acceptée 0.7-1.2).
+        voice_settings: { stability: 0.7, similarity_boost: 0.85, style: 0.25, use_speaker_boost: true, speed: 0.9 },
       }),
     }
   );
