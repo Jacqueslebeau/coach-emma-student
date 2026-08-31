@@ -119,7 +119,7 @@ export default function CoachingPage() {
         <div className="bg-indigo-soft rounded-xl px-4 py-3 text-[13.5px] text-indigo-deep mt-3">
           No maths here — coaching prepares <strong>the competitor</strong>: how exam day unfolds, what examiners reward,
           revision strategy, time management, nerves. Ask anything, out loud or in writing. Every session ends with a recap
-          you can email home. Voice sessions last up to 10 minutes — short and focused wins.
+          you can email home.
         </div>
       )}
 
