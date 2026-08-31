@@ -357,18 +357,18 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
       {/* ============ VOS TOPICS — cartes façon « Vos préparations » de Coach
           Emma : comptes rendus (leçon, past papers, coaching) + Start ▾ avec
           les étapes grisées selon l'avancement du cycle. ============ */}
-      <section className="mt-8 rounded-2xl overflow-hidden border border-line">
-        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between">
+      <section className="mt-8 rounded-2xl border border-line">
+        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-serif font-semibold text-lg">Your topics</h2>
           <span className="text-xs opacity-80">{data.lessons.length} topic{data.lessons.length === 1 ? "" : "s"}</span>
         </div>
         {data.lessons.length === 0 ? (
-          <div className="bg-white p-8 text-center">
+          <div className="bg-white p-8 text-center rounded-b-2xl">
             <p className="text-muted">No {subjectLabel} topics yet.</p>
             <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Start my first lesson</Link>
           </div>
         ) : (
-          <div className="bg-white divide-y divide-line">
+          <div className="bg-white divide-y divide-line rounded-b-2xl">
             {data.lessons.map((l) => (
               <TopicCard
                 key={l.id}

@@ -181,22 +181,22 @@ export default function Dashboard() {
       </div>
 
       {/* ============ MY TUTORINGS — cartes matière ALLÉGÉES ============ */}
-      <section className="mt-6 rounded-2xl overflow-hidden border border-line">
-        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between">
+      <section className="mt-6 rounded-2xl border border-line">
+        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-serif font-semibold text-lg">My tutorings</h2>
           <span className="text-xs opacity-80">
             {data.enrolments.length} subject{data.enrolments.length === 1 ? "" : "s"}
           </span>
         </div>
         {data.enrolments.length === 0 && legacyKeys.length === 0 ? (
-          <div className="bg-white p-8 text-center">
+          <div className="bg-white p-8 text-center rounded-b-2xl">
             <p className="text-muted">
               Nothing here yet — your tutorings will appear here once you start one from
               «&nbsp;Start your tutoring&nbsp;» above.
             </p>
           </div>
         ) : (
-          <div className="bg-white divide-y divide-line">
+          <div className="bg-white divide-y divide-line rounded-b-2xl">
             {data.enrolments.map((e) => {
               const s = SUBJECTS[e.subject as SubjectKey];
               const r = data.by_subject[e.subject];
@@ -248,8 +248,8 @@ export default function Dashboard() {
       </section>
 
       {/* ============ YOUR TOPICS — le cœur : cartes façon Coach Emma ============ */}
-      <section className="mt-6 rounded-2xl overflow-hidden border border-line">
-        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between">
+      <section className="mt-6 rounded-2xl border border-line">
+        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between rounded-t-2xl">
           <h2 className="font-serif font-semibold text-lg">Your topics</h2>
           <span className="text-xs opacity-80">{topics.length} topic{topics.length === 1 ? "" : "s"}</span>
         </div>
@@ -319,7 +319,7 @@ export default function Dashboard() {
         </div>
 
         {topics.length === 0 ? (
-          <div className="bg-white p-8 text-center">
+          <div className="bg-white p-8 text-center rounded-b-2xl">
             <p className="text-muted">
               {data.lessons.length === 0
                 ? "Your topics will appear here after your first lesson."
@@ -327,7 +327,7 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="bg-white divide-y divide-line">
+          <div className="bg-white divide-y divide-line rounded-b-2xl">
             {topics.slice(0, shown).map((l) => (
               <TopicCard
                 key={l.id}
@@ -345,7 +345,7 @@ export default function Dashboard() {
           <button
             type="button"
             onClick={() => setShown((n) => n + PAGE)}
-            className="w-full bg-white border-t border-line py-3 text-sm font-semibold text-indigo hover:text-indigo-deep"
+            className="w-full bg-white border-t border-line py-3 text-sm font-semibold text-indigo hover:text-indigo-deep rounded-b-2xl"
           >
             Show {Math.min(PAGE, topics.length - shown)} more ↓
           </button>
