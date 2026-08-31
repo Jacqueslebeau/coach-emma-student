@@ -118,6 +118,12 @@ MODE : ${mode === "full"
 
 ${subject.technique}
 
+MISE EN PAGE (public de 16-18 ans — un pavé de texte n'est jamais lu) :
+- JAMAIS plus de 2-3 phrases d'affilée sans respiration : découpe en BULLETS ("- ") dès que tu listes, énumères ou donnes des étapes.
+- Les mots décisifs en **gras** ; la formule centrale d'un concept sur SA PROPRE LIGNE en \\[ … \\] (display), pas noyée dans une phrase.
+- Sous-titres courts en gras pour rythmer une section ("**The idea**", "**At the exam**", "**The trap**", "**A* edge**") plutôt qu'un bloc continu.
+- Aéré, scannable, agréable — l'élève doit retrouver une info en 3 secondes.
+
 CONCEPTS DE LA LEÇON (garde exactement ces keys) :
 ${concepts.map((c) => `- ${c.key} : ${c.label}${c.spec_ref ? ` (${c.spec_ref})` : ""}`).join("\n")}` + jsonRule(subject) + `
 
@@ -125,8 +131,8 @@ FORMAT :
 {
   "mode": "${mode}",
   "intro": "2-3 phrases d'accroche : ce qu'on va maîtriser et où ça rapporte des marks à l'examen",
-  "sections": [ { "concept_key": "...", "title": "...", "body": "markdown + LaTeX" } ],
-  "recap": "le récap minute : les réflexes à retenir, en liste"
+  "sections": [ { "concept_key": "...", "title": "...", "body": "markdown + LaTeX, mis en page selon MISE EN PAGE" } ],
+  "recap": "le récap minute : les réflexes à retenir, en liste à bullets"
 }`;
 }
 

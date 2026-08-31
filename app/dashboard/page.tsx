@@ -204,6 +204,13 @@ export default function Dashboard() {
             })}
           </div>
         )}
+
+        {/* L'historique des séances VIT dans My tutorings (date + matière). */}
+        <div className="bg-white border-t border-line px-5 py-4">
+          <h3 className="font-serif font-semibold text-[16px]">Sessions</h3>
+          <p className="text-xs text-muted mt-0.5 mb-3">This week, last week, this month — or a custom range. Filter by subject or coaching.</p>
+          <ActivityHistory />
+        </div>
       </section>
 
       {/* ============ SUIVI PARENT & CONNEXIONS ============ */}
@@ -211,13 +218,6 @@ export default function Dashboard() {
 
       {/* ============ INTEGRATIONS (Google Drive) ============ */}
       <IntegrationsPanel />
-
-      {/* ============ HISTORIQUE DES SÉANCES (filtrable) ============ */}
-      <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Your sessions</h2>
-        <p className="text-sm text-muted mt-1 mb-3">This week, last week, this month — or a custom range.</p>
-        <ActivityHistory />
-      </section>
     </div>
   );
 }

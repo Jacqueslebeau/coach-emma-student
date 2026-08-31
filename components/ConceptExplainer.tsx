@@ -1,41 +1,44 @@
 "use client";
 
 // « 🎬 Watch Emma explain » — la mini-vidéo générée d'UN concept, format démo :
-// studio vert profond, Emma qui parle (lèvres animées), et le script révélé
-// phrase par phrase en rythme avec l'audio (karaoké). Ouvert à la demande
-// quand l'élève bute sur un concept ; le reste de la leçon reste à l'écrit.
+// un STORYBOARD de slides visuelles (vraies formules KaTeX, bullets, gras) qui
+// s'enchaînent en rythme avec la voix d'Emma, sous-titres inclus. Pensé pour
+// un public de 16-18 ans : court (60-90 s), animé, une idée par écran.
 // L'audio est débloqué DANS le clic d'ouverture (autoplay policy).
 import { useCallback, useEffect, useRef, useState } from "react";
 import EmmaFace from "@/components/EmmaFace";
+import RichText from "@/components/RichText";
 
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
 
-// Découpe le script en phrases affichables (le rythme de révélation suit l'audio).
-function toSentences(script: string): string[] {
-  return script
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
+type Slide = { show: string; say: string };
 type Status = "closed" | "writing" | "voicing" | "playing" | "paused" | "ended" | "error";
+
+// Messages d'attente qui tournent pendant la préparation (jamais un spinner muet).
+const LOADER_MSGS = [
+  "🎬 Emma is storyboarding this concept…",
+  "✍️ Writing the key formula on the board…",
+  "🎙 Warming up her voice…",
+  "✨ Almost there — press play energy…",
+];
 
 export default function ConceptExplainer({ lessonId, mode, section, title, compact = false }: {
   lessonId: string;
   mode: "full" | "key";
   section: string;          // "intro" | concept_key | "recap"
-  title: string;            // ce qu'on annonce sur le bouton et dans la modale
-  compact?: boolean;        // bouton discret (sections) vs pleine largeur
+  title: string;
+  compact?: boolean;
 }) {
   const [status, setStatus] = useState<Status>("closed");
-  const [sentences, setSentences] = useState<string[]>([]);
-  const [current, setCurrent] = useState(0);
+  const [slides, setSlides] = useState<Slide[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [loaderIdx, setLoaderIdx] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
-  const scriptRef = useRef<string | null>(null);
-  const liveRef = useRef<HTMLDivElement | null>(null);
+  const slidesRef = useRef<Slide[] | null>(null);
+  const cumRef = useRef<number[]>([]); // fractions cumulées de narration par slide
 
   useEffect(() => {
     const a = new Audio();
@@ -46,23 +49,32 @@ export default function ConceptExplainer({ lessonId, mode, section, title, compa
     };
   }, []);
 
-  // Fait défiler la phrase en cours au centre du "screen".
+  // Rotation des messages d'attente.
   useEffect(() => {
-    liveRef.current?.querySelector('[data-live="1"]')?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [current]);
+    if (status !== "writing" && status !== "voicing") return;
+    const t = setInterval(() => setLoaderIdx((i) => (i + 1) % LOADER_MSGS.length), 2600);
+    return () => clearInterval(t);
+  }, [status]);
 
   const close = useCallback(() => {
     audioRef.current?.pause();
     setStatus("closed");
   }, []);
 
-  // Échap ferme la modale.
   useEffect(() => {
     if (status === "closed") return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [status, close]);
+
+  // La slide active suit la position audio (poids = longueur de narration).
+  function computeCum(list: Slide[]) {
+    const lens = list.map((s) => Math.max(8, s.say.length));
+    const total = lens.reduce((a, b) => a + b, 0);
+    let acc = 0;
+    cumRef.current = lens.map((l) => (acc += l) / total); // fraction de FIN de chaque slide
+  }
 
   async function open() {
     const a = audioRef.current;
@@ -71,43 +83,48 @@ export default function ConceptExplainer({ lessonId, mode, section, title, compa
     a.src = SILENT_WAV;
     a.play().catch(() => {});
     setError(null);
-    setCurrent(0);
+    setIdx(0);
 
     try {
-      // 1. Le script oral du concept (caché côté serveur après la 1re fois).
-      let script = scriptRef.current;
-      if (!script) {
+      // 1. Le storyboard (caché côté serveur après la 1re fois).
+      let list = slidesRef.current;
+      if (!list) {
         setStatus("writing");
         const r = await fetch(`/api/lessons/${lessonId}/speak`, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ mode, section }),
+          body: JSON.stringify({ mode, section, format: "slides" }),
         });
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.error || "Emma could not prepare this explanation.");
-        script = String(d.script || "");
-        scriptRef.current = script;
+        list = (d.slides || []) as Slide[];
+        if (!list.length) throw new Error("Emma could not prepare this explanation.");
+        slidesRef.current = list;
       }
-      const parts = toSentences(script);
-      setSentences(parts);
+      setSlides(list);
+      computeCum(list);
 
-      // 2. La voix (réutilisée si déjà générée dans cette modale).
+      // 2. La voix : toute la narration en un seul audio. Si la voix échoue,
+      // les slides restent utilisables à la main (jamais un écran mort).
       if (!urlRef.current) {
         setStatus("voicing");
+        const narration = list.map((s) => s.say.trim()).join(" ");
         const r = await fetch("/api/tts", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ text: script.slice(0, 4800) }),
-        });
-        if (!r.ok) throw new Error("Emma's voice is unavailable right now — the text is below.");
-        urlRef.current = URL.createObjectURL(await r.blob());
+          body: JSON.stringify({ text: narration.slice(0, 4800) }),
+        }).catch(() => null);
+        if (r?.ok) urlRef.current = URL.createObjectURL(await r.blob());
       }
+      if (!urlRef.current) { setStatus("paused"); return; }
 
-      // 3. Lecture + karaoké : la phrase visible suit la position audio.
+      // 3. Lecture : la slide visible avance avec la voix.
       a.src = urlRef.current;
       a.ontimeupdate = () => {
-        if (!a.duration || !parts.length) return;
-        setCurrent(Math.min(parts.length - 1, Math.floor((a.currentTime / a.duration) * parts.length)));
+        if (!a.duration) return;
+        const f = a.currentTime / a.duration;
+        const i = cumRef.current.findIndex((c) => f < c);
+        setIdx(i === -1 ? cumRef.current.length - 1 : i);
       };
       a.onended = () => setStatus("ended");
       setStatus("playing");
@@ -123,8 +140,22 @@ export default function ConceptExplainer({ lessonId, mode, section, title, compa
     if (!a) return;
     if (status === "playing") { a.pause(); setStatus("paused"); }
     else if (status === "paused") { a.play().then(() => setStatus("playing")).catch(() => {}); }
-    else if (status === "ended") { a.currentTime = 0; setCurrent(0); a.play().then(() => setStatus("playing")).catch(() => {}); }
+    else if (status === "ended") { seekTo(0); }
   }
+
+  // Saute au début de la slide i (fraction cumulée de la slide précédente).
+  // Sans audio (voix indisponible), la navigation reste manuelle.
+  function seekTo(i: number) {
+    const clamped = Math.max(0, Math.min(i, slides.length - 1));
+    const a = audioRef.current;
+    if (!a || !urlRef.current || !a.duration) { setIdx(clamped); return; }
+    const from = clamped <= 0 ? 0 : cumRef.current[clamped - 1];
+    a.currentTime = from * a.duration + 0.01;
+    setIdx(clamped);
+    a.play().then(() => setStatus("playing")).catch(() => {});
+  }
+
+  const busyMsg = status === "writing" || status === "voicing";
 
   return (
     <>
@@ -143,13 +174,24 @@ export default function ConceptExplainer({ lessonId, mode, section, title, compa
 
       {status !== "closed" && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={close}>
+          <style>{`
+            @keyframes ceSlideIn { 0% { opacity: 0; transform: translateY(14px) scale(.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+            .ce-slide { animation: ceSlideIn .45s cubic-bezier(.2,.8,.3,1); }
+            .ce-screen .rich { font-size: 19px; line-height: 1.55; }
+            .ce-screen .rich ul { padding-left: 1.2em; margin: .4em 0; list-style: none; }
+            .ce-screen .rich li { margin: .45em 0; position: relative; padding-left: .35em; }
+            .ce-screen .rich li::before { content: "▸"; color: #B45309; position: absolute; left: -0.85em; }
+            .ce-screen .rich h2, .ce-screen .rich h3 { font-family: var(--font-serif, Georgia), serif; font-size: 22px; margin: 0 0 .35em; color: #064E3B; }
+            .ce-screen .rich .katex-display { margin: .5em 0; }
+            .ce-screen .rich .katex-display .katex { font-size: 1.35em; }
+          `}</style>
           <div
             className="w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl bg-indigo-deep"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Le studio : Emma + le titre du concept */}
-            <div className="flex items-center gap-4 px-6 pt-6">
-              <EmmaFace state={status === "playing" ? "speaking" : "idle"} size={84} />
+            <div className="flex items-center gap-4 px-6 pt-5">
+              <EmmaFace state={status === "playing" ? "speaking" : "idle"} size={72} />
               <div className="flex-1 min-w-0">
                 <p className="font-mono text-[10.5px] uppercase tracking-wider text-amber">Emma explains</p>
                 <h3 className="font-serif font-bold text-lg text-white truncate">{title}</h3>
@@ -157,45 +199,54 @@ export default function ConceptExplainer({ lessonId, mode, section, title, compa
               <button onClick={close} className="text-white/70 hover:text-white text-xl leading-none px-2" title="Close">✕</button>
             </div>
 
-            {/* L'écran : les phrases apparaissent au rythme de la voix */}
-            <div ref={liveRef} className="mx-6 mt-4 h-56 overflow-y-auto rounded-2xl bg-black/25 px-5 py-4">
-              {(status === "writing" || status === "voicing") && (
-                <p className="text-amber text-sm animate-pulse">
-                  {status === "writing" ? "Emma is preparing this explanation…" : "Emma is warming up her voice…"}
-                </p>
+            {/* L'ÉCRAN : la slide du moment — vraies formules, bullets, animée */}
+            <div className="mx-6 mt-4 h-64 rounded-2xl bg-white ce-screen flex items-center justify-center px-6 py-4 overflow-y-auto">
+              {busyMsg && (
+                <p className="text-indigo font-semibold text-[15px] animate-pulse text-center">{LOADER_MSGS[loaderIdx]}</p>
               )}
-              {status === "error" && <p className="text-amber text-sm">{error}</p>}
-              {sentences.slice(0, status === "ended" ? sentences.length : current + 1).map((s, i) => (
-                <p
-                  key={i}
-                  data-live={i === current && status === "playing" ? "1" : undefined}
-                  className={`text-[15.5px] leading-relaxed mb-2 transition-colors ${
-                    i === current && status === "playing" ? "text-white font-medium" : "text-white/55"
-                  }`}
-                >
-                  {s}
-                </p>
-              ))}
+              {status === "error" && <p className="text-gap font-semibold text-sm text-center">{error}</p>}
+              {!busyMsg && status !== "error" && slides[idx] && (
+                <div key={idx} className="ce-slide w-full text-center">
+                  <RichText text={slides[idx].show} />
+                </div>
+              )}
             </div>
 
+            {/* Sous-titres : ce qu'Emma dit sur cette slide */}
+            <div className="mx-6 mt-2 min-h-[40px] flex items-center justify-center">
+              {!busyMsg && status !== "error" && slides[idx] && (
+                <p className="text-white/75 text-[13.5px] italic text-center leading-snug">“{slides[idx].say}”</p>
+              )}
+            </div>
+
+            {/* Points de progression — cliquables pour naviguer */}
+            {slides.length > 0 && !busyMsg && (
+              <div className="flex items-center justify-center gap-1.5 mt-2">
+                {slides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => seekTo(i)}
+                    className={`h-2 rounded-full transition-all ${i === idx ? "w-6 bg-amber" : "w-2 bg-white/30 hover:bg-white/60"}`}
+                    title={`Slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+
             {/* Contrôles */}
-            <div className="flex items-center justify-center gap-3 px-6 py-5">
+            <div className="flex items-center justify-center gap-3 px-6 py-4">
               {(status === "playing" || status === "paused" || status === "ended") && (
                 <>
+                  <button onClick={() => seekTo(idx - 1)} className="text-white/80 hover:text-white font-bold text-lg px-2" title="Previous">⏮</button>
                   <button onClick={toggle} className="bg-amber text-indigo-deep font-bold rounded-full w-12 h-12 text-lg hover:brightness-105 transition" title={status === "playing" ? "Pause" : "Play"}>
                     {status === "playing" ? "❚❚" : "▶"}
                   </button>
-                  <button
-                    onClick={() => { const a = audioRef.current; if (!a) return; a.currentTime = 0; setCurrent(0); a.play().then(() => setStatus("playing")).catch(() => {}); }}
-                    className="text-white/80 hover:text-white font-semibold text-sm rounded-full border border-white/30 px-4 py-2 transition"
-                  >
-                    ↺ Replay
-                  </button>
+                  <button onClick={() => seekTo(idx + 1)} className="text-white/80 hover:text-white font-bold text-lg px-2" title="Next">⏭</button>
                 </>
               )}
               {status === "ended" && (
                 <button onClick={close} className="text-white/80 hover:text-white font-semibold text-sm rounded-full border border-white/30 px-4 py-2 transition">
-                  Got it — back to the lesson ✓
+                  Got it ✓ — back to the lesson
                 </button>
               )}
             </div>

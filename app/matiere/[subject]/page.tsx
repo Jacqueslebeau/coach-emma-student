@@ -53,7 +53,6 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
   const [err, setErr] = useState<string | null>(null);
   const [planBusy, setPlanBusy] = useState(false);
   const [targetBusy, setTargetBusy] = useState(false);
-  const [shownLessons, setShownLessons] = useState(6); // pagination des leçons
   const planRequested = useRef(false);
 
   const load = useCallback(() => {
@@ -357,7 +356,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         )}
       </section>
 
-      {/* ============ LEÇONS ============ */}
+      {/* ============ LEÇONS COUVERTES — la plus récente en évidence + drop-down ============ */}
       <section className="mt-8">
         <h2 className="font-serif font-semibold text-xl">Lessons & topics covered</h2>
         {data.lessons.length === 0 ? (
@@ -366,42 +365,83 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
             <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Capture my first lesson</Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-4 mt-4">
-            {data.lessons.slice(0, shownLessons).map((l) => {
-              const m = masteryByLesson.get(l.id);
-              const nConcepts = Array.isArray(l.concepts) ? l.concepts.length : 0;
+          <>
+            {/* Le tout dernier topic couvert — visible immédiatement */}
+            {(() => {
+              const latest = data.lessons[0];
+              const m = masteryByLesson.get(latest.id);
               return (
-                <Link key={l.id} href={`/lesson/${l.id}`} className="card p-5 hover:border-indigo transition">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-[15.5px] leading-snug">{l.title}</h3>
-                    <span className={l.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
-                      {STAGE_LABEL[l.stage] || l.stage}
-                    </span>
-                  </div>
-                  {l.spec_topic && <p className="font-mono text-[11px] text-faint mt-1">{l.spec_topic}</p>}
-                  <p className="text-sm text-muted mt-3">
-                    {m ? `${m.acquis}/${m.total} concepts secure` : `${nConcepts} concepts — mastery to be checked`}
-                  </p>
+                <Link href={`/lesson/${latest.id}`} className="card p-4 mt-3 flex items-center gap-3 flex-wrap border-amber hover:border-indigo transition">
+                  <span className="chip bg-amber-soft text-amber shrink-0">Just covered</span>
+                  <span className="flex-1 min-w-[200px]">
+                    <span className="font-semibold text-[15px]">{latest.title}</span>
+                    {latest.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{latest.spec_topic}</span>}
+                  </span>
+                  <span className={latest.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
+                    {STAGE_LABEL[latest.stage] || latest.stage}
+                  </span>
+                  <span className="font-mono text-xs text-faint shrink-0">
+                    {new Date(latest.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                  {m && <span className="text-xs text-muted shrink-0">{m.acquis}/{m.total} secure</span>}
                 </Link>
               );
-            })}
-          </div>
-        )}
-        {data.lessons.length > shownLessons && (
-          <button
-            type="button"
-            onClick={() => setShownLessons((n) => n + 6)}
-            className="mt-3 w-full text-sm font-semibold text-indigo hover:text-indigo-deep"
-          >
-            Show more lessons ({data.lessons.length - shownLessons} left) ↓
-          </button>
+            })()}
+            {/* Le drop-down de TOUTES les leçons/topics couverts */}
+            <details className="card mt-3 overflow-hidden">
+              <summary className="px-5 py-3 cursor-pointer select-none flex items-center justify-between text-[15px] font-semibold hover:bg-indigo-soft/40">
+                <span>All lessons &amp; topics ({data.lessons.length})</span>
+                <span className="text-[11px] text-faint">▼</span>
+              </summary>
+              <div className="divide-y divide-line border-t border-line">
+                {data.lessons.map((l) => {
+                  const m = masteryByLesson.get(l.id);
+                  const nConcepts = Array.isArray(l.concepts) ? l.concepts.length : 0;
+                  return (
+                    <Link key={l.id} href={`/lesson/${l.id}`} className="px-5 py-3 flex items-center gap-3 flex-wrap hover:bg-indigo-soft/40 transition">
+                      <span className="flex-1 min-w-[200px]">
+                        <span className="font-semibold text-[14.5px]">{l.title}</span>
+                        {l.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{l.spec_topic}</span>}
+                      </span>
+                      <span className="text-xs text-muted shrink-0">{m ? `${m.acquis}/${m.total} secure` : `${nConcepts} concepts`}</span>
+                      <span className={l.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
+                        {STAGE_LABEL[l.stage] || l.stage}
+                      </span>
+                      <span className="font-mono text-xs text-faint shrink-0 w-14 text-right">
+                        {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </details>
+          </>
         )}
       </section>
 
-      {/* ============ PAST PAPERS — la bibliothèque centralisée ============ */}
+      {/* ============ REPORTS — comptes rendus de tutoring & de coaching ============ */}
       <section className="mt-8">
+        <h2 className="font-serif font-semibold text-xl">Reports</h2>
+        <p className="text-sm text-muted mt-1">Every tutoring and coaching session leaves a recap — reread it, email it.</p>
+
+        <div className="mt-4">
+          <p className="text-[11px] font-mono uppercase tracking-wider text-faint mb-2">Tutoring session recaps</p>
+          <ActivityHistory subject={subject} />
+        </div>
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+            <p className="text-[11px] font-mono uppercase tracking-wider text-faint">Coaching session recaps</p>
+            <Link href="/coaching" className="btn-primary !py-1.5 !px-4 text-[13px]">Start a coaching session →</Link>
+          </div>
+          <ActivityHistory subject="coaching" />
+        </div>
+      </section>
+
+      {/* ============ PAST PAPERS DONE — la bibliothèque centralisée ============ */}
+      <section className="mt-8" id="papers">
         <div className="flex items-baseline justify-between flex-wrap gap-2">
-          <h2 className="font-serif font-semibold text-xl">Past-paper practice</h2>
+          <h2 className="font-serif font-semibold text-xl">Past papers done</h2>
           <p className="text-sm text-faint">Every set is kept here — reopen it, reprint it, review the marking.</p>
         </div>
         {(!data.papers || data.papers.length === 0) ? (
@@ -445,12 +485,6 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         )}
       </section>
 
-      {/* ============ HISTORIQUE ============ */}
-      <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Session history</h2>
-        <p className="text-sm text-muted mt-1 mb-3">This week, last week, this month — or a custom range.</p>
-        <ActivityHistory subject={subject} />
-      </section>
     </div>
   );
 }
