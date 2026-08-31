@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // voix (même voice ID) ; débit 22050/64 = fichier ~2× plus léger à
   // télécharger. Qualité vocale très proche — réversible si besoin.
   const r = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_22050_64`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_64`,
     {
       method: "POST",
       headers: { "xi-api-key": key, "Content-Type": "application/json" },

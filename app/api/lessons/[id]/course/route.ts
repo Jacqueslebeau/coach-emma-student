@@ -46,6 +46,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       system: courseSystem(auth.firstName, auth.style, subj, mode, concepts) + sessionClock("tutoring", elapsed),
       content: userMsg,
       maxTokens: mode === "full" ? 8000 : 3500,
+      // Vitesse façon Coach Emma : réflexion minimale sur la génération — la
+      // qualité vient du prompt (fiche board) + de la relectrice Opus en fond.
+      effort: "low",
       workflow: `course-${mode}`,
       lessonId: id,
       userId: auth.user.id,

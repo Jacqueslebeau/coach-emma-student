@@ -29,6 +29,10 @@ export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: strin
       maxTokens: 2500,
       // un peu de variété pour ne pas retomber sur les mêmes questions au 2e passage
       temperature: 0.4,
+      // 5 questions n'ont pas besoin de réflexion profonde — en high, la
+      // génération dépassait parfois les 120 s de la route (= « rien ne se
+      // déclenche »). Le prompt calibré fait la qualité.
+      effort: "low",
       workflow: "mastery-quiz",
       lessonId: id,
       userId: auth.user.id,

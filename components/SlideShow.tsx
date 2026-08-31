@@ -25,6 +25,7 @@ export default function SlideShow({ title, kicker = "Emma explains", slides, aud
 }) {
   const [status, setStatus] = useState<Status>("voicing");
   const [idx, setIdx] = useState(0);
+  const [noVoice, setNoVoice] = useState(false);
   const cumRef = useRef<number[]>([]);
   const hasVoiceRef = useRef(false);
   const onEndedRef = useRef(onEnded);
@@ -46,7 +47,7 @@ export default function SlideShow({ title, kicker = "Emma explains", slides, aud
       setIdx(0);
       const url = await getAudioUrl().catch(() => null);
       if (cancelled) return;
-      if (!url || !audio) { hasVoiceRef.current = false; setStatus("paused"); return; }
+      if (!url || !audio) { hasVoiceRef.current = false; setNoVoice(true); setStatus("paused"); return; }
       hasVoiceRef.current = true;
       audio.src = url;
       audio.ontimeupdate = () => {
@@ -127,6 +128,11 @@ export default function SlideShow({ title, kicker = "Emma explains", slides, aud
             <p className="text-white/75 text-[13.5px] italic text-center leading-snug">“{slides[idx].say}”</p>
           )}
         </div>
+        {noVoice && (
+          <p className="text-center text-amber/90 text-[12px] mt-1">
+            🔇 Emma&apos;s voice is unavailable right now — browse the slides with ⏮ ⏭ and try again in a minute.
+          </p>
+        )}
 
         {/* Progression + contrôles */}
         {status !== "voicing" && (

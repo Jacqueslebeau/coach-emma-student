@@ -44,6 +44,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       content: `LEÇON : ${lesson.title}\n\nRé-explique « ${concept.label} » sous un autre angle puis pose les 2 questions.`,
       maxTokens: 4000,
       temperature: 0.3,
+      effort: "medium",
       workflow: "remediation",
       lessonId: id,
       userId: auth.user.id,

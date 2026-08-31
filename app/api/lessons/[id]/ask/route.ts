@@ -99,7 +99,9 @@ Réponds UNIQUEMENT avec un JSON {"slides":[{"show":"…","say":"…"}]} de 2 à
         (courseCtx.length > 10 ? `THE COURSE EMMA WROTE FOR THIS LESSON (context):\n${courseCtx}\n\n` : "") +
         `${auth.firstName || "The student"} raises their hand and asks:\n« ${question} »`,
       maxTokens: spoken ? 700 : 900,
-      effort: spoken ? "low" : undefined,
+      // Conversationnel = réflexion minimale (architecture Coach Emma) : la
+      // réponse part en secondes, le prompt ancré fait la justesse.
+      effort: "low",
       workflow: "lesson-qa",
       lessonId: id,
       userId: auth.user.id,

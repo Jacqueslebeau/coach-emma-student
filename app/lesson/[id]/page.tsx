@@ -13,6 +13,7 @@ import AskEmma from "@/components/AskEmma";
 import ConceptExplainer from "@/components/ConceptExplainer";
 import LessonListen from "@/components/LessonListen";
 import SpeakButton from "@/components/SpeakButton";
+import WaitOverlay from "@/components/WaitOverlay";
 import { compressImage } from "@/lib/compressImage";
 import type {
   Concept, Course, Exercise, ExerciseMark, QuizGrade, QuizQuestion, Remediation,
@@ -43,6 +44,8 @@ export default function LessonPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Pop-up d'attente pour les fabrications longues (leçon, questions).
+  const [waiting, setWaiting] = useState<null | "course" | "quiz">(null);
   // Mode 🎧 Listen : Emma présente la leçon (pop-ups visuels + voix).
   // L'audio est créé au niveau page et DÉBLOQUÉ dans le clic du bouton.
   const [listening, setListening] = useState(false);
@@ -125,9 +128,10 @@ export default function LessonPage() {
   const run = (fn: () => Promise<void>) => () => { fn().catch((e) => setError((e as Error).message)); };
 
   const chooseCourse = (mode: "full" | "key") => run(async () => {
+    setWaiting("course");
     const d = await api<{ course: Course }>(`/api/lessons/${id}/course`, {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode }),
-    });
+    }).finally(() => setWaiting(null));
     setCourse(d.course); setPhase("course"); window.scrollTo(0, 0);
     // La relecture factuelle tourne en arrière-plan côté serveur : on
     // re-synchronise silencieusement le cours réparé quelques minutes après.
@@ -139,7 +143,9 @@ export default function LessonPage() {
   })();
 
   const startQuiz = run(async () => {
-    const d = await api<{ attempt_id: string; questions: QuizQuestion[] }>(`/api/lessons/${id}/quiz`, { method: "POST" });
+    setWaiting("quiz");
+    const d = await api<{ attempt_id: string; questions: QuizQuestion[] }>(`/api/lessons/${id}/quiz`, { method: "POST" })
+      .finally(() => setWaiting(null));
     setQuiz(d); setQuizAnswers({}); setQuizGrade(null); setPhase("quiz"); window.scrollTo(0, 0);
   });
 
@@ -225,6 +231,30 @@ export default function LessonPage() {
       </div>
 
       {error && <p className="text-sm text-gap font-semibold mb-4">{error}</p>}
+
+      {waiting === "course" && (
+        <WaitOverlay
+          title="Emma is writing your lesson"
+          lines={[
+            "📚 Reading your board's specification…",
+            "✍️ Writing each concept for YOUR starting point…",
+            "🎯 Adding the exam traps and the A* edge…",
+            "🔍 A second pair of eyes checks every fact…",
+          ]}
+          note="Usually 1-2 minutes — it's written for you, not pulled from a stock."
+        />
+      )}
+      {waiting === "quiz" && (
+        <WaitOverlay
+          title="Emma is preparing your mastery check"
+          lines={[
+            "🎯 One question per concept…",
+            "⚖️ Calibrating to your level…",
+            "✍️ Wording them exam-style…",
+          ]}
+          note="About 30 seconds."
+        />
+      )}
 
       {/* ÉTAPE 1 — choix du cours */}
       {phase === "course-choice" && (

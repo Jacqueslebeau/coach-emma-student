@@ -44,6 +44,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       content: `LEÇON : ${lesson.title}\nTOPIC : ${lesson.spec_topic || "—"}\n\nÉcris les 3 exercices.`,
       maxTokens: 3000,
       temperature: 0.4,
+      effort: "medium",
       workflow: "exercises",
       lessonId: id,
       userId: auth.user.id,
