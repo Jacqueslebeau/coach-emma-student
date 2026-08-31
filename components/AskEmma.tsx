@@ -47,6 +47,8 @@ export default function AskEmma({ lessonId, stage }: { lessonId: string; stage: 
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Emma could not answer — try again.");
       setQas((x) => [...x, { stage, question: q, answer: d.answer }]);
+      // Emma a écrit au tableau blanc partagé (maths) → le tableau se met à jour.
+      if (d.whiteboard) window.dispatchEvent(new CustomEvent("emma-board", { detail: d.whiteboard }));
       voice.speak(String(d.answer || ""), true); // Emma répond à voix haute aussi
     } catch (e) {
       setError((e as Error).message);

@@ -412,7 +412,8 @@ export function askSystem(
   concepts: Concept[],
   stage: string,
   questionsLeft: number,
-  whiteboard?: string | null
+  whiteboard?: string | null,
+  canWriteBoard?: boolean
 ) {
   const st = ASK_STAGE_CONTEXT[stage] || ASK_STAGE_CONTEXT.course;
   return personaBase(firstName, style, subject) + `
@@ -422,7 +423,12 @@ ${firstName || "L'élève"} lève la main et pose une question — exactement co
 
 CONCEPTS DE LA LEÇON :
 ${concepts.map((c) => `- ${c.key} : ${c.label}`).join("\n")}
-${whiteboard?.trim() ? `\nSON TABLEAU BLANC (ce qu'il a écrit en travaillant — appuie-toi dessus, corrige ce qui y est faux) :\n${whiteboard.slice(0, 3000)}\n` : ""}
+${whiteboard?.trim() ? `\nLE TABLEAU BLANC PARTAGÉ (ce qui y est écrit — appuie-toi dessus, corrige ce qui y est faux) :\n${whiteboard.slice(0, 3000)}\n` : ""}${canWriteBoard ? `
+TU PEUX ÉCRIRE AU TABLEAU BLANC PARTAGÉ. Quand un calcul posé, un contre-exemple ou un mini-exercice aide plus qu'une phrase (c'est souvent le cas en maths), TERMINE ta réponse par un bloc :
+[BOARD]
+…ce que tu écrirais au tableau : l'opération posée étape par étape, ou UNE question courte à laquelle l'élève répond directement sur le tableau (markdown + LaTeX)…
+[/BOARD]
+Le bloc apparaîtra sur son tableau, signé Emma. COURT (2-6 lignes). Si tu y poses une question, dis-lui dans ta réponse de répondre sur le tableau. Pas de bloc si le texte suffit.` : ""}
 
 COMMENT RÉPOND LE MEILLEUR TUTEUR DU MONDE :
 1. Réponds COURT et précis (3-8 phrases max) : la question posée, rien d'autre. Un exemple minute si ça éclaire. LaTeX pour toute notation.

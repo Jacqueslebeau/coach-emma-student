@@ -76,9 +76,13 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
   const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
 
+  // En maths, Emma peut ÉCRIRE au tableau blanc partagé (opération posée,
+  // mini-exercice) — l'élève y répond directement.
+  const canWriteBoard = lesson.subject === "maths";
+
   try {
-    const answer = await askClaude({
-      system: askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft, lesson.whiteboard) + sessionClock("tutoring", elapsed),
+    const rawAnswer = await askClaude({
+      system: askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft, lesson.whiteboard, canWriteBoard) + sessionClock("tutoring", elapsed),
       content:
         `LESSON: ${lesson.title}\nTOPIC: ${lesson.spec_topic || "—"}\n\n` +
         (courseCtx.length > 10 ? `THE COURSE EMMA WROTE FOR THIS LESSON (context):\n${courseCtx}\n\n` : "") +
@@ -90,6 +94,18 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       sb: auth.sb,
     });
 
+    // Bloc [BOARD]…[/BOARD] : Emma écrit au tableau partagé (maths).
+    let answer = rawAnswer;
+    let newBoard: string | null = null;
+    if (canWriteBoard) {
+      const m = rawAnswer.match(/\[BOARD\]([\s\S]*?)\[\/BOARD\]/);
+      if (m && m[1].trim()) {
+        answer = rawAnswer.replace(m[0], "").trim();
+        newBoard = `${(lesson.whiteboard || "").trimEnd()}\n\n---\n**Emma:**\n${m[1].trim()}\n`.trimStart();
+        await auth.sb.from("lessons").update({ whiteboard: newBoard }).eq("id", id);
+      }
+    }
+
     const { data: saved } = await auth.sb
       .from("attempts")
       .insert({ lesson_id: id, user_id: auth.user.id, kind: "qa", payload: { stage, question }, result: { answer } })
@@ -97,7 +113,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       .single();
 
     await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: "Questions to Emma" });
-    return NextResponse.json({ id: saved?.id, answer, questions_left: questionsLeft - 1 });
+    return NextResponse.json({ id: saved?.id, answer, whiteboard: newBoard, questions_left: questionsLeft - 1 });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "Emma could not answer — try again" }, { status: 502 });
   }

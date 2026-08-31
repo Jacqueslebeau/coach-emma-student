@@ -184,8 +184,10 @@ export default function LessonPage() {
 
       {error && <p className="text-sm text-gap font-semibold mb-4">{error}</p>}
 
-      {/* Le tableau blanc — l'espace de travail de la séance (Emma le lit) */}
-      {phase !== "course-choice" && (
+      {/* Le tableau blanc partagé — MATHS uniquement : l'espace de calcul de la
+          séance. Emma le lit ET peut y écrire (opérations, mini-exercices) ;
+          les questions, elles, passent par la case « Any questions? ». */}
+      {phase !== "course-choice" && lesson.subject === "maths" && (
         <div className="mb-5">
           <Whiteboard lessonId={lesson.id} initial={(lesson as { whiteboard?: string }).whiteboard || ""} />
         </div>
