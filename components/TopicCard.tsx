@@ -1,11 +1,12 @@
 "use client";
 
 // LA CARTE TOPIC — calquée sur « Vos préparations » de Coach Emma.
-// Quatre menus : « View reports ▾ » (compte rendu de tutoring + de coaching),
-// « Papers » (les papers À FAIRE : en ligne ou imprimer & uploader),
-// « Paper results » (chaque paper noté : score, Coached ✓, points à préparer
-// avant le coaching) et « Start ▾ » (Lesson / Past paper / Coaching — dans
-// l'ordre du cycle, grisés selon l'avancement).
+// Quatre menus : « View reports ▾ » (compte rendu de tutoring + de la séance
+// de coaching post-paper), « Papers (n to do) ▾ » (les papers À FAIRE),
+// « Paper results (n) ▾ » (chaque paper noté : score, Coached ✓, points à
+// préparer avant le coaching) et « Start ▾ » (Lesson / Past paper (to do) /
+// Coaching — dans l'ordre du cycle, grisés selon l'avancement).
+// Chaque bouton n'apparaît que s'il a du contenu à montrer.
 // Utilisée par My space (toutes matières) et par la console matière.
 import { useState } from "react";
 import Link from "next/link";
@@ -13,10 +14,11 @@ import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 
 export type TopicPaper = { id: string; at: string; total_marks: number; awarded: number | null; decision: string | null; prep_points?: string[] };
 
-export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coachedIds, sessionMeta, showSubject = false }: {
+type CoachTurn = { question: string; answer: string };
+
+export default function TopicCard({ lesson, masteryRows, papers, coachedIds, sessionMeta, showSubject = false }: {
   lesson: { id: string; title: string; subject: string; spec_topic: string | null; stage: string; created_at: string };
   masteryRows: { concept_key: string; label: string; status: string }[];
-  weakPoints: { id: string; label: string; misconception: string | null }[];
   papers: TopicPaper[];
   coachedIds: Set<string>;
   sessionMeta?: { covered?: string[]; duration_min?: number } | null;
@@ -25,6 +27,7 @@ export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coa
   const [panel, setPanel] = useState<null | "tutoring" | "coaching" | "papers" | "results">(null);
   const [reportsOpen, setReportsOpen] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
+  const [coachLog, setCoachLog] = useState<Record<string, CoachTurn[]> | null>(null);
 
   const todoPapers = papers.filter((p) => p.awarded === null);
   const markedPapers = papers.filter((p) => p.awarded !== null);
@@ -45,9 +48,30 @@ export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coa
     : "Not checked yet";
   const statusLabel: Record<string, string> = { acquis: "secure", fragile: "fragile", non_acquis: "to review" };
 
+  const coachedPapers = markedPapers.filter((p) => coachedIds.has(p.id));
+  const hasTutoringReport = masteryRows.length > 0 || !!sessionMeta?.covered?.length;
+  const hasCoachingReport = coachedPapers.length > 0;
+
   const togglePanel = (p: "tutoring" | "coaching" | "papers" | "results") => {
     setReportsOpen(false); setStartOpen(false);
     setPanel((x) => (x === p ? null : p));
+  };
+
+  // Le compte rendu de coaching = la SÉANCE de débrief post-paper — on charge
+  // les échanges (paresseusement, au dépliage) depuis /api/paper/[id]/coach.
+  const openCoaching = () => {
+    togglePanel("coaching");
+    if (panel !== "coaching" && coachedPapers.length > 0 && coachLog === null) {
+      Promise.all(
+        coachedPapers.map(async (p) => {
+          try {
+            const r = await fetch(`/api/paper/${p.id}/coach`);
+            const j = await r.json();
+            return [p.id, (j?.messages || []) as CoachTurn[]] as const;
+          } catch { return [p.id, [] as CoachTurn[]] as const; }
+        })
+      ).then((pairs) => setCoachLog(Object.fromEntries(pairs)));
+    }
   };
 
   return (
@@ -90,34 +114,44 @@ export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coa
 
       {/* ===== Les 4 menus ===== */}
       <div className="flex flex-wrap items-center gap-2 mt-4">
-        {/* View reports ▾ */}
-        <div className="relative">
-          <button
-            onClick={() => { setStartOpen(false); setReportsOpen((o) => !o); }}
-            className={panel === "tutoring" || panel === "coaching" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
-          >
-            View reports ▾
-          </button>
-          {reportsOpen && (
-            <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
-              <button onClick={() => togglePanel("tutoring")} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
-                <p className="text-sm font-semibold">📖 Tutoring report</p>
-                <p className="text-[11.5px] text-faint">Understanding level, concept by concept</p>
-              </button>
-              <button onClick={() => togglePanel("coaching")} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
-                <p className="text-sm font-semibold">🎯 Coaching report</p>
-                <p className="text-[11.5px] text-faint">Paper score, points to work on, debrief</p>
-              </button>
-            </div>
-          )}
-        </div>
+        {/* View reports ▾ — visible seulement s'il y a au moins un report */}
+        {(hasTutoringReport || hasCoachingReport) && (
+          <div className="relative">
+            <button
+              onClick={() => { setStartOpen(false); setReportsOpen((o) => !o); }}
+              className={panel === "tutoring" || panel === "coaching" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
+            >
+              View reports ▾
+            </button>
+            {reportsOpen && (
+              <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
+                {hasTutoringReport && (
+                  <button onClick={() => togglePanel("tutoring")} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
+                    <p className="text-sm font-semibold">📖 Tutoring report</p>
+                    <p className="text-[11.5px] text-faint">Understanding level, concept by concept</p>
+                  </button>
+                )}
+                {hasCoachingReport && (
+                  <button onClick={openCoaching} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
+                    <p className="text-sm font-semibold">🎯 Coaching report</p>
+                    <p className="text-[11.5px] text-faint">Your coaching session on the marked paper</p>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
-        <button onClick={() => togglePanel("papers")} className={panel === "papers" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
-          Papers{todoPapers.length ? ` (${todoPapers.length} to do)` : ""}
-        </button>
-        <button onClick={() => togglePanel("results")} className={panel === "results" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
-          Paper results{markedPapers.length ? ` (${markedPapers.length})` : ""}
-        </button>
+        {todoPapers.length > 0 && (
+          <button onClick={() => togglePanel("papers")} className={panel === "papers" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
+            Papers ({todoPapers.length} to do) ▾
+          </button>
+        )}
+        {markedPapers.length > 0 && (
+          <button onClick={() => togglePanel("results")} className={panel === "results" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
+            Paper results ({markedPapers.length}) ▾
+          </button>
+        )}
 
         {/* Start ▾ */}
         <div className="relative ml-auto">
@@ -137,7 +171,7 @@ export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coa
               )}
               {todoPapers[0] ? (
                 <Link href={`/paper/${todoPapers[0].id}`} className="block px-4 py-2.5 hover:bg-indigo-soft">
-                  <p className="text-sm font-semibold">📝 Past paper</p>
+                  <p className="text-sm font-semibold">📝 Past paper (to do)</p>
                   <p className="text-[11.5px] text-faint">Do the assigned paper — online or printed</p>
                 </Link>
               ) : (
@@ -205,28 +239,48 @@ export default function TopicCard({ lesson, masteryRows, weakPoints, papers, coa
       {panel === "coaching" && (
         <div className="mt-4 bg-indigo-soft/40 rounded-xl p-4">
           <p className="font-semibold text-[14.5px]">🎯 Coaching report</p>
-          {lastMarked ? (
-            <div className="mt-2 space-y-2 text-sm">
-              <p><strong>Paper score:</strong> {lastMarked.awarded}/{lastMarked.total_marks}{bestPct !== null ? ` (${bestPct}%)` : ""} — {lastMarked.decision === "advance" ? "solid, on track" : "fragile, worth another go"}</p>
-              {weakPoints.length > 0 && (
-                <div>
-                  <p className="font-semibold">Points to work on:</p>
-                  <ul className="list-disc pl-5 mt-1 text-muted">
-                    {weakPoints.map((w) => <li key={w.id}>{w.label}{w.misconception ? ` — ${w.misconception}` : ""}</li>)}
-                  </ul>
-                </div>
-              )}
-              <p className="text-muted">
-                {coached
-                  ? "Debriefed with Emma ✓ — reread the full conversation on the paper page."
-                  : "Not debriefed yet — open the paper and start the coaching with Emma."}
-              </p>
-              <Link href={`/paper/${lastMarked.id}`} className="text-[13px] font-semibold text-indigo hover:text-indigo-deep inline-block">
-                {coached ? "Reread the debrief →" : "Start the coaching on this paper →"}
+          <p className="text-[12.5px] text-muted mt-0.5">
+            The coaching session on a marked paper — Emma has the results in front of her and builds the session around that performance.
+          </p>
+          {coachedPapers.length > 0 ? (
+            <div className="mt-3 space-y-3">
+              {coachedPapers.map((p) => {
+                const num = markedPapers.findIndex((m) => m.id === p.id) + 1;
+                const turns = coachLog?.[p.id];
+                return (
+                  <div key={p.id} className="bg-white/70 rounded-lg p-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-semibold flex-1 min-w-[140px]">Coaching session — Paper {num}</span>
+                      <span className="font-mono text-[11px] text-faint shrink-0">{new Date(p.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                      <Link href={`/paper/${p.id}`} className="text-indigo font-semibold text-[13px] shrink-0">Continue on the paper →</Link>
+                    </div>
+                    {turns === undefined ? (
+                      <p className="text-[12.5px] text-faint mt-2">Loading the session…</p>
+                    ) : turns.length === 0 ? (
+                      <p className="text-[12.5px] text-faint mt-2">No exchanges recorded for this session.</p>
+                    ) : (
+                      <div className="mt-2 space-y-2 max-h-64 overflow-y-auto pr-1">
+                        {turns.map((t, j) => (
+                          <div key={j} className="text-[13px]">
+                            {t.question && <p className="text-muted"><span className="font-semibold text-indigo-deep">You:</span> {t.question}</p>}
+                            {t.answer && <p className="mt-0.5"><span className="font-semibold text-indigo">Emma:</span> {t.answer}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : uncoachedMarked.length > 0 ? (
+            <div className="mt-2 text-sm">
+              <p className="text-muted">No coaching session yet — your paper is marked, so Emma is ready to debrief it with you.</p>
+              <Link href={`/paper/${uncoachedMarked[0].id}`} className="text-[13px] font-semibold text-indigo hover:text-indigo-deep inline-block mt-1.5">
+                Start the coaching on this paper →
               </Link>
             </div>
           ) : (
-            <p className="text-sm text-faint mt-2">The coaching report appears once your past paper is marked.</p>
+            <p className="text-sm text-faint mt-2">The coaching session unlocks once your past paper is marked.</p>
           )}
         </div>
       )}

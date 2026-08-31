@@ -374,7 +374,6 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                 key={l.id}
                 lesson={{ ...l, subject: data.subject.key }}
                 masteryRows={data.mastery.filter((m) => m.lesson_id === l.id)}
-                weakPoints={data.weak_points.filter((w) => w.lesson_id === l.id)}
                 papers={(data.papers || []).filter((p) => p.lesson_id === l.id)}
                 coachedIds={coachedIds}
                 sessionMeta={(data.sessions || []).find((s) => s.ref_id === l.id) || null}

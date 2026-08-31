@@ -266,7 +266,7 @@ export default function Dashboard() {
                 📅 Period: <strong>{PERIOD_LABEL[period]}</strong> ▾
               </button>
               {periodOpen && (
-                <div className="absolute left-0 top-full mt-2 w-60 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
+                <div className="absolute left-0 top-full mt-2 w-80 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
                   {(Object.keys(PERIOD_LABEL) as PeriodKey[]).map((p) => (
                     <button
                       key={p}
@@ -278,10 +278,15 @@ export default function Dashboard() {
                     </button>
                   ))}
                   {period === "custom" && (
-                    <div className="px-4 py-2 flex gap-2 items-center border-t border-line">
-                      <input type="date" className="input !py-1 !px-2 text-[12.5px]" value={from} onChange={(e) => setFrom(e.target.value)} />
-                      <span className="text-faint text-xs">→</span>
-                      <input type="date" className="input !py-1 !px-2 text-[12.5px]" value={to} onChange={(e) => setTo(e.target.value)} />
+                    <div className="px-4 py-3 space-y-2 border-t border-line">
+                      <label className="flex items-center gap-3">
+                        <span className="w-10 shrink-0 font-mono text-[11px] uppercase tracking-wider text-faint">From</span>
+                        <input type="date" className="input flex-1 !py-1.5 !px-2.5 text-[13px]" value={from} onChange={(e) => setFrom(e.target.value)} />
+                      </label>
+                      <label className="flex items-center gap-3">
+                        <span className="w-10 shrink-0 font-mono text-[11px] uppercase tracking-wider text-faint">To</span>
+                        <input type="date" className="input flex-1 !py-1.5 !px-2.5 text-[13px]" value={to} onChange={(e) => setTo(e.target.value)} />
+                      </label>
                     </div>
                   )}
                 </div>
@@ -333,7 +338,6 @@ export default function Dashboard() {
                 key={l.id}
                 lesson={l}
                 masteryRows={data.mastery.filter((m) => m.lesson_id === l.id)}
-                weakPoints={data.weak_points.filter((w) => w.lesson_id === l.id)}
                 papers={(data.papers || []).filter((p) => p.lesson_id === l.id)}
                 coachedIds={coachedIds}
                 showSubject
