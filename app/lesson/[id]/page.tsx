@@ -4,15 +4,15 @@
 // cours (complet / concepts clés) → vérification de maîtrise → remédiation
 // ciblée → exercices past-paper → correction au mark scheme → refaire ou
 // avancer → points à travailler.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import AskEmma from "@/components/AskEmma";
 import ConceptExplainer from "@/components/ConceptExplainer";
+import LessonListen from "@/components/LessonListen";
 import SpeakButton from "@/components/SpeakButton";
-import Whiteboard from "@/components/Whiteboard";
 import { compressImage } from "@/lib/compressImage";
 import type {
   Concept, Course, Exercise, ExerciseMark, QuizGrade, QuizQuestion, Remediation,
@@ -43,6 +43,15 @@ export default function LessonPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Mode 🎧 Listen : Emma présente la leçon (pop-ups visuels + voix).
+  // L'audio est créé au niveau page et DÉBLOQUÉ dans le clic du bouton.
+  const [listening, setListening] = useState(false);
+  const listenAudioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const a = new Audio();
+    listenAudioRef.current = a;
+    return () => a.pause();
+  }, []);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [quiz, setQuiz] = useState<{ attempt_id: string; questions: QuizQuestion[] } | null>(null);
@@ -184,15 +193,6 @@ export default function LessonPage() {
 
       {error && <p className="text-sm text-gap font-semibold mb-4">{error}</p>}
 
-      {/* Le tableau blanc partagé — MATHS uniquement : l'espace de calcul de la
-          séance. Emma le lit ET peut y écrire (opérations, mini-exercices) ;
-          les questions, elles, passent par la case « Any questions? ». */}
-      {phase !== "course-choice" && lesson.subject === "maths" && (
-        <div className="mb-5">
-          <Whiteboard lessonId={lesson.id} initial={(lesson as { whiteboard?: string }).whiteboard || ""} />
-        </div>
-      )}
-
       {/* ÉTAPE 1 — choix du cours */}
       {phase === "course-choice" && (
         <div className="grid sm:grid-cols-2 gap-4">
@@ -214,13 +214,41 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ÉTAPE 2 — le cours À L'ÉCRIT, à ton rythme. Un concept qui résiste ?
-          🎬 Emma l'explique en mini-vidéo (voix + script animé), juste ce concept. */}
+      {/* ÉTAPE 2 — le cours : LIRE (à ton rythme) ou ÉCOUTER (Emma présente,
+          pop-ups visuels au fil de sa voix) — jamais les deux en même temps. */}
       {phase === "course" && course && (
         <div>
-          <div className="rounded-xl bg-indigo-soft px-4 py-2.5 text-[13.5px] text-indigo-deep">
-            📖 Read at your own pace. Stuck on a concept? Hit <strong>🎬 Watch Emma explain</strong> — she explains just that bit, out loud.
+          <div className="rounded-xl bg-indigo-soft px-4 py-2.5 text-[13.5px] text-indigo-deep flex items-center justify-between gap-3 flex-wrap">
+            <span>📖 <strong>Read it</strong> at your own pace — or stuck on one concept? Hit <strong>🎬 Watch Emma explain</strong>.</span>
+            <button
+              type="button"
+              onClick={() => {
+                const a = listenAudioRef.current;
+                if (a) {
+                  a.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+                  a.play().catch(() => {});
+                }
+                setListening(true);
+              }}
+              className="btn-primary !py-1.5 !px-4 text-[13px] shrink-0"
+              title="Emma presents the lesson out loud, with visuals popping up as she talks"
+            >
+              🎧 Listen — Emma presents it
+            </button>
           </div>
+          {listening && (
+            <LessonListen
+              lessonId={lesson.id}
+              mode={course.mode === "full" ? "full" : "key"}
+              sections={[
+                { key: "intro", title: "Introduction" },
+                ...course.sections.map((s) => ({ key: s.concept_key, title: s.title })),
+                ...(course.recap ? [{ key: "recap", title: "One-minute recap" }] : []),
+              ]}
+              audio={listenAudioRef.current}
+              onClose={() => { listenAudioRef.current?.pause(); setListening(false); }}
+            />
+          )}
           <div className="card p-6 mt-4">
             <RichText text={course.intro} />
             {course.sections.map((s) => (

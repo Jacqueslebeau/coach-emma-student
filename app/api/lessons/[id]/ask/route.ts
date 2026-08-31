@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
-import { askClaude } from "@/lib/claude";
+import { askClaude, extractJson } from "@/lib/claude";
 import { askSystem , sessionClock } from "@/lib/prompts";
 import type { Concept } from "@/lib/types";
 
@@ -76,34 +76,45 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   // L'horloge d'Emma : minutes ecoulees dans la seance de tutorat en cours.
   const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
 
-  // En maths, Emma peut ÉCRIRE au tableau blanc partagé (opération posée,
-  // mini-exercice) — l'élève y répond directement.
-  const canWriteBoard = lesson.subject === "maths";
+  // Mode de réponse choisi par l'élève : "text" (écrit) ou "spoken" (Emma
+  // répond à l'oral, soutenue par des slides visuelles — jamais les deux).
+  const spoken = body?.mode === "spoken";
 
   try {
+    const baseSystem = askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft) + sessionClock("tutoring", elapsed);
+    const system = spoken
+      ? baseSystem + `
+
+FORMAT DE CETTE RÉPONSE — L'ÉLÈVE A CHOISI « POSE TA QUESTION » (réponse ORALE + visuel) :
+Réponds UNIQUEMENT avec un JSON {"slides":[{"show":"…","say":"…"}]} de 2 à 4 slides.
+- "show" : le VISUEL à l'écran — une formule en \\[ … \\] display, ou 2-3 bullets courts, ou un mot-clé en **gras**. JAMAIS un paragraphe.
+- "say" : ce que ta voix dit sur cette slide (1-2 phrases naturelles, formules dites en mots). Total < 90 mots.
+- La règle 6 (ramener vers la suite) vit dans le "say" de la DERNIÈRE slide.`
+      : baseSystem;
+
     const rawAnswer = await askClaude({
-      system: askSystem(auth.firstName, auth.style, subj, concepts, stage, questionsLeft, lesson.whiteboard, canWriteBoard) + sessionClock("tutoring", elapsed),
+      system,
       content:
         `LESSON: ${lesson.title}\nTOPIC: ${lesson.spec_topic || "—"}\n\n` +
         (courseCtx.length > 10 ? `THE COURSE EMMA WROTE FOR THIS LESSON (context):\n${courseCtx}\n\n` : "") +
         `${auth.firstName || "The student"} raises their hand and asks:\n« ${question} »`,
       maxTokens: 900,
+      effort: spoken ? "low" : undefined,
       workflow: "lesson-qa",
       lessonId: id,
       userId: auth.user.id,
       sb: auth.sb,
     });
 
-    // Bloc [BOARD]…[/BOARD] : Emma écrit au tableau partagé (maths).
     let answer = rawAnswer;
-    let newBoard: string | null = null;
-    if (canWriteBoard) {
-      const m = rawAnswer.match(/\[BOARD\]([\s\S]*?)\[\/BOARD\]/);
-      if (m && m[1].trim()) {
-        answer = rawAnswer.replace(m[0], "").trim();
-        newBoard = `${(lesson.whiteboard || "").trimEnd()}\n\n---\n**Emma:**\n${m[1].trim()}\n`.trimStart();
-        await auth.sb.from("lessons").update({ whiteboard: newBoard }).eq("id", id);
-      }
+    let slides: { show: string; say: string }[] | null = null;
+    if (spoken) {
+      try {
+        const parsed = extractJson<{ slides: { show: string; say: string }[] }>(rawAnswer);
+        slides = (parsed.slides || []).filter((s) => s?.show && s?.say).slice(0, 5);
+        if (slides.length) answer = slides.map((s) => s.say).join(" ");
+        else slides = null;
+      } catch { slides = null; /* repli : réponse texte */ }
     }
 
     const { data: saved } = await auth.sb
@@ -113,7 +124,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       .single();
 
     await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: "Questions to Emma" });
-    return NextResponse.json({ id: saved?.id, answer, whiteboard: newBoard, questions_left: questionsLeft - 1 });
+    return NextResponse.json({ id: saved?.id, answer, slides, questions_left: questionsLeft - 1 });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "Emma could not answer — try again" }, { status: 502 });
   }
