@@ -9,6 +9,7 @@ import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import EmmaStyle from "@/components/EmmaStyle";
 import EmmaFace from "@/components/EmmaFace";
+import VoiceTalk from "@/components/VoiceTalk";
 import { useEmmaAudio } from "@/lib/useEmmaAudio";
 
 type Msg = { role: string; message: string };
@@ -22,19 +23,6 @@ const OPENERS = [
   "How do I manage my time during the paper?",
 ];
 
-// Reconnaissance vocale du navigateur (Chrome/Edge/Safari) — pas de serveur.
-type SpeechRecognitionLike = {
-  lang: string; continuous: boolean; interimResults: boolean;
-  onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onend: (() => void) | null; onerror: (() => void) | null;
-  start: () => void; stop: () => void;
-};
-function getRecognition(): SpeechRecognitionLike | null {
-  const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
-  const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
-  return Ctor ? new Ctor() : null;
-}
-
 export default function CoachingPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -45,9 +33,6 @@ export default function CoachingPage() {
   const [wrap, setWrap] = useState<{ covered: string[]; coach_note: string } | null>(null);
   const [wrapBusy, setWrapBusy] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true); // le coaching est PARLÉ par défaut
-  const [listening, setListening] = useState(false);
-  const [micUnsupported, setMicUnsupported] = useState(false);
-  const recRef = useRef<SpeechRecognitionLike | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const voice = useEmmaAudio();
   const speaking = voice.state === "playing";
@@ -86,36 +71,6 @@ export default function CoachingPage() {
       setBusy(false);
     }
   }, [busy, voiceOn, voice]);
-
-  // 🎙 Talk to Emma : le micro écoute (en-GB), ta phrase part comme message.
-  function toggleMic() {
-    if (listening) { recRef.current?.stop(); setListening(false); return; }
-    const rec = getRecognition();
-    if (!rec) { setMicUnsupported(true); return; }
-    voice.unlock(); // le clic micro débloque aussi la voix d'Emma
-    recRef.current = rec;
-    rec.lang = "en-GB";
-    rec.continuous = false;
-    rec.interimResults = true;
-    let finalText = "";
-    rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const seg = e.results[i];
-        if (seg.isFinal) finalText += seg[0].transcript;
-        else interim += seg[0].transcript;
-      }
-      setInput((finalText + interim).trim());
-    };
-    rec.onend = () => {
-      setListening(false);
-      const t = finalText.trim();
-      if (t) { setInput(""); send(t); }
-    };
-    rec.onerror = () => setListening(false);
-    setListening(true);
-    rec.start();
-  }
 
   // Fin de séance : Emma écrit le débrief (loggé au dashboard + envoyable par email).
   async function endSession() {
@@ -168,25 +123,18 @@ export default function CoachingPage() {
         </div>
       )}
 
-      {/* La carte Emma : elle est LÀ, tu écris ou tu parles */}
+      {/* La carte Emma : elle est LÀ, tu écris ou tu lui PARLES (temps réel) */}
       <div className="card p-4 mt-4 flex items-center gap-4 flex-wrap">
-        <EmmaFace state={speaking ? "speaking" : listening || busy ? "listening" : "idle"} size={64} />
+        <EmmaFace state={speaking ? "speaking" : busy ? "listening" : "idle"} size={64} />
         <div className="flex-1 min-w-[180px]">
           <p className="font-semibold text-[15.5px]">Emma, your coach</p>
           <p className="text-xs text-muted">on your side — out loud or in writing</p>
         </div>
-        <button
-          type="button"
-          onClick={toggleMic}
-          className={listening ? "btn-primary !py-2.5 !px-5 animate-pulse" : "btn-amber !py-2.5 !px-5"}
-          title="Speak to Emma — your words are sent as your question"
-        >
-          {listening ? "🎙 Listening… tap to stop" : "🎙 Talk to Emma"}
-        </button>
+        <VoiceTalk
+          mode="coaching"
+          onLine={(l) => setMessages((m) => [...m, { role: l.role === "user" ? "user" : "assistant", message: l.message }])}
+        />
       </div>
-      {micUnsupported && (
-        <p className="text-xs text-gap font-semibold mt-1">Voice input isn&apos;t supported by this browser — type your question below instead.</p>
-      )}
 
       <div className="mt-3 flex items-center justify-between flex-wrap gap-2">
         <EmmaStyle />

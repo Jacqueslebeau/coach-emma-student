@@ -13,6 +13,7 @@ import AskEmma from "@/components/AskEmma";
 import ConceptExplainer from "@/components/ConceptExplainer";
 import LessonListen from "@/components/LessonListen";
 import SpeakButton from "@/components/SpeakButton";
+import VoiceTalk from "@/components/VoiceTalk";
 import WaitOverlay from "@/components/WaitOverlay";
 import { compressImage } from "@/lib/compressImage";
 import type {
@@ -302,6 +303,12 @@ export default function LessonPage() {
             >
               🎧 Listen — Emma presents it
             </button>
+          </div>
+
+          {/* 🎙 La tutrice en direct : Emma ENTEND l'élève et répond de vive
+              voix, ancrée sur CETTE leçon (même mécanisme que le coaching). */}
+          <div className="mt-3 flex justify-end">
+            <VoiceTalk mode="lesson" lessonId={lesson.id} label="🎙 Talk to Emma about this lesson" />
           </div>
           {listening && (
             <LessonListen
