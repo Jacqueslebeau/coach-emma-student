@@ -1,6 +1,10 @@
 // Génère le cours de la leçon — complet ou « concepts clés ». Idempotent par
 // mode (re-servi depuis la base si déjà généré).
+// LATENCE : le cours part chez l'élève dès la première passe (~2 min de
+// gagnées) ; la relecture factuelle Opus tourne APRÈS la réponse (after())
+// et remplace silencieusement le cours en base — le client re-synchronise.
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { touchSession, sessionElapsedMin } from "@/lib/sessionTrack";
 import { getSubjectBoard } from "@/lib/subjects";
@@ -47,32 +51,39 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       userId: auth.user.id,
       sb: auth.sb,
     });
-    let course = extractJson<Course>(raw);
+    const course = extractJson<Course>(raw);
 
-    // Relecture factuelle du cours (best-effort) : faits, chiffres, spec,
-    // cohérence — réparés avant l'élève ; en cas d'échec, le cours initial part.
-    try {
-      const audited = extractJson<Course>(
-        await askClaude({
-          system: courseAuditSystem(auth.firstName, auth.style, subj),
-          content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
-          maxTokens: mode === "full" ? 9000 : 4500,
-          effort: "medium",
-          model: "claude-opus-5", // la relectrice a le calibre du jury
-          workflow: `course-${mode}-audit`,
-          lessonId: id,
-          userId: auth.user.id,
-          sb: auth.sb,
-        })
-      );
-      if (Array.isArray(audited?.sections) && audited.sections.length === course.sections?.length) course = audited;
-    } catch { /* on garde le cours initial */ }
-
+    // Le cours part TOUT DE SUITE — sauvegardé, l'élève commence à lire.
     await auth.sb
       .from("lessons")
       .update({ course: { ...existing, [mode]: course }, stage: lesson.stage === "captured" ? "course" : lesson.stage })
       .eq("id", id);
     await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: mode === "full" ? "Cours complet" : "Concepts clés" });
+
+    // Relecture factuelle Opus APRÈS la réponse (faits, chiffres, spec,
+    // cohérence) : si elle passe, le cours réparé remplace l'original en
+    // base — le client re-synchronise quelques minutes plus tard.
+    after(async () => {
+      try {
+        const audited = extractJson<Course>(
+          await askClaude({
+            system: courseAuditSystem(auth.firstName, auth.style, subj),
+            content: `COURS PROPOSÉ (relis, répare, rends le JSON final) :\n${JSON.stringify(course)}`,
+            maxTokens: mode === "full" ? 9000 : 4500,
+            effort: "medium",
+            model: "claude-opus-5", // la relectrice a le calibre du jury
+            workflow: `course-${mode}-audit`,
+            lessonId: id,
+            userId: auth.user.id,
+            sb: auth.sb,
+          })
+        );
+        if (Array.isArray(audited?.sections) && audited.sections.length === course.sections?.length) {
+          await auth.sb.from("lessons").update({ course: { ...existing, [mode]: audited } }).eq("id", id);
+        }
+      } catch { /* on garde le cours initial */ }
+    });
+
     return NextResponse.json({ course });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "génération impossible" }, { status: 502 });

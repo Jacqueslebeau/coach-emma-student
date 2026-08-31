@@ -129,6 +129,13 @@ export default function LessonPage() {
       method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode }),
     });
     setCourse(d.course); setPhase("course"); window.scrollTo(0, 0);
+    // La relecture factuelle tourne en arrière-plan côté serveur : on
+    // re-synchronise silencieusement le cours réparé quelques minutes après.
+    setTimeout(async () => {
+      const fresh = await refresh();
+      const c = (fresh?.lesson.course || {})[mode];
+      if (c?.sections?.length) setCourse(c);
+    }, 180_000);
   })();
 
   const startQuiz = run(async () => {
@@ -236,7 +243,11 @@ export default function LessonPage() {
             </p>
             <span className="chip bg-amber-soft text-amber mt-4">~3 min read</span>
           </button>
-          {busy && <p className="text-sm text-muted sm:col-span-2">Emma is writing your lesson…</p>}
+          {busy && (
+            <p className="text-sm text-muted sm:col-span-2 animate-pulse">
+              ✍️ Emma is writing your lesson against the {detail.lesson.exam_board || "board"} spec — usually about 2 minutes. Worth the wait: it&apos;s written for YOUR starting point.
+            </p>
+          )}
         </div>
       )}
 
