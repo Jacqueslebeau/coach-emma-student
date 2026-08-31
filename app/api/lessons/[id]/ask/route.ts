@@ -98,7 +98,7 @@ Réponds UNIQUEMENT avec un JSON {"slides":[{"show":"…","say":"…"}]} de 2 à
         `LESSON: ${lesson.title}\nTOPIC: ${lesson.spec_topic || "—"}\n\n` +
         (courseCtx.length > 10 ? `THE COURSE EMMA WROTE FOR THIS LESSON (context):\n${courseCtx}\n\n` : "") +
         `${auth.firstName || "The student"} raises their hand and asks:\n« ${question} »`,
-      maxTokens: 900,
+      maxTokens: spoken ? 700 : 900,
       effort: spoken ? "low" : undefined,
       workflow: "lesson-qa",
       lessonId: id,

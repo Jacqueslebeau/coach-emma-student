@@ -106,6 +106,14 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
     }
   }, [data, genPlan]);
 
+  // Lien « Past-paper practice » (#papers) : l'ancre saute avant que la page
+  // ait chargé ses données — on re-scrolle une fois le contenu rendu.
+  useEffect(() => {
+    if (!data || window.location.hash !== "#papers") return;
+    const t = setTimeout(() => document.getElementById("papers")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    return () => clearTimeout(t);
+  }, [data]);
+
   if (err) return <p className="text-gap font-semibold">{err}</p>;
   if (!data) return <p className="text-muted">Loading…</p>;
 

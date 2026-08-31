@@ -38,14 +38,17 @@ export async function POST(req: NextRequest) {
     } catch { /* on lit le texte brut en dernier recours */ }
   }
 
+  // eleven_turbo_v2_5 : ~2-3× plus rapide que multilingual_v2 pour la même
+  // voix (même voice ID) ; débit 22050/64 = fichier ~2× plus léger à
+  // télécharger. Qualité vocale très proche — réversible si besoin.
   const r = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_44100_128`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}?output_format=mp3_22050_64`,
     {
       method: "POST",
       headers: { "xi-api-key": key, "Content-Type": "application/json" },
       body: JSON.stringify({
         text,
-        model_id: "eleven_multilingual_v2",
+        model_id: "eleven_turbo_v2_5",
         voice_settings: { stability: 0.7, similarity_boost: 0.85, style: 0.25, use_speaker_boost: true },
       }),
     }

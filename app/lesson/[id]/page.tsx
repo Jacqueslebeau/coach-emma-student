@@ -84,6 +84,32 @@ export default function LessonPage() {
     });
   }, [refresh]);
 
+  // PRÉCHAUFFAGE : dès que le cours s'affiche, on génère en tâche de fond les
+  // storyboards de toutes les sections (cachés côté serveur). Le clic 🎬/🎧
+  // ne paie alors plus que la voix (~3-5 s) au lieu de toute la génération.
+  const warmedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (phase !== "course" || !course || !detail) return;
+    const mode = course.mode === "full" ? "full" : "key";
+    if (warmedRef.current === mode) return;
+    warmedRef.current = mode;
+    const keys = ["intro", ...course.sections.map((s) => s.concept_key), ...(course.recap ? ["recap"] : [])];
+    (async () => {
+      // 2 générations en parallèle max — silencieux, jamais bloquant.
+      const queue = [...keys];
+      const worker = async () => {
+        for (let k = queue.shift(); k; k = queue.shift()) {
+          await fetch(`/api/lessons/${detail.lesson.id}/speak`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ mode, section: k, format: "slides" }),
+          }).catch(() => {});
+        }
+      };
+      await Promise.all([worker(), worker()]);
+    })();
+  }, [phase, course, detail]);
+
   async function api<T>(path: string, init?: RequestInit): Promise<T> {
     setBusy(true); setError(null);
     try {
