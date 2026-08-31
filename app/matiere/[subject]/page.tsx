@@ -35,6 +35,7 @@ type Data = {
   weak_points: { id: string; lesson_id: string; label: string; misconception: string | null }[];
   papers: { id: string; lesson_id: string; title: string; at: string; total_marks: number; awarded: number | null; decision: string | null }[];
   coached_paper_ids?: string[];
+  sessions?: { id: string; ref_id: string | null; started_at: string; duration_min: number; summary: { covered?: string[] } | null }[];
   exam_scores: { at: string; pct: number }[];
   avg_pct: number | null;
   estimated_grade: string | null;
@@ -143,18 +144,6 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
     const advanced = ps.some((p) => p.decision === "advance");
     const secured = coached && advanced && bestPct !== null && bestPct >= 75;
     return { bestPct, hasTodo, coached, secured, lessonDone: stage === "done" || ps.length > 0 };
-  };
-  const CycleChips = ({ lessonId, stage }: { lessonId: string; stage: string }) => {
-    const c = cycleOf(lessonId, stage);
-    if (c.secured) return <span className="chip-acquis shrink-0">Secured ✓</span>;
-    return (
-      <span className="flex items-center gap-1 shrink-0 flex-wrap">
-        <span className={c.lessonDone ? "chip-acquis" : "chip-todo"}>{c.lessonDone ? "Lesson ✓" : STAGE_LABEL[stage] || stage}</span>
-        {c.hasTodo && <span className="chip bg-amber-soft text-amber">Paper to do</span>}
-        {c.bestPct !== null && <span className={c.bestPct >= 75 ? "chip-acquis" : "chip-fragile"}>Paper {c.bestPct}%</span>}
-        {c.coached && <span className="chip-acquis">Coached ✓</span>}
-      </span>
-    );
   };
 
   return (
@@ -390,62 +379,35 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         )}
       </section>
 
-      {/* ============ LEÇONS COUVERTES — la plus récente en évidence + drop-down ============ */}
-      <section className="mt-8">
-        <h2 className="font-serif font-semibold text-xl">Lessons & topics covered</h2>
+      {/* ============ VOS TOPICS — cartes façon « Vos préparations » de Coach
+          Emma : comptes rendus (leçon, past papers, coaching) + Start ▾ avec
+          les étapes grisées selon l'avancement du cycle. ============ */}
+      <section className="mt-8 rounded-2xl overflow-hidden border border-line">
+        <div className="bg-indigo-deep text-white px-5 py-3 flex items-center justify-between">
+          <h2 className="font-serif font-semibold text-lg">Your topics</h2>
+          <span className="text-xs opacity-80">{data.lessons.length} topic{data.lessons.length === 1 ? "" : "s"}</span>
+        </div>
         {data.lessons.length === 0 ? (
-          <div className="card p-8 mt-4 text-center">
-            <p className="text-muted">No {subjectLabel} lessons yet.</p>
-            <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Capture my first lesson</Link>
+          <div className="bg-white p-8 text-center">
+            <p className="text-muted">No {subjectLabel} topics yet.</p>
+            <Link href={`/lesson/new?subject=${subject}`} className="btn-amber mt-4 inline-block">Start my first lesson</Link>
           </div>
         ) : (
-          <>
-            {/* Le tout dernier topic couvert — visible immédiatement */}
-            {(() => {
-              const latest = data.lessons[0];
-              const m = masteryByLesson.get(latest.id);
-              return (
-                <Link href={`/lesson/${latest.id}`} className="card p-4 mt-3 flex items-center gap-3 flex-wrap border-amber hover:border-indigo transition">
-                  <span className="chip bg-amber-soft text-amber shrink-0">Just covered</span>
-                  <span className="flex-1 min-w-[200px]">
-                    <span className="font-semibold text-[15px]">{latest.title}</span>
-                    {latest.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{latest.spec_topic}</span>}
-                  </span>
-                  <CycleChips lessonId={latest.id} stage={latest.stage} />
-                  <span className="font-mono text-xs text-faint shrink-0">
-                    {new Date(latest.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                  </span>
-                  {m && <span className="text-xs text-muted shrink-0">{m.acquis}/{m.total} secure</span>}
-                </Link>
-              );
-            })()}
-            {/* Le drop-down de TOUTES les leçons/topics couverts */}
-            <details className="card mt-3 overflow-hidden">
-              <summary className="px-5 py-3 cursor-pointer select-none flex items-center justify-between text-[15px] font-semibold hover:bg-indigo-soft/40">
-                <span>All lessons &amp; topics ({data.lessons.length})</span>
-                <span className="text-[11px] text-faint">▼</span>
-              </summary>
-              <div className="divide-y divide-line border-t border-line">
-                {data.lessons.map((l) => {
-                  const m = masteryByLesson.get(l.id);
-                  const nConcepts = Array.isArray(l.concepts) ? l.concepts.length : 0;
-                  return (
-                    <Link key={l.id} href={`/lesson/${l.id}`} className="px-5 py-3 flex items-center gap-3 flex-wrap hover:bg-indigo-soft/40 transition">
-                      <span className="flex-1 min-w-[200px]">
-                        <span className="font-semibold text-[14.5px]">{l.title}</span>
-                        {l.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{l.spec_topic}</span>}
-                      </span>
-                      <span className="text-xs text-muted shrink-0">{m ? `${m.acquis}/${m.total} secure` : `${nConcepts} concepts`}</span>
-                      <CycleChips lessonId={l.id} stage={l.stage} />
-                      <span className="font-mono text-xs text-faint shrink-0 w-14 text-right">
-                        {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </details>
-          </>
+          <div className="bg-white divide-y divide-line">
+            {data.lessons.map((l) => (
+              <TopicCard
+                key={l.id}
+                lesson={l}
+                masterySummary={masteryByLesson.get(l.id) || null}
+                masteryRows={data.mastery.filter((m) => m.lesson_id === l.id)}
+                weakPoints={data.weak_points.filter((w) => w.lesson_id === l.id)}
+                papers={(data.papers || []).filter((p) => p.lesson_id === l.id)}
+                coachedIds={coachedIds}
+                session={(data.sessions || []).find((s) => s.ref_id === l.id) || null}
+                cycle={cycleOf(l.id, l.stage)}
+              />
+            ))}
+          </div>
         )}
       </section>
 
@@ -516,6 +478,233 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
         )}
       </section>
 
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LA CARTE TOPIC — calquée sur « Vos préparations » de Coach Emma :
+// comptes rendus dépliables (leçon + niveau de compréhension, past papers,
+// coaching : note du paper + points à travailler) et « Start ▾ » avec les
+// étapes grisées selon l'avancement (leçon faite, coaching 1/2 utilisés).
+// ---------------------------------------------------------------------------
+function TopicCard({ lesson, masterySummary, masteryRows, weakPoints, papers, coachedIds, session, cycle }: {
+  lesson: { id: string; title: string; spec_topic: string | null; stage: string; created_at: string };
+  masterySummary: { acquis: number; total: number } | null;
+  masteryRows: { concept_key: string; label: string; status: string }[];
+  weakPoints: { id: string; label: string; misconception: string | null }[];
+  papers: { id: string; title: string; at: string; total_marks: number; awarded: number | null; decision: string | null }[];
+  coachedIds: Set<string>;
+  session: { started_at: string; duration_min: number; summary: { covered?: string[] } | null } | null;
+  cycle: { bestPct: number | null; hasTodo: boolean; coached: boolean; secured: boolean; lessonDone: boolean };
+}) {
+  const [panel, setPanel] = useState<null | "lesson" | "papers" | "coaching">(null);
+  const [startOpen, setStartOpen] = useState(false);
+
+  const todoPaper = papers.find((p) => p.awarded === null);
+  const markedPapers = papers.filter((p) => p.awarded !== null);
+  const lastMarked = markedPapers[markedPapers.length - 1];
+  const coachedCount = papers.filter((p) => coachedIds.has(p.id)).length;
+  const uncoachedMarked = markedPapers.filter((p) => !coachedIds.has(p.id));
+  const understanding = masterySummary && masterySummary.total > 0
+    ? masterySummary.acquis === masterySummary.total ? "Strong — all concepts secure"
+      : masterySummary.acquis >= masterySummary.total / 2 ? "Good — a few concepts to consolidate"
+      : "Fragile — several concepts to revisit"
+    : "Not checked yet";
+  const statusLabel: Record<string, string> = { acquis: "secure", fragile: "fragile", non_acquis: "to review" };
+
+  const toggle = (p: "lesson" | "papers" | "coaching") => setPanel((x) => (x === p ? null : p));
+
+  return (
+    <div className="p-5 border-l-4 border-l-indigo">
+      {/* En-tête de la carte */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex-1 min-w-[220px]">
+          <h3 className="font-serif font-semibold text-lg leading-snug">{lesson.title}</h3>
+          <p className="text-xs text-faint mt-0.5 font-mono">
+            {lesson.spec_topic || "—"} · {new Date(lesson.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+          </p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {cycle.secured ? (
+              <span className="chip-acquis">Secured ✓</span>
+            ) : (
+              <>
+                <span className={cycle.lessonDone ? "chip-acquis" : "chip-todo"}>{cycle.lessonDone ? "Lesson ✓" : "Lesson in progress"}</span>
+                {cycle.hasTodo && <span className="chip bg-amber-soft text-amber">Paper to do</span>}
+                {cycle.bestPct !== null && <span className={cycle.bestPct >= 75 ? "chip-acquis" : "chip-fragile"}>Paper {cycle.bestPct}%</span>}
+                {cycle.coached && <span className="chip-acquis">Coached ✓</span>}
+              </>
+            )}
+          </div>
+        </div>
+        {/* Le cercle de score (meilleur paper) façon adéquation */}
+        {cycle.bestPct !== null && (
+          <div className="text-center shrink-0">
+            <div className="relative h-14 w-14">
+              <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#E5E7EB" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke={cycle.bestPct >= 75 ? "#064E3B" : "#B45309"} strokeWidth="3"
+                  strokeDasharray={`${Math.max(4, cycle.bestPct)} 100`} strokeLinecap="round" pathLength={100} />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center font-serif font-black text-[15px] text-indigo-deep">{cycle.bestPct}%</span>
+            </div>
+            <p className="text-[9.5px] font-mono uppercase tracking-wider text-faint mt-0.5">paper</p>
+          </div>
+        )}
+      </div>
+
+      {/* Les boutons comptes rendus + Start ▾ */}
+      <div className="flex flex-wrap items-center gap-2 mt-4">
+        <button onClick={() => toggle("lesson")} className={panel === "lesson" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
+          Lesson report
+        </button>
+        <button onClick={() => toggle("papers")} className={panel === "papers" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
+          Past papers{papers.length ? ` (${papers.length})` : ""}
+        </button>
+        <button onClick={() => toggle("coaching")} className={panel === "coaching" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
+          Coaching report
+        </button>
+
+        <div className="relative ml-auto">
+          <button onClick={() => setStartOpen((o) => !o)} className="btn-amber !py-2 !px-5">Start ▾</button>
+          {startOpen && (
+            <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
+              {/* Lesson — grisée si déjà faite */}
+              {cycle.lessonDone ? (
+                <div className="px-4 py-2.5 opacity-50 cursor-not-allowed">
+                  <p className="text-sm font-semibold">🔒 Lesson</p>
+                  <p className="text-[11.5px] text-faint">Lesson already done for this topic</p>
+                </div>
+              ) : (
+                <Link href={`/lesson/${lesson.id}`} className="block px-4 py-2.5 hover:bg-indigo-soft">
+                  <p className="text-sm font-semibold">📖 Lesson</p>
+                  <p className="text-[11.5px] text-faint">Continue the lesson</p>
+                </Link>
+              )}
+              {/* Past paper */}
+              {todoPaper ? (
+                <Link href={`/paper/${todoPaper.id}`} className="block px-4 py-2.5 hover:bg-indigo-soft">
+                  <p className="text-sm font-semibold">📝 Past paper</p>
+                  <p className="text-[11.5px] text-faint">Do the assigned paper — online or printed</p>
+                </Link>
+              ) : (
+                <div className="px-4 py-2.5 opacity-50 cursor-not-allowed">
+                  <p className="text-sm font-semibold">🔒 Past paper</p>
+                  <p className="text-[11.5px] text-faint">
+                    {papers.length === 0 ? "Assigned at the end of the lesson" : "All assigned papers done — the coaching can recommend another"}
+                  </p>
+                </div>
+              )}
+              {/* Coaching 1 & 2 — grisés selon usage */}
+              {[0, 1].map((n) => {
+                const done = coachedCount > n;
+                const available = !done && uncoachedMarked.length > 0 && coachedCount === n;
+                const target = uncoachedMarked[0] || lastMarked;
+                return done ? (
+                  <div key={n} className="px-4 py-2.5 opacity-50 cursor-not-allowed">
+                    <p className="text-sm font-semibold">🔒 Coaching {n + 1}</p>
+                    <p className="text-[11.5px] text-faint">Coaching already done for this topic</p>
+                  </div>
+                ) : available && target ? (
+                  <Link key={n} href={`/paper/${target.id}`} className="block px-4 py-2.5 hover:bg-indigo-soft">
+                    <p className="text-sm font-semibold">🎙 Coaching {n + 1}</p>
+                    <p className="text-[11.5px] text-faint">Debrief your marked paper with Emma</p>
+                  </Link>
+                ) : (
+                  <div key={n} className="px-4 py-2.5 opacity-50 cursor-not-allowed">
+                    <p className="text-sm font-semibold">🔒 Coaching {n + 1}</p>
+                    <p className="text-[11.5px] text-faint">{markedPapers.length === 0 ? "After your paper is marked" : n === 1 ? "After the second paper" : "—"}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===== Panneaux dépliés ===== */}
+      {panel === "lesson" && (
+        <div className="mt-4 bg-indigo-soft/40 rounded-xl p-4">
+          <div className="flex items-baseline justify-between flex-wrap gap-2">
+            <p className="font-semibold text-[14.5px]">Lesson report</p>
+            <span className="text-[12px] text-muted">Understanding: <strong className="text-indigo-deep">{understanding}</strong></span>
+          </div>
+          {masteryRows.length > 0 ? (
+            <div className="mt-2 space-y-1">
+              {masteryRows.map((m) => (
+                <div key={m.concept_key} className="flex items-center justify-between text-sm border-b border-line/60 pb-1 last:border-0">
+                  <span>{m.label}</span>
+                  <span className={m.status === "acquis" ? "chip-acquis" : m.status === "fragile" ? "chip-fragile" : "chip-non_acquis"}>
+                    {statusLabel[m.status] || m.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-faint mt-2">The mastery check hasn&apos;t been taken yet.</p>
+          )}
+          {session?.summary?.covered?.length ? (
+            <p className="text-[12.5px] text-muted mt-3">
+              <strong>Covered:</strong> {session.summary.covered.join(" → ")} · {session.duration_min} min
+            </p>
+          ) : null}
+          <Link href={`/lesson/${lesson.id}`} className="text-[13px] font-semibold text-indigo hover:text-indigo-deep inline-block mt-2">Open the lesson →</Link>
+        </div>
+      )}
+
+      {panel === "papers" && (
+        <div className="mt-4 bg-indigo-soft/40 rounded-xl p-4">
+          <p className="font-semibold text-[14.5px]">Past papers</p>
+          {papers.length === 0 ? (
+            <p className="text-sm text-faint mt-2">Emma assigns the paper at the end of the lesson — it will appear here.</p>
+          ) : (
+            <div className="mt-2 divide-y divide-line/60">
+              {papers.map((p, i) => (
+                <Link key={p.id} href={`/paper/${p.id}`} className="py-2.5 flex items-center gap-3 flex-wrap hover:bg-white/60 rounded-lg px-2 -mx-2 transition">
+                  <span className={p.awarded === null ? "chip bg-amber-soft text-amber shrink-0" : p.decision === "advance" ? "chip-acquis shrink-0" : "chip-fragile shrink-0"}>
+                    {p.awarded === null ? "to do" : `${p.awarded}/${p.total_marks}`}
+                  </span>
+                  <span className="flex-1 min-w-[140px] text-sm font-semibold">Paper {i + 1}</span>
+                  {coachedIds.has(p.id) && <span className="chip-acquis shrink-0">Coached ✓</span>}
+                  <span className="font-mono text-[11px] text-faint shrink-0">{new Date(p.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                  <span className="text-indigo font-semibold text-[13px] shrink-0">{p.awarded === null ? "Do it →" : "Open →"}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {panel === "coaching" && (
+        <div className="mt-4 bg-indigo-soft/40 rounded-xl p-4">
+          <p className="font-semibold text-[14.5px]">Coaching report</p>
+          {lastMarked ? (
+            <div className="mt-2 space-y-2 text-sm">
+              <p><strong>Paper score:</strong> {lastMarked.awarded}/{lastMarked.total_marks}{cycle.bestPct !== null ? ` (${cycle.bestPct}%)` : ""} — {lastMarked.decision === "advance" ? "solid, on track" : "fragile, worth another go"}</p>
+              {weakPoints.length > 0 && (
+                <div>
+                  <p className="font-semibold">Points to work on:</p>
+                  <ul className="list-disc pl-5 mt-1 text-muted">
+                    {weakPoints.map((w) => (
+                      <li key={w.id}>{w.label}{w.misconception ? ` — ${w.misconception}` : ""}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="text-muted">
+                {cycle.coached
+                  ? "Debriefed with Emma ✓ — reread the full conversation on the paper page."
+                  : "Not debriefed yet — open the paper and start the coaching with Emma."}
+              </p>
+              <Link href={`/paper/${lastMarked.id}`} className="text-[13px] font-semibold text-indigo hover:text-indigo-deep inline-block">
+                {cycle.coached ? "Reread the debrief →" : "Start the coaching on this paper →"}
+              </Link>
+            </div>
+          ) : (
+            <p className="text-sm text-faint mt-2">The coaching report appears once your past paper is marked.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
