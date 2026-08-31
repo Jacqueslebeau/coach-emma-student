@@ -218,8 +218,8 @@ export default function CoachingPage() {
           <div className="flex justify-start">
             <div className="bg-indigo-soft rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[90%]">
               <p className="text-[15px]">
-                Hi {firstName || "there"}! 👋 Ask me anything to move forward — or tell me what&apos;s worrying you about your
-                exams and we&apos;ll work on it together.
+                Hi {firstName || "there"}! 👋 Ask me anything to move forward — or ask me to <strong>quiz you on your exam
+                craft</strong> and I&apos;ll score your answers out of 10.
               </p>
             </div>
           </div>
