@@ -2,10 +2,11 @@
 
 // « Any questions? » — la main levée du vrai tutoring. Fenêtres bornées
 // (3 questions max par étape), Emma répond ancrée sur la leçon et ramène
-// toujours vers la suite. Pendant le cours on écoute ; les questions
-// viennent APRÈS, comme chez le meilleur tuteur.
+// toujours vers la suite. Elle répond À L'ORAL (sa voix) en plus de l'écrit ;
+// l'audio est débloqué dans le submit (autoplay policy).
 import { useEffect, useState } from "react";
 import RichText from "@/components/RichText";
+import { useEmmaAudio } from "@/lib/useEmmaAudio";
 
 type QA = { id?: string; stage: string; question: string; answer: string };
 
@@ -21,6 +22,7 @@ export default function AskEmma({ lessonId, stage }: { lessonId: string; stage: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const voice = useEmmaAudio();
 
   useEffect(() => {
     fetch(`/api/lessons/${lessonId}/ask`)
@@ -35,6 +37,7 @@ export default function AskEmma({ lessonId, stage }: { lessonId: string; stage: 
   async function ask() {
     const q = input.trim();
     if (!q || busy || left === 0) return;
+    voice.unlock(); // dans le geste utilisateur, avant tout await
     setBusy(true); setError(null); setInput("");
     try {
       const r = await fetch(`/api/lessons/${lessonId}/ask`, {
@@ -44,6 +47,7 @@ export default function AskEmma({ lessonId, stage }: { lessonId: string; stage: 
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Emma could not answer — try again.");
       setQas((x) => [...x, { stage, question: q, answer: d.answer }]);
+      voice.speak(String(d.answer || ""), true); // Emma répond à voix haute aussi
     } catch (e) {
       setError((e as Error).message);
       setInput(q);
@@ -75,6 +79,23 @@ export default function AskEmma({ lessonId, stage }: { lessonId: string; stage: 
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {(voice.state === "loading" || voice.state === "playing" || voice.state === "paused") && (
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[12.5px] text-indigo font-semibold">
+            {voice.state === "loading" ? "🔊 Emma is about to answer out loud…" : "🔊 Emma is answering out loud"}
+          </span>
+          {voice.state === "playing" && (
+            <button onClick={voice.pause} className="text-indigo hover:text-indigo-deep text-sm font-bold" title="Pause">❚❚</button>
+          )}
+          {voice.state === "paused" && (
+            <button onClick={voice.resume} className="text-indigo hover:text-indigo-deep text-sm font-bold" title="Resume">▶</button>
+          )}
+          {voice.state !== "loading" && (
+            <button onClick={voice.stop} className="text-faint hover:text-indigo text-sm font-bold" title="Stop">✕</button>
+          )}
         </div>
       )}
 

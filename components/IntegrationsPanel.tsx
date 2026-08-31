@@ -10,7 +10,7 @@ type Status = { configured: boolean; connected: boolean; connected_at: string | 
 export default function IntegrationsPanel() {
   const [status, setStatus] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
-  const [flash, setFlash] = useState<"connected" | "error" | null>(null);
+  const [flash, setFlash] = useState<"connected" | "error" | "denied" | null>(null);
 
   const load = () => {
     fetch("/api/google/status").then((r) => r.json()).then(setStatus).catch(() => {});
@@ -20,10 +20,9 @@ export default function IntegrationsPanel() {
     // retour d'OAuth : ?drive=connected|error (lu hors useSearchParams pour
     // éviter la contrainte Suspense au prerender)
     const v = new URLSearchParams(window.location.search).get("drive");
-    if (v === "connected" || v === "error") setFlash(v);
+    if (v === "connected" || v === "error" || v === "denied") setFlash(v);
   }, []);
   const justConnected = flash === "connected";
-  const driveError = flash === "error";
 
   async function disconnect() {
     setBusy(true);
@@ -50,7 +49,19 @@ export default function IntegrationsPanel() {
               : "Save your marked past papers to your own Google Drive, organised by subject and date."}
           </p>
           {justConnected && <p className="text-sm text-mastered font-semibold mt-1">Google Drive connected ✓</p>}
-          {driveError && <p className="text-sm text-gap font-semibold mt-1">Connection failed — try again.</p>}
+          {flash === "denied" && (
+            <p className="text-sm text-gap font-semibold mt-1">
+              Google refused access for this account. If the app is in testing mode, this Google account must be added
+              as a test user in the Google Cloud console (OAuth consent screen → Test users), then try again.
+            </p>
+          )}
+          {flash === "error" && (
+            <p className="text-sm text-gap font-semibold mt-1">
+              Connection failed. If Google showed “redirect_uri_mismatch”, the app&apos;s OAuth client must list
+              exactly <span className="font-mono text-[12px]">https://coach-emma-student.vercel.app/api/google/callback</span> as
+              an authorised redirect URI. Otherwise, just try again.
+            </p>
+          )}
         </div>
         {status.connected ? (
           <div className="flex items-center gap-2 shrink-0">

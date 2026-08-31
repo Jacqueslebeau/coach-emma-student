@@ -262,17 +262,28 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
 
         {!e ? null : !plan ? (
           <div className="card p-6 mt-3">
-            <p className="text-muted">
-              {planBusy || !planRequested.current
-                ? "Emma is analysing the gap between your grade and your target, and preparing your action plan…"
-                : "The plan could not be generated."}
-            </p>
+            {planBusy || !planRequested.current ? (
+              <div>
+                <p className="font-serif font-semibold text-indigo-deep animate-pulse">
+                  ✍️ Emma is writing your Tutoring Plan — it usually takes 1-2 minutes.
+                </p>
+                <p className="text-sm text-muted mt-2">
+                  She is checking your starting point against every topic of the {data.subject.board} {data.subject.spec} specification,
+                  to decide what to work on first and at what pace. It only happens once — the plan is saved.
+                </p>
+              </div>
+            ) : (
+              <p className="text-muted">The plan could not be generated.</p>
+            )}
             {!planBusy && planRequested.current && (
               <button onClick={() => genPlan(true)} className="btn-primary mt-3 !py-2 !px-4">Try again</button>
             )}
           </div>
         ) : (
           <div className="card p-6 mt-3 space-y-5">
+            <p className="text-[12.5px] text-muted bg-indigo-soft rounded-lg px-3 py-2 -mb-1">
+              This plan drives your sessions: each priority below becomes lessons — click one to start it as a lesson.
+            </p>
             {plan.headline && <p className="font-serif font-semibold text-lg text-indigo-deep">{plan.headline}</p>}
             {plan.gap_analysis && <RichText text={plan.gap_analysis} className="text-[15px] leading-relaxed" />}
 
@@ -295,6 +306,14 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                       <div>
                         <p className="font-semibold text-[15px]">{p.title}{p.spec_area ? <span className="font-mono text-[11px] text-faint font-normal"> — {p.spec_area}</span> : null}</p>
                         {p.why && <p className="text-sm text-muted">{p.why}</p>}
+                        {p.title && (
+                          <Link
+                            href={`/lesson/new?subject=${encodeURIComponent(subject)}&title=${encodeURIComponent(p.title)}`}
+                            className="inline-block text-[13px] font-semibold text-indigo hover:text-indigo-deep mt-0.5"
+                          >
+                            Start a lesson on this →
+                          </Link>
+                        )}
                       </div>
                     </li>
                   ))}

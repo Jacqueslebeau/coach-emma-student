@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { BOARD_OPTIONS, SUBJECTS, SUBJECT_KEYS, type SubjectKey } from "@/lib/subjects";
 import { GCSE_GRADES, gcseToStart, allowedTargets } from "@/lib/grades";
 import BackLink from "@/components/BackLink";
+import { compressImage } from "@/lib/compressImage";
 
 type Row = {
   on: boolean;
@@ -73,16 +74,19 @@ export default function Onboarding() {
   async function onSlip(file: File) {
     setReading(true); setSlipMsg(null); setError(null);
     try {
+      // PDF envoyé tel quel ; photo (HEIC de téléphone inclus) convertie en JPEG.
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const upload = isPdf ? file : await compressImage(file);
       const b64 = await new Promise<string>((res, rej) => {
         const fr = new FileReader();
         fr.onload = () => res(String(fr.result).split(",")[1] || "");
         fr.onerror = rej;
-        fr.readAsDataURL(file);
+        fr.readAsDataURL(upload);
       });
       const r = await fetch("/api/gcse-extract", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ image: b64, media_type: file.type || "image/jpeg" }),
+        body: JSON.stringify({ image: b64, media_type: isPdf ? "application/pdf" : upload.type || "image/jpeg" }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Could not read the slip");
@@ -152,7 +156,7 @@ export default function Onboarding() {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,application/pdf"
             className="text-sm"
             onChange={(e) => e.target.files?.[0] && onSlip(e.target.files[0])}
             disabled={reading}

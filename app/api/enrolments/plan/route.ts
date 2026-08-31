@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
         ? `Écris le plan d'action de ${auth.firstName || "l'élève"} en ${subj.labelFr} (${subj.board} ${subj.spec}).`
         : `Write ${auth.firstName || "the student"}'s action plan for ${subj.labelEn} (${subj.board} ${subj.spec}).`,
       maxTokens: 3000,
+      // "medium" : le plan sort en ~1-2 min au lieu de 3+ — la qualité vient du
+      // prompt (fiche board complète), pas de la profondeur de réflexion ici.
+      effort: "medium",
       workflow: "action-plan",
       userId: auth.user.id,
       sb: auth.sb,

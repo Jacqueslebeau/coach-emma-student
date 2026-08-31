@@ -7,6 +7,7 @@ import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import EmmaStyle from "@/components/EmmaStyle";
 import EmmaFace from "@/components/EmmaFace";
+import { useEmmaAudio } from "@/lib/useEmmaAudio";
 
 type Msg = { role: string; message: string };
 
@@ -28,38 +29,10 @@ export default function CoachingPage() {
   const [wrap, setWrap] = useState<{ covered: string[]; coach_note: string } | null>(null);
   const [wrapBusy, setWrapBusy] = useState(false);
   const [voiceOn, setVoiceOn] = useState(true); // le coaching est PARLÉ par défaut
-  const [speaking, setSpeaking] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
-
-  // La voix d'Emma : chaque réponse est lue à voix haute (pause possible).
-  async function speak(text: string) {
-    if (!voiceOn) return;
-    try {
-      audioRef.current?.pause();
-      const clean = text
-        .replace(/\*\*|__|\*|#+\s?/g, "")
-        .replace(/\\\(|\\\)|\\\[|\\\]/g, " ")
-        .slice(0, 4500);
-      const r = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: clean }),
-      });
-      if (!r.ok) return; // la voix est un plus — jamais bloquant
-      const url = URL.createObjectURL(await r.blob());
-      const a = new Audio(url);
-      audioRef.current = a;
-      a.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
-      setSpeaking(true);
-      await a.play().catch(() => setSpeaking(false));
-    } catch { /* silencieux */ }
-  }
-  function toggleSpeech() {
-    const a = audioRef.current;
-    if (!a) return;
-    if (a.paused) { a.play(); setSpeaking(true); } else { a.pause(); setSpeaking(false); }
-  }
+  // La voix d'Emma — élément Audio unique, débloqué DANS le clic (autoplay policy).
+  const voice = useEmmaAudio();
+  const speaking = voice.state === "playing";
 
   // Fin de séance : Emma écrit le débrief (loggé au dashboard + envoyable par email).
   async function endSession() {
@@ -99,6 +72,7 @@ export default function CoachingPage() {
   async function send(text: string) {
     const t = text.trim();
     if (!t || busy) return;
+    if (voiceOn) voice.unlock(); // dans le geste utilisateur, avant tout await
     setBusy(true); setError(null); setInput("");
     setMessages((m) => [...m, { role: "user", message: t }]);
     try {
@@ -108,7 +82,7 @@ export default function CoachingPage() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Something went wrong — try again.");
       setMessages((m) => [...m, { role: "assistant", message: d.reply }]);
-      speak(d.reply);
+      if (voiceOn) voice.speak(d.reply);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -153,14 +127,19 @@ export default function CoachingPage() {
       <div className="mt-4 flex items-center justify-between flex-wrap gap-2">
         <EmmaStyle />
         <div className="flex items-center gap-2">
-          {speaking !== null && audioRef.current && (
-            <button type="button" onClick={toggleSpeech} className="btn-ghost !py-1 !px-3 text-[12.5px]" title="Pause / resume Emma's voice">
+          {(voice.state === "playing" || voice.state === "paused") && (
+            <button
+              type="button"
+              onClick={() => (speaking ? voice.pause() : voice.resume())}
+              className="btn-ghost !py-1 !px-3 text-[12.5px]"
+              title="Pause / resume Emma's voice"
+            >
               {speaking ? "❚❚ Pause voice" : "▶ Resume voice"}
             </button>
           )}
           <button
             type="button"
-            onClick={() => { if (voiceOn) audioRef.current?.pause(); setVoiceOn(!voiceOn); setSpeaking(false); }}
+            onClick={() => { if (voiceOn) voice.stop(); setVoiceOn(!voiceOn); }}
             className={voiceOn ? "btn-primary !py-1 !px-3 text-[12.5px]" : "btn-ghost !py-1 !px-3 text-[12.5px]"}
             title="Emma speaks her replies — the text stays as captions"
           >

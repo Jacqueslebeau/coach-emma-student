@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
   if (!auth) return NextResponse.redirect(`${SITE_URL}/login`);
 
   const url = new URL(req.url);
+  // Google renvoie ?error=access_denied quand le compte n'est pas dans les
+  // Test users de l'app OAuth (ou refus manuel) — on le remonte tel quel.
+  const gError = url.searchParams.get("error");
+  if (gError) return back(gError === "access_denied" ? "denied" : "error");
+
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const cookieState = req.cookies.get("g_oauth_state")?.value;

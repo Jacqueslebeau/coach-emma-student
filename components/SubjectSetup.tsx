@@ -8,6 +8,7 @@
 import { useRef, useState } from "react";
 import { BOARD_OPTIONS, type SubjectKey } from "@/lib/subjects";
 import { GCSE_GRADES, gcseToStart, allowedTargets } from "@/lib/grades";
+import { compressImage } from "@/lib/compressImage";
 
 type Q = { id: string; question: string; marks?: number; tariff?: string };
 type PlacementResult = { total_awarded: number; total: number; estimated_start: string; rationale: string };
@@ -40,16 +41,19 @@ export default function SubjectSetup({ subject, subjectLabel, onDone }: {
   async function readSlip(file: File) {
     setBusy("slip"); setError(null);
     try {
+      // PDF envoyé tel quel ; photo (HEIC de téléphone inclus) convertie en JPEG.
+      const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+      const upload = isPdf ? file : await compressImage(file);
       const b64 = await new Promise<string>((res, rej) => {
         const fr = new FileReader();
         fr.onload = () => res(String(fr.result).split(",")[1] || "");
         fr.onerror = rej;
-        fr.readAsDataURL(file);
+        fr.readAsDataURL(upload);
       });
       const r = await fetch("/api/gcse-extract", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ image: b64, media_type: file.type || "image/jpeg" }),
+        body: JSON.stringify({ image: b64, media_type: isPdf ? "application/pdf" : upload.type || "image/jpeg" }),
       });
       const d = await r.json();
       if (!r.ok || !d.readable) throw new Error(d.error || d.reason || "Emma couldn't read this document — enter your grade manually.");
@@ -181,7 +185,7 @@ export default function SubjectSetup({ subject, subjectLabel, onDone }: {
           <div className="text-sm">
             <p className="font-semibold">Optional — upload your results slip</p>
             <p className="text-xs text-muted">Emma reads the exact grade and the marks behind it (a high 7 and a low 7 don&apos;t start from the same place).</p>
-            <input ref={fileRef} type="file" accept="image/*" className="text-sm mt-1.5"
+            <input ref={fileRef} type="file" accept="image/*,.pdf,application/pdf" className="text-sm mt-1.5"
               onChange={(e) => e.target.files?.[0] && readSlip(e.target.files[0])} disabled={busy === "slip"} />
             {busy === "slip" && <p className="text-xs text-muted animate-pulse mt-1">Emma is reading your slip…</p>}
             {gcseNote && <p className="text-xs text-indigo-deep font-semibold mt-1">From your slip: {gcseNote}</p>}

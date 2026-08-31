@@ -35,9 +35,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "image manquante ou trop lourde" }, { status: 400 });
   }
 
+  // PDF → bloc document ; images → bloc image (formats acceptés par l'API).
+  // Le client compresse déjà en JPEG, mais on garde un message clair sinon.
+  const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+  const isPdf = mediaType === "application/pdf";
+  if (!isPdf && !IMAGE_TYPES.has(mediaType)) {
+    return NextResponse.json(
+      { error: "Unsupported file format — upload a photo (JPEG/PNG) or a PDF of your results slip." },
+      { status: 400 }
+    );
+  }
+
   try {
+    const fileBlock: ContentBlock = isPdf
+      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: image } }
+      : { type: "image", source: { type: "base64", media_type: mediaType, data: image } };
     const content: ContentBlock[] = [
-      { type: "image", source: { type: "base64", media_type: mediaType, data: image } },
+      fileBlock,
       { type: "text", text: "Voici le relevé de résultats. Extrais les notes." },
     ];
     const parsed = extractJson<{ readable: boolean; reason?: string; results?: { subject: string; label: string; grade: string; detail: string | null }[] }>(

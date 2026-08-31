@@ -36,7 +36,8 @@ function NewLesson() {
       })
       .catch(() => {});
   }, []);
-  const [title, setTitle] = useState("");
+  // ?title= : une priorité du Tutoring Plan cliquée arrive préremplie ici.
+  const [title, setTitle] = useState(search.get("title") || "");
   const [notes, setNotes] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);

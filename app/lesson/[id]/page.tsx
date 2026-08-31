@@ -10,7 +10,7 @@ import { useParams } from "next/navigation";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
 import AskEmma from "@/components/AskEmma";
-import LessonVoice from "@/components/LessonVoice";
+import ConceptExplainer from "@/components/ConceptExplainer";
 import SpeakButton from "@/components/SpeakButton";
 import Whiteboard from "@/components/Whiteboard";
 import { compressImage } from "@/lib/compressImage";
@@ -43,7 +43,6 @@ export default function LessonPage() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [spokenKey, setSpokenKey] = useState<string | null>(null);
 
   const [course, setCourse] = useState<Course | null>(null);
   const [quiz, setQuiz] = useState<{ attempt_id: string; questions: QuizQuestion[] } | null>(null);
@@ -213,36 +212,42 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ÉTAPE 2 — le cours : Emma le LIT (voix UK), le texte suit en sous-titres */}
+      {/* ÉTAPE 2 — le cours À L'ÉCRIT, à ton rythme. Un concept qui résiste ?
+          🎬 Emma l'explique en mini-vidéo (voix + script animé), juste ce concept. */}
       {phase === "course" && course && (
         <div>
-          <LessonVoice
-            lessonId={lesson.id}
-            mode={course.mode === "full" ? "full" : "key"}
-            sections={[
-              { key: "intro", title: "Introduction" },
-              ...course.sections.map((s) => ({ key: s.concept_key, title: s.title })),
-              ...(course.recap ? [{ key: "recap", title: "One-minute recap" }] : []),
-            ]}
-            onSectionChange={setSpokenKey}
-            onAskEmma={() => document.getElementById("ask-emma-course")?.scrollIntoView({ behavior: "smooth", block: "center" })}
-          />
+          <div className="rounded-xl bg-indigo-soft px-4 py-2.5 text-[13.5px] text-indigo-deep">
+            📖 Read at your own pace. Stuck on a concept? Hit <strong>🎬 Watch Emma explain</strong> — she explains just that bit, out loud.
+          </div>
           <div className="card p-6 mt-4">
-            <div className={spokenKey === "intro" ? "rounded-xl bg-amber-soft/50 -m-2 p-2 transition" : "transition"}>
-              <RichText text={course.intro} />
-            </div>
+            <RichText text={course.intro} />
             {course.sections.map((s) => (
-              <div
-                key={s.concept_key}
-                className={`mt-5 pt-5 border-t border-line ${spokenKey === s.concept_key ? "rounded-xl bg-amber-soft/50 -mx-2 px-2 pb-2 transition" : "transition"}`}
-              >
-                <h2 className="font-serif font-semibold text-xl">{s.title}</h2>
+              <div key={s.concept_key} className="mt-5 pt-5 border-t border-line">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h2 className="font-serif font-semibold text-xl">{s.title}</h2>
+                  <ConceptExplainer
+                    lessonId={lesson.id}
+                    mode={course.mode === "full" ? "full" : "key"}
+                    section={s.concept_key}
+                    title={s.title}
+                    compact
+                  />
+                </div>
                 <RichText text={s.body} className="mt-2" />
               </div>
             ))}
             {course.recap && (
               <div className="mt-6 bg-indigo-soft rounded-xl p-5">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-indigo">One-minute recap</p>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-indigo">One-minute recap</p>
+                  <ConceptExplainer
+                    lessonId={lesson.id}
+                    mode={course.mode === "full" ? "full" : "key"}
+                    section="recap"
+                    title="One-minute recap"
+                    compact
+                  />
+                </div>
                 <RichText text={course.recap} className="mt-1" />
               </div>
             )}
