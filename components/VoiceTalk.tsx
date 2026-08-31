@@ -5,11 +5,16 @@
 // répond de vive voix, en continu. Utilisé par le coaching (coach d'examen)
 // et par la leçon (tutrice ancrée sur la leçon en cours).
 // Le transcript est flushé dans /api/voice-log à la fin (historique + récaps).
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useConversation } from "@elevenlabs/react";
 import EmmaFace from "@/components/EmmaFace";
 
 type Line = { role: "user" | "assistant"; message: string };
+
+// Durée maximum d'une séance vocale (maîtrise du coût, comme Coach Emma) :
+// Emma est prévenue ~2 min avant la fin et CONCLUT naturellement (récap des
+// actions) — jamais de coupure en plein mot.
+const MAX_MIN: Record<"coaching" | "lesson", number> = { coaching: 10, lesson: 15 };
 
 export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma", onLine }: {
   mode: "coaching" | "lesson";
@@ -20,8 +25,17 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
   const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [lastLines, setLastLines] = useState<Line[]>([]);
+  const [winding, setWinding] = useState(false);
+  const [minutesLeft, setMinutesLeft] = useState<number | null>(null);
   const bufferRef = useRef<Line[]>([]);
   const flushedRef = useRef(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearTimers = useCallback(() => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+  }, []);
+  useEffect(() => clearTimers, [clearTimers]);
 
   const flush = useCallback(() => {
     if (flushedRef.current || bufferRef.current.length === 0) return;
@@ -69,6 +83,37 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
         connectionType: "websocket",
         dynamicVariables: d.vars || {},
       });
+
+      // La minuterie de séance : préavis à Emma 2 min avant la fin (elle
+      // conclut avec les actions), puis arrêt en douceur — on ne coupe
+      // jamais Emma en plein mot.
+      const maxMs = MAX_MIN[mode] * 60_000;
+      setWinding(false);
+      setMinutesLeft(MAX_MIN[mode]);
+      clearTimers();
+      const tick = setInterval(() => setMinutesLeft((m) => (m === null ? null : Math.max(0, m - 1))), 60_000);
+      timersRef.current.push(tick as unknown as ReturnType<typeof setTimeout>);
+      timersRef.current.push(setTimeout(() => {
+        setWinding(true);
+        try {
+          (conversation as unknown as { sendContextualUpdate?: (t: string) => void }).sendContextualUpdate?.(
+            "The session is reaching its time limit in about two minutes. Start wrapping up NOW, naturally: recap the 1-3 concrete actions decided, have the student say them back in their own words, then say a warm goodbye. Do not start any new topic."
+          );
+        } catch {}
+      }, maxMs - 120_000));
+      timersRef.current.push(setTimeout(() => {
+        // Fin gracieuse : on attend qu'Emma ait fini sa phrase (max +45 s).
+        const started = Date.now();
+        const tryEnd = () => {
+          const speakingNow = (conversation as { isSpeaking?: boolean }).isSpeaking === true;
+          if (speakingNow && Date.now() - started < 45_000) {
+            timersRef.current.push(setTimeout(tryEnd, 2_000));
+          } else {
+            stop();
+          }
+        };
+        tryEnd();
+      }, maxMs));
     } catch (e) {
       setPhase("error");
       setError((e as Error).message);
@@ -76,6 +121,9 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
   }
 
   async function stop() {
+    clearTimers();
+    setWinding(false);
+    setMinutesLeft(null);
     try { await conversation.endSession(); } catch {}
     setPhase("idle");
     flush();
@@ -106,7 +154,11 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
         <EmmaFace state={speaking ? "speaking" : "listening"} size={56} />
         <div className="flex-1 min-w-[160px]">
           <p className="font-semibold text-[14.5px]">{speaking ? "Emma is speaking…" : "Emma is listening — go ahead 🎙"}</p>
-          <p className="text-xs text-muted">A real conversation: speak naturally, she hears you.</p>
+          <p className="text-xs text-muted">
+            {winding
+              ? "Wrapping up — Emma is closing the session with your actions."
+              : `A real conversation: speak naturally, she hears you.${minutesLeft !== null ? ` · ~${minutesLeft} min left` : ""}`}
+          </p>
         </div>
         <button type="button" onClick={stop} className="btn-primary !py-2 !px-4 text-[13.5px]">⏹ End the voice chat</button>
       </div>
