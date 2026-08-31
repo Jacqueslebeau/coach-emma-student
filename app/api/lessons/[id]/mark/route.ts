@@ -96,10 +96,24 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     });
     const mark = extractJson<ExerciseMark>(raw);
 
+    // « À préparer avant ton coaching » — dérivé de la correction (aucun appel
+    // supplémentaire) : chaque perte de marks devient un point de préparation,
+    // + la question à apporter. Affiché sous le résultat du paper.
+    const prepPoints: string[] = (mark.items || [])
+      .map((it, i) => {
+        const lost = (it.marks_total || 0) - (it.marks_awarded || 0);
+        if (lost <= 0) return null;
+        const why = it.misconception || (it.method_comment || it.feedback || "").split(/\.\s/)[0];
+        return `Q${i + 1} (−${lost} mark${lost > 1 ? "s" : ""}): ${String(why).slice(0, 140)}`;
+      })
+      .filter((x): x is string => !!x)
+      .slice(0, 4);
+    prepPoints.push("Note the ONE question you most want to ask Emma about this paper.");
+
     // Réponses tapées persistées avec la copie : le débrief coaché s'appuie dessus.
     await auth.sb
       .from("attempts")
-      .update({ result: { ...mark, photos: stored }, payload: { ...(attempt.payload as object), answers } })
+      .update({ result: { ...mark, photos: stored, prep_points: prepPoints }, payload: { ...(attempt.payload as object), answers } })
       .eq("id", attempt.id);
     await applyVerdicts({
       sb: auth.sb,

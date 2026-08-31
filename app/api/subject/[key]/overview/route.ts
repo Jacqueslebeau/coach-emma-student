@@ -109,6 +109,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
         total_marks: total,
         awarded: a.result ? awarded : null,
         decision: (a.result as { decision?: string } | null)?.decision || null,
+        prep_points: (a.result as { prep_points?: string[] } | null)?.prep_points || [],
       };
     })
     .reverse();

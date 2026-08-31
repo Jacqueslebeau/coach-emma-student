@@ -57,17 +57,25 @@ export async function GET() {
         .limit(120),
     ]);
 
-  // Les past papers ASSIGNÉS pas encore faits (nouveau format : la leçon se
-  // termine par l'assignation d'un paper, visible dans My space jusqu'à ce
-  // qu'il soit fait).
-  const { data: todoPapers } = await auth.sb
-    .from("attempts")
-    .select("id, lesson_id, payload, created_at")
-    .eq("user_id", auth.user.id)
-    .eq("kind", "exercise")
-    .is("result", null)
-    .order("created_at", { ascending: false })
-    .limit(12);
+  // TOUS les papers (à faire + notés) + les débriefs — les cartes topic de
+  // My space affichent Papers / Résultats / Coaching sans requête de plus.
+  const [{ data: allPapers }, { data: paperCoach }] = await Promise.all([
+    auth.sb
+      .from("attempts")
+      .select("id, lesson_id, payload, result, created_at")
+      .eq("user_id", auth.user.id)
+      .eq("kind", "exercise")
+      .order("created_at", { ascending: true })
+      .limit(200),
+    auth.sb
+      .from("attempts")
+      .select("payload")
+      .eq("user_id", auth.user.id)
+      .eq("kind", "qa")
+      .contains("payload", { stage: "paper" })
+      .limit(400),
+  ]);
+  const coachedPaperIds = [...new Set((paperCoach || []).map((a) => (a.payload as { paper_id?: string })?.paper_id).filter(Boolean))];
 
   const lessonSubject = new Map((lessons || []).map((l) => [l.id as string, l.subject as string]));
 
@@ -128,18 +136,27 @@ export async function GET() {
     lessons: lessons || [],
     mastery: mastery || [],
     weak_points: weakPoints || [],
-    papers_todo: (todoPapers || []).map((p) => {
-      const lesson = (lessons || []).find((l) => l.id === p.lesson_id);
-      const exs = ((p.payload as { exercises?: { marks?: number; time_min?: number }[] })?.exercises || []);
+    papers: (allPapers || []).map((p) => {
+      const exs = ((p.payload as { exercises?: { marks?: number }[] })?.exercises || []);
+      const items = (p.result as { items?: { marks_awarded?: number; marks_total?: number }[] } | null)?.items || [];
+      const gradedTotal = items.reduce((s, i) => s + (i.marks_total || 0), 0);
       return {
         id: p.id,
         lesson_id: p.lesson_id,
-        subject: lesson?.subject || lessonSubject.get(p.lesson_id as string) || "maths",
-        title: lesson?.title || "Practice paper",
-        marks: exs.reduce((s, e) => s + (e.marks || 0), 0),
-        minutes: exs.reduce((s, e) => s + (e.time_min || e.marks || 0), 0),
-        assigned_at: p.created_at,
+        at: p.created_at,
+        total_marks: gradedTotal || exs.reduce((s, e) => s + (e.marks || 0), 0),
+        awarded: p.result ? items.reduce((s, i) => s + (i.marks_awarded || 0), 0) : null,
+        decision: (p.result as { decision?: string } | null)?.decision || null,
+        prep_points: (p.result as { prep_points?: string[] } | null)?.prep_points || [],
       };
     }),
+    coached_paper_ids: coachedPaperIds,
+    lesson_sessions: (sessions || [])
+      .filter((s) => s.kind === "lesson" && s.ref_id)
+      .map((s) => ({
+        ref_id: s.ref_id,
+        started_at: s.started_at,
+        duration_min: Math.max(1, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 60000)),
+      })),
   });
 }
