@@ -163,6 +163,9 @@ export async function POST(req: NextRequest) {
         (convo ? `CONVERSATION JUSQU'ICI :\n${convo}\n\n` : "") +
         `NOUVEAU MESSAGE DE ${auth.firstName || "L'ÉLÈVE"} : ${text}`,
       maxTokens: 800,
+      // Réflexion minimale : le tour de conversation part en ~3-5 s. La
+      // brièveté (2-4 phrases + une question) est imposée par le prompt.
+      effort: "low",
       temperature: 0.6, // coach vivant, pas mécanique
       workflow: "exam-coaching",
       userId: auth.user.id,
