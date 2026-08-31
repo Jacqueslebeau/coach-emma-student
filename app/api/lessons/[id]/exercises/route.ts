@@ -60,8 +60,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       .single();
     if (error || !attempt) throw new Error(error?.message || "attempt");
 
-    await auth.sb.from("lessons").update({ stage: "practice" }).eq("id", id);
-    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: variant ? "Exercices (variante ciblée)" : "Exercices past paper" });
+    // Nouveau format : assign=true = fin de leçon, le paper se fait à part
+    // (la leçon est terminée, le paper reste « à faire » dans My space).
+    await auth.sb.from("lessons").update({ stage: body?.assign === true ? "done" : "practice" }).eq("id", id);
+    await touchSession({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id, title: lesson.title, subject: lesson.subject, covered: variant ? "Past paper (variante ciblée) assigné" : "Past paper assigné" });
     return NextResponse.json({ attempt_id: attempt.id, exercises: parsed.exercises });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message || "génération impossible" }, { status: 502 });

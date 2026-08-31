@@ -15,9 +15,8 @@ import LessonListen from "@/components/LessonListen";
 import SpeakButton from "@/components/SpeakButton";
 import VoiceTalk from "@/components/VoiceTalk";
 import WaitOverlay from "@/components/WaitOverlay";
-import { compressImage } from "@/lib/compressImage";
 import type {
-  Concept, Course, Exercise, ExerciseMark, QuizGrade, QuizQuestion, Remediation,
+  Concept, Course, QuizGrade, QuizQuestion, Remediation,
 } from "@/lib/types";
 
 type Detail = {
@@ -33,7 +32,7 @@ type Detail = {
 
 type Phase =
   | "loading" | "course-choice" | "course" | "quiz" | "quiz-result"
-  | "remediation" | "exercises" | "exercise-result" | "done";
+  | "remediation" | "done";
 
 const STATUS_LABEL: Record<string, string> = {
   acquis: "secure", fragile: "fragile", non_acquis: "to review",
@@ -64,10 +63,8 @@ export default function LessonPage() {
   const [rem, setRem] = useState<{ attempt_id: string; remediation: Remediation } | null>(null);
   const [remAnswers, setRemAnswers] = useState<Record<string, string>>({});
   const [remGrade, setRemGrade] = useState<QuizGrade | null>(null);
-  const [ex, setEx] = useState<{ attempt_id: string; exercises: Exercise[] } | null>(null);
-  const [exAnswers, setExAnswers] = useState<Record<string, string>>({});
-  const [exPhotos, setExPhotos] = useState<File[]>([]);
-  const [mark, setMark] = useState<ExerciseMark | null>(null);
+  // Le past paper assigné en fin de leçon (nouveau format : il se fait à part).
+  const [assignedPaper, setAssignedPaper] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<Detail | null> => {
     const r = await fetch(`/api/lessons/${id}`);
@@ -177,23 +174,17 @@ export default function LessonPage() {
     setRemGrade(d.grade); await refresh();
   });
 
-  const startExercises = (conceptKeys?: string[], variant?: boolean) => run(async () => {
-    const d = await api<{ attempt_id: string; exercises: Exercise[] }>(`/api/lessons/${id}/exercises`, {
+  // FIN DE LEÇON (nouveau format) : Emma ASSIGNE le past paper — il se fait
+  // à part (en ligne ou imprimé), visible dans My space, débriefé ensuite.
+  const finishLesson = run(async () => {
+    const d = await api<{ attempt_id: string }>(`/api/lessons/${id}/exercises`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ concept_keys: conceptKeys || [], variant: !!variant }),
+      body: JSON.stringify({ concept_keys: [], variant: false, assign: true }),
     });
-    setEx(d); setExAnswers({}); setExPhotos([]); setMark(null); setPhase("exercises"); window.scrollTo(0, 0);
-  })();
-
-  const submitExercises = run(async () => {
-    if (!ex) return;
-    const fd = new FormData();
-    fd.set("attempt_id", ex.attempt_id);
-    fd.set("answers", JSON.stringify(ex.exercises.map((e) => ({ id: e.id, answer: exAnswers[e.id] || "" }))));
-    const compressed = await Promise.all(exPhotos.map(compressImage));
-    compressed.forEach((p) => fd.append("photos", p));
-    const d = await api<{ mark: ExerciseMark }>(`/api/lessons/${id}/mark`, { method: "POST", body: fd });
-    setMark(d.mark); await refresh(); setPhase("exercise-result"); window.scrollTo(0, 0);
+    setAssignedPaper(d.attempt_id);
+    await refresh();
+    setPhase("done");
+    window.scrollTo(0, 0);
   });
 
   if (error && !detail) return <p className="text-gap font-semibold">{error}</p>;
@@ -444,13 +435,13 @@ export default function LessonPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => startExercises()} disabled={busy} className="text-sm font-semibold text-faint hover:text-indigo mt-4">
-                Skip ahead to the exercises anyway →
+              <button onClick={finishLesson} disabled={busy} className="text-sm font-semibold text-faint hover:text-indigo mt-4">
+                Finish the lesson anyway — get my past paper →
               </button>
             </div>
           ) : (
-            <button onClick={() => startExercises()} disabled={busy} className="btn-primary w-full !py-3">
-              {busy ? "Emma is preparing your exercises…" : "All secure — on to the exercises →"}
+            <button onClick={finishLesson} disabled={busy} className="btn-primary w-full !py-3">
+              {busy ? "Emma is writing your past paper…" : "All secure — finish & get my past paper →"}
             </button>
           )}
         </div>
@@ -504,8 +495,8 @@ export default function LessonPage() {
                     Revisit “{c.label}”
                   </button>
                 ))}
-                <button onClick={() => startExercises()} disabled={busy} className="btn-primary !py-2.5">
-                  {busy ? "…" : "On to the exercises →"}
+                <button onClick={finishLesson} disabled={busy} className="btn-primary !py-2.5">
+                  {busy ? "…" : "Finish the lesson — get my past paper →"}
                 </button>
               </div>
             </>
@@ -513,124 +504,26 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ÉTAPE 6 — exercices */}
-      {phase === "exercises" && ex && (
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <p className="text-muted text-sm flex-1 min-w-[240px]">
-              {lesson.exam_board || "Your board's"} past-paper style. Do them <strong>online</strong> or <strong>on paper</strong> — in that case,
-              take a photo of your work and upload it below: Emma marks the handwriting against the mark scheme.
-            </p>
-            <Link href={`/paper/${ex.attempt_id}`} className="btn-ghost !py-1.5 !px-3.5 text-[13px] shrink-0" target="_blank">
-              🖨️ Print / download this paper
-            </Link>
-          </div>
-          {ex.exercises.map((e, i) => (
-            <div key={e.id} className="card p-5">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <p className="font-mono text-[11px] text-faint">Exercise {i + 1}</p>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {e.command_word && <span className="chip bg-amber-soft text-amber font-mono">“{e.command_word}”</span>}
-                  {e.question_type && <span className="chip-todo">{e.question_type}</span>}
-                  <span className="chip-todo">{e.marks} marks{e.time_min ? ` · ~${e.time_min} min` : ""}</span>
-                </div>
-              </div>
-              <RichText text={e.statement} className="mt-1.5" />
-              {(e.exam_expectation || e.method_note) && (
-                <p className="text-xs text-muted mt-2 bg-indigo-soft rounded-lg px-3 py-2">
-                  🎯 <strong>What the examiner expects:</strong> {e.exam_expectation || e.method_note}
-                </p>
-              )}
-              <textarea
-                className="input mt-3 min-h-[90px] font-mono text-[14px]"
-                placeholder="Your answer here… (or leave blank if you're uploading a photo of your work)"
-                value={exAnswers[e.id] || ""}
-                onChange={(ev) => setExAnswers((a) => ({ ...a, [e.id]: ev.target.value }))}
-              />
-            </div>
-          ))}
-          <div className="card p-5">
-            <label className="text-sm font-semibold">Photo(s) of your work <span className="text-faint font-normal">(up to 3)</span></label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="mt-2 block w-full text-sm text-muted"
-              onChange={(e) => setExPhotos(Array.from(e.target.files || []).slice(0, 3))}
-            />
-            {exPhotos.length > 0 && (
-              <p className="text-xs text-faint mt-1">{exPhotos.map((p) => p.name).join(" · ")}</p>
-            )}
-          </div>
-          <button onClick={submitExercises} disabled={busy} className="btn-primary w-full !py-3">
-            {busy ? "Emma is marking your work against the mark scheme…" : "Send for marking"}
-          </button>
-        </div>
-      )}
+      {/* ÉTAPES EXERCICES SUPPRIMÉES — nouveau format : le past paper
+          est assigné en fin de leçon et se fait à part sur /paper/[id],
+          puis est débriefé avec Emma (écrit ou vocal). */}
 
-      {/* ÉTAPE 7 — correction des exercices + décision */}
-      {phase === "exercise-result" && mark && ex && (
-        <div className="space-y-4">
-          <div className="card p-5 bg-indigo-soft border-indigo-soft">
-            <p className="font-semibold text-indigo-deep">{mark.summary}</p>
-            <p className="font-mono text-sm text-indigo mt-2">
-              Total: {mark.items.reduce((s, i) => s + (i.marks_awarded || 0), 0)}
-              /{mark.items.reduce((s, i) => s + (i.marks_total || 0), 0)} marks
-            </p>
-          </div>
-          {ex.exercises.map((e, i) => {
-            const it = mark.items.find((x) => x.id === e.id);
-            if (!it) return null;
-            const tone = it.verdict === "secure" ? "chip-acquis" : it.verdict === "fragile" ? "chip-fragile" : "chip-non_acquis";
-            return (
-              <div key={e.id} className="card p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={tone}>{it.marks_awarded}/{it.marks_total} marks</span>
-                    <p className="font-mono text-[11px] text-faint">Exercise {i + 1}</p>
-                  </div>
-                </div>
-                <RichText text={it.feedback} className="mt-2" />
-                <p className="text-sm text-muted mt-2"><strong>Method marks:</strong> {it.method_comment}</p>
-                {Array.isArray(it.exam_habits) && it.exam_habits.length > 0 && (
-                  <div className="text-sm mt-2 bg-learning-bg rounded-lg px-3 py-2">
-                    <strong className="text-learning">Exam technique to fix:</strong>
-                    <ul className="list-disc pl-5 mt-1 text-muted">
-                      {it.exam_habits.map((h, j) => <li key={j}>{h}</li>)}
-                    </ul>
-                  </div>
-                )}
-                {it.misconception && <p className="text-sm text-gap font-semibold mt-1">Misconception spotted: {it.misconception}</p>}
-                <details className="mt-2">
-                  <summary className="text-sm font-semibold text-indigo cursor-pointer">Step-by-step solution (mark scheme)</summary>
-                  <RichText text={it.model_solution} className="mt-2" />
-                </details>
-              </div>
-            );
-          })}
-          <AskEmma lessonId={lesson.id} stage="exercise-result" />
-
-          {mark.decision === "redo" ? (
-            <div className="card p-5 border-amber">
-              <h2 className="font-serif font-semibold text-lg">Emma's verdict: go again — different variation</h2>
-              <p className="text-sm text-muted mt-1">
-                Same concept(s), different question. Doing it again is what makes it stick.
-              </p>
-              <button onClick={() => startExercises(mark.redo_concept_keys, true)} disabled={busy} className="btn-amber mt-3">
-                {busy ? "Emma is preparing the variation…" : "Try a targeted variation"}
-              </button>
-            </div>
-          ) : (
-            <button onClick={() => setPhase("done")} className="btn-primary w-full !py-3">
-              Loop closed ✓ — see my summary
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ÉTAPE 8 — bilan de la leçon */}
+      {/* ÉTAPE 8 — bilan de la leçon + LE PAST PAPER ASSIGNÉ */}
       {phase === "done" && (
         <div className="space-y-4">
+          {assignedPaper && (
+            <div className="card p-6 border-amber bg-amber-soft/30">
+              <h2 className="font-serif font-black text-xl text-indigo-deep">📝 Your past paper is ready</h2>
+              <p className="text-sm text-muted mt-1.5">
+                Emma wrote it on today&apos;s topic, in your board&apos;s exam format. Do it <strong>now or later</strong> —
+                it stays in <strong>My space</strong> until it&apos;s done. Online, or print it and upload your script.
+                Once marked, Emma debriefs it with you.
+              </p>
+              <Link href={`/paper/${assignedPaper}`} className="btn-amber inline-block mt-4 !py-2.5 !px-5">
+                Open my past paper →
+              </Link>
+            </div>
+          )}
           <div className="card p-6">
             <h2 className="font-serif font-black text-2xl text-indigo-deep">Lesson summary</h2>
             <div className="mt-4 space-y-2">
@@ -661,8 +554,8 @@ export default function LessonPage() {
             </div>
           )}
           <div className="flex gap-3">
-            <Link href="/dashboard" className="btn-primary">Back to dashboard</Link>
-            <button onClick={() => startExercises()} disabled={busy} className="btn-ghost">More exercises</button>
+            <Link href="/dashboard" className="btn-primary">Back to My space</Link>
+            {detail && <Link href={`/matiere/${detail.lesson.subject}`} className="btn-ghost">Subject console →</Link>}
           </div>
         </div>
       )}

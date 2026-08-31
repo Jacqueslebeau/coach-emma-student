@@ -14,11 +14,12 @@ type Line = { role: "user" | "assistant"; message: string };
 // Durée maximum d'une séance vocale (maîtrise du coût, comme Coach Emma) :
 // Emma est prévenue ~2 min avant la fin et CONCLUT naturellement (récap des
 // actions) — jamais de coupure en plein mot.
-const MAX_MIN: Record<"coaching" | "lesson", number> = { coaching: 10, lesson: 15 };
+const MAX_MIN: Record<"coaching" | "lesson" | "paper", number> = { coaching: 10, lesson: 15, paper: 10 };
 
-export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma", onLine }: {
-  mode: "coaching" | "lesson";
+export default function VoiceTalk({ mode, lessonId, paperId, label = "🎙 Talk to Emma", onLine }: {
+  mode: "coaching" | "lesson" | "paper";
   lessonId?: string;
+  paperId?: string;
   label?: string;
   onLine?: (line: Line) => void; // le parent peut refléter le transcript dans son fil
 }) {
@@ -43,9 +44,9 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
     fetch("/api/voice-log", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ mode, lesson_id: lessonId, lines }),
+      body: JSON.stringify({ mode, lesson_id: lessonId, paper_id: paperId, lines }),
     }).catch(() => {});
-  }, [mode, lessonId]);
+  }, [mode, lessonId, paperId]);
 
   const conversation = useConversation({
     onConnect: () => setPhase("live"),
@@ -72,7 +73,7 @@ export default function VoiceTalk({ mode, lessonId, label = "🎙 Talk to Emma",
       const r = await fetch("/api/voice-session", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode, lesson_id: lessonId }),
+        body: JSON.stringify({ mode, lesson_id: lessonId, paper_id: paperId }),
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.signed_url) throw new Error(d.error || "Voice is unavailable right now.");

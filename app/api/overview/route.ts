@@ -57,6 +57,18 @@ export async function GET() {
         .limit(120),
     ]);
 
+  // Les past papers ASSIGNÉS pas encore faits (nouveau format : la leçon se
+  // termine par l'assignation d'un paper, visible dans My space jusqu'à ce
+  // qu'il soit fait).
+  const { data: todoPapers } = await auth.sb
+    .from("attempts")
+    .select("id, lesson_id, payload, created_at")
+    .eq("user_id", auth.user.id)
+    .eq("kind", "exercise")
+    .is("result", null)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
   const lessonSubject = new Map((lessons || []).map((l) => [l.id as string, l.subject as string]));
 
   // Roll-up par matière : la console distingue TOUT par matière.
@@ -116,5 +128,18 @@ export async function GET() {
     lessons: lessons || [],
     mastery: mastery || [],
     weak_points: weakPoints || [],
+    papers_todo: (todoPapers || []).map((p) => {
+      const lesson = (lessons || []).find((l) => l.id === p.lesson_id);
+      const exs = ((p.payload as { exercises?: { marks?: number; time_min?: number }[] })?.exercises || []);
+      return {
+        id: p.id,
+        lesson_id: p.lesson_id,
+        subject: lesson?.subject || lessonSubject.get(p.lesson_id as string) || "maths",
+        title: lesson?.title || "Practice paper",
+        marks: exs.reduce((s, e) => s + (e.marks || 0), 0),
+        minutes: exs.reduce((s, e) => s + (e.time_min || e.marks || 0), 0),
+        assigned_at: p.created_at,
+      };
+    }),
   });
 }

@@ -66,6 +66,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
         .limit(60),
     ]);
 
+  // Papers DÉBRIEFÉS avec Emma (échanges kind=qa stage=paper) → « Coached ✓ »
+  // dans le cycle du topic : leçon → paper → débrief → variation → secured.
+  const { data: paperCoach } = await auth.sb
+    .from("attempts")
+    .select("payload")
+    .eq("user_id", auth.user.id)
+    .eq("kind", "qa")
+    .contains("payload", { stage: "paper" })
+    .in("lesson_id", inIds)
+    .limit(200);
+  const coachedPaperIds = [...new Set((paperCoach || []).map((a) => (a.payload as { paper_id?: string })?.paper_id).filter(Boolean))] as string[];
+
   // Tendance des scores d'exercices de la matière + niveau indicatif.
   const scores = (exAttempts || [])
     .map((a) => {
@@ -117,6 +129,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ key: string }>
       ),
     })),
     papers,
+    coached_paper_ids: coachedPaperIds,
     exam_scores: scores,
     avg_pct: avgPct,
     estimated_grade: avgPct !== null ? estimateGrade(avgPct) : null,

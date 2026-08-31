@@ -28,6 +28,7 @@ type Overview = {
   enrolments: Enrolment[];
   by_subject: Record<string, Roll>;
   lessons: { id: string; subject: string }[];
+  papers_todo?: { id: string; lesson_id: string; subject: string; title: string; marks: number; minutes: number; assigned_at: string }[];
 };
 
 export default function Dashboard() {
@@ -114,6 +115,24 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* ============ PAST PAPERS À FAIRE — assignés en fin de leçon ============ */}
+      {(data.papers_todo || []).length > 0 && (
+        <section className="card mt-6 p-5 border-amber">
+          <h2 className="font-serif font-semibold text-lg">📝 Past papers to do</h2>
+          <p className="text-sm text-muted mt-0.5">Emma assigned these at the end of your lessons — do them online or print them, then she debriefs your script.</p>
+          <div className="mt-3 divide-y divide-line">
+            {(data.papers_todo || []).map((p) => (
+              <Link key={p.id} href={`/paper/${p.id}`} className="py-3 flex items-center gap-3 flex-wrap hover:bg-amber-soft/40 transition rounded-lg px-2 -mx-2">
+                <span className="chip bg-amber-soft text-amber shrink-0">to do</span>
+                <span className="flex-1 min-w-[200px] font-semibold text-[14.5px]">{p.title}</span>
+                <span className="font-mono text-xs text-faint shrink-0">{SUBJECTS[p.subject as SubjectKey]?.labelEn || p.subject} · {p.marks} marks · ~{p.minutes} min</span>
+                <span className="text-indigo font-semibold text-sm shrink-0">Do it →</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ============ MY TUTORINGS — façon « Vos préparations » ============ */}
       <section className="mt-6 rounded-2xl overflow-hidden border border-line">

@@ -96,7 +96,11 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     });
     const mark = extractJson<ExerciseMark>(raw);
 
-    await auth.sb.from("attempts").update({ result: { ...mark, photos: stored } }).eq("id", attempt.id);
+    // Réponses tapées persistées avec la copie : le débrief coaché s'appuie dessus.
+    await auth.sb
+      .from("attempts")
+      .update({ result: { ...mark, photos: stored }, payload: { ...(attempt.payload as object), answers } })
+      .eq("id", attempt.id);
     await applyVerdicts({
       sb: auth.sb,
       userId: auth.user.id,

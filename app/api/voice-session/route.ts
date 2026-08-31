@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser, getOwnedLesson } from "@/lib/routeAuth";
 import { SUBJECTS, type SubjectKey } from "@/lib/subjects";
 import { estimateGrade } from "@/lib/examTechnique";
+import { paperContext } from "@/lib/paperContext";
 import type { Concept, Course } from "@/lib/types";
 
 // Agents créés le 2026-08-31 (voix Emma approuvée 6MCJQJe3NCkhDRHZaJ31).
@@ -31,9 +32,39 @@ export async function POST(req: NextRequest) {
   if (!apiKey) return NextResponse.json({ error: "voice not configured" }, { status: 503 });
 
   const body = await req.json().catch(() => ({}));
-  const mode = body?.mode === "lesson" ? "lesson" : "coaching";
+  const mode = body?.mode === "lesson" ? "lesson" : body?.mode === "paper" ? "paper" : "coaching";
 
   try {
+    if (mode === "paper") {
+      // DÉBRIEF VOCAL de la copie corrigée — l'agent tutrice, ancré sur le paper.
+      const paperId = String(body?.paper_id || "");
+      const { data: attempt } = await auth.sb
+        .from("attempts")
+        .select("id, lesson_id, kind, payload, result")
+        .eq("id", paperId)
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      if (!attempt || attempt.kind !== "exercise" || !attempt.result) {
+        return NextResponse.json({ error: "marked paper not found" }, { status: 404 });
+      }
+      const lesson = await getOwnedLesson(auth.sb, attempt.lesson_id as string, auth.user.id);
+      if (!lesson) return NextResponse.json({ error: "lesson not found" }, { status: 404 });
+
+      const url = await signedUrl(apiKey, TUTOR_AGENT);
+      if (!url) return NextResponse.json({ error: "voice unavailable" }, { status: 502 });
+      return NextResponse.json({
+        signed_url: url,
+        vars: {
+          student_first_name: auth.firstName || "there",
+          lesson_title: `Past paper debrief — ${lesson.title}`,
+          subject_board: `${SUBJECTS[lesson.subject as SubjectKey]?.labelEn || lesson.subject} · ${lesson.exam_board || "A Level"}`,
+          concepts: ((lesson.concepts || []) as Concept[]).map((c) => c.label).join(", ") || "—",
+          course_context:
+            `THIS IS A MARKED PAST PAPER DEBRIEF. Coach the student ON THIS MARKED PAPER: open on what they did well, then work the most costly mark losses ONE at a time, make them redo the step out loud, and close with the 1-2 reflexes to remember (have them say the reflexes back).\n\n` +
+            paperContext(attempt),
+        },
+      });
+    }
     if (mode === "lesson") {
       // TUTRICE VOCALE ancrée sur LA leçon en cours.
       const lessonId = String(body?.lesson_id || "");

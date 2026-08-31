@@ -1,30 +1,124 @@
 "use client";
 
-// UN PAST PAPER, centralisé dans la console (principe Interview Live) :
-// - version EXAMEN imprimable/téléchargeable en PDF (bouton Print → Save as
-//   PDF) pour le faire sur papier ;
-// - ou le faire EN LIGNE dans la leçon ;
-// - et une fois corrigé : la review complète — score, feedback mark par mark,
-//   mark scheme — retrouvable à tout moment depuis la page matière.
-import { use, useEffect, useState } from "react";
+// LA CONSOLE D'UN PAST PAPER — le pivot du format « leçon → paper → débrief » :
+// - À FAIRE : répondre EN LIGNE ici même, ou IMPRIMER le paper, le faire sur
+//   papier et uploader la photo de sa copie — puis envoi à la correction.
+// - CORRIGÉ : la review complète (marks, feedback, mark scheme), puis le
+//   DÉBRIEF COACHÉ avec Emma (écrit ou vocal) sur CETTE copie, et la
+//   variation ciblée si besoin. Tout est centralisé et enregistré.
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import RichText from "@/components/RichText";
 import BackLink from "@/components/BackLink";
+import VoiceTalk from "@/components/VoiceTalk";
+import { compressImage } from "@/lib/compressImage";
 import type { Exercise, ExerciseMark } from "@/lib/types";
 
 type Data = {
-  attempt: { id: string; lesson_id: string; payload: { exercises?: Exercise[]; variant?: boolean }; result: (ExerciseMark & { photos?: string[] }) | null; created_at: string };
+  attempt: { id: string; lesson_id: string; payload: { exercises?: Exercise[]; variant?: boolean; answers?: { id: string; answer: string }[] }; result: (ExerciseMark & { photos?: string[] }) | null; created_at: string };
   lesson: { id: string; title: string; subject: string; exam_board: string | null; spec_topic: string | null } | null;
   first_name: string;
 };
+type QA = { id?: string; question: string; answer: string };
+
+const DEBRIEF_OPENERS = [
+  "Where did I lose most marks?",
+  "Walk me through my worst question",
+  "What should I do differently next time?",
+];
 
 export default function PaperPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [data, setData] = useState<Data | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [marking, setMarking] = useState(false);
+  const [markErr, setMarkErr] = useState<string | null>(null);
+  const [variantBusy, setVariantBusy] = useState(false);
+  // Débrief écrit
+  const [qas, setQas] = useState<QA[]>([]);
+  const [dInput, setDInput] = useState("");
+  const [dBusy, setDBusy] = useState(false);
   const [driveBusy, setDriveBusy] = useState(false);
   const [driveLink, setDriveLink] = useState<string | null>(null);
   const [driveMsg, setDriveMsg] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    fetch(`/api/attempts/${id}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Paper not found"))))
+      .then(setData)
+      .catch((e) => setErr(e.message));
+  }, [id]);
+  useEffect(load, [load]);
+
+  // Historique du débrief (persisté — on peut y revenir).
+  useEffect(() => {
+    fetch(`/api/paper/${id}/coach`)
+      .then((r) => (r.ok ? r.json() : { messages: [] }))
+      .then((d) => setQas(d.messages || []))
+      .catch(() => {});
+  }, [id]);
+
+  async function submitForMarking() {
+    if (!data?.lesson) return;
+    setMarking(true); setMarkErr(null);
+    try {
+      const fd = new FormData();
+      fd.set("attempt_id", id);
+      fd.set("answers", JSON.stringify((data.attempt.payload.exercises || []).map((e) => ({ id: e.id, answer: answers[e.id] || "" }))));
+      const compressed = await Promise.all(photos.map(compressImage));
+      compressed.forEach((p) => fd.append("photos", p));
+      const r = await fetch(`/api/lessons/${data.lesson.id}/mark`, { method: "POST", body: fd });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Marking failed — try again.");
+      load();
+      window.scrollTo(0, 0);
+    } catch (e) {
+      setMarkErr((e as Error).message);
+    } finally {
+      setMarking(false);
+    }
+  }
+
+  async function askDebrief(text: string) {
+    const q = text.trim();
+    if (!q || dBusy) return;
+    setDBusy(true); setDInput("");
+    try {
+      const r = await fetch(`/api/paper/${id}/coach`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: q }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Emma could not answer");
+      setQas((x) => [...x, { question: q, answer: d.answer }]);
+    } catch (e) {
+      setMarkErr((e as Error).message);
+      setDInput(q);
+    } finally {
+      setDBusy(false);
+    }
+  }
+
+  async function doVariation() {
+    if (!data?.lesson || !data.attempt.result) return;
+    setVariantBusy(true);
+    try {
+      const r = await fetch(`/api/lessons/${data.lesson.id}/exercises`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ concept_keys: data.attempt.result.redo_concept_keys || [], variant: true }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not build the variation");
+      router.push(`/paper/${d.attempt_id}`);
+    } catch (e) {
+      setMarkErr((e as Error).message);
+      setVariantBusy(false);
+    }
+  }
 
   async function saveToDrive() {
     setDriveBusy(true); setDriveMsg(null);
@@ -34,28 +128,16 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
         body: JSON.stringify({ attempt_id: id }),
       });
       const d = await r.json().catch(() => ({}));
-      if (r.status === 428 || d.error === "not_connected") {
-        setDriveMsg("Connect your Google Drive first — from the dashboard, Integrations section.");
-      } else if (r.status === 503) {
-        setDriveMsg("Google Drive integration is coming very soon.");
-      } else if (!r.ok) {
-        throw new Error(d.error || "Drive save failed");
-      } else {
-        setDriveLink(d.link);
-      }
+      if (r.status === 428 || d.error === "not_connected") setDriveMsg("Connect your Google Drive first — My account → Integrations.");
+      else if (r.status === 503) setDriveMsg("Google Drive integration is coming very soon.");
+      else if (!r.ok) throw new Error(d.error || "Drive save failed");
+      else setDriveLink(d.link);
     } catch (e) {
       setDriveMsg((e as Error).message);
     } finally {
       setDriveBusy(false);
     }
   }
-
-  useEffect(() => {
-    fetch(`/api/attempts/${id}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Paper not found"))))
-      .then(setData)
-      .catch((e) => setErr(e.message));
-  }, [id]);
 
   if (err) return <p className="text-gap font-semibold">{err}</p>;
   if (!data) return <p className="text-muted">Loading…</p>;
@@ -70,13 +152,13 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
     <div className="max-w-3xl mx-auto">
       <div className="no-print flex items-center justify-between flex-wrap gap-3">
         <BackLink />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button onClick={() => window.print()} className="btn-ghost !py-2 !px-4 text-[13.5px]">
-            🖨️ Download / print the blank paper
+            🖨️ Print the blank paper
           </button>
-          {data?.attempt.result && (
-            driveLink || (data.attempt.result as { drive_link?: string }).drive_link ? (
-              <a href={driveLink || (data.attempt.result as { drive_link?: string }).drive_link} target="_blank" rel="noreferrer" className="btn-ghost !py-2 !px-4 text-[13.5px]">
+          {mark && (
+            driveLink || (mark as { drive_link?: string }).drive_link ? (
+              <a href={driveLink || (mark as { drive_link?: string }).drive_link} target="_blank" rel="noreferrer" className="btn-ghost !py-2 !px-4 text-[13.5px]">
                 📁 Open in Google Drive
               </a>
             ) : (
@@ -85,15 +167,18 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
               </button>
             )
           )}
-          {!mark && data.lesson && (
-            <Link href={`/lesson/${data.lesson.id}`} className="btn-primary !py-2 !px-4 text-[13.5px]">
-              Answer online →
-            </Link>
-          )}
         </div>
       </div>
-
       {driveMsg && <p className="no-print text-sm text-learning font-semibold mt-2">{driveMsg}</p>}
+
+      {/* Mode d'emploi (paper à faire) */}
+      {!mark && (
+        <div className="no-print rounded-xl bg-indigo-soft px-4 py-2.5 text-[13.5px] text-indigo-deep mt-3">
+          📝 <strong>Your past paper.</strong> Do it <strong>online below</strong> — or <strong>print it</strong>, do it on paper
+          under timed conditions, then <strong>upload a photo of your script</strong> at the bottom. Emma marks it against the
+          mark scheme either way, then debriefs it with you.
+        </div>
+      )}
 
       {/* ============ EN-TÊTE FAÇON PAPER ============ */}
       <div className="card p-6 mt-4 paper-sheet">
@@ -104,7 +189,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           <h1 className="font-serif font-black text-2xl text-indigo-deep mt-1">{data.lesson?.title || "Practice paper"}</h1>
           <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-sm text-muted">
             {data.lesson?.spec_topic && <span>{data.lesson.spec_topic}</span>}
-            <span><strong>{totalMarks} marks</strong> · ~{exercises.reduce((s, e) => s + (e.time_min || e.marks || 0), 0)} min</span>
+            <span><strong>{totalMarks} marks</strong> · ~{exercises.reduce((s, e) => s + (e.time_min || e.marks || 0), 0)} min — time yourself</span>
             {data.attempt.payload?.variant && <span className="no-print">targeted variation</span>}
           </div>
           <p className="print-only text-sm mt-3">
@@ -112,7 +197,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           </p>
         </div>
 
-        {/* ============ LES QUESTIONS ============ */}
+        {/* ============ LES QUESTIONS (+ réponse en ligne si non corrigé) ============ */}
         {exercises.map((e, i) => (
           <div key={e.id} className="mt-6 paper-q">
             <div className="flex items-center gap-2 flex-wrap">
@@ -126,14 +211,42 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                 🎯 <strong>What the examiner expects:</strong> {e.exam_expectation}
               </p>
             )}
-            {/* Espace de rédaction — uniquement sur la version imprimée */}
+            {!mark && (
+              <textarea
+                className="no-print input mt-3 min-h-[90px] font-mono text-[14px]"
+                placeholder="Your answer here… (or leave blank if you're uploading a photo of your script)"
+                value={answers[e.id] || ""}
+                onChange={(ev) => setAnswers((a) => ({ ...a, [e.id]: ev.target.value }))}
+              />
+            )}
             <div className="print-only answer-space" />
           </div>
         ))}
       </div>
 
-      {/* ============ LA REVIEW (si corrigé) ============ */}
-      {mark ? (
+      {/* ============ ENVOI À LA CORRECTION (paper à faire) ============ */}
+      {!mark && (
+        <div className="no-print mt-4 space-y-3">
+          <div className="card p-5">
+            <label className="text-sm font-semibold">📷 Photo(s) of your handwritten script <span className="text-faint font-normal">(up to 3 — if you did it on paper)</span></label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="mt-2 block w-full text-sm text-muted"
+              onChange={(e) => setPhotos(Array.from(e.target.files || []).slice(0, 3))}
+            />
+            {photos.length > 0 && <p className="text-xs text-faint mt-1">{photos.map((p) => p.name).join(" · ")}</p>}
+          </div>
+          {markErr && <p className="text-sm text-gap font-semibold">{markErr}</p>}
+          <button onClick={submitForMarking} disabled={marking} className="btn-primary w-full !py-3">
+            {marking ? "Emma is marking your paper against the mark scheme…" : "Send for marking →"}
+          </button>
+        </div>
+      )}
+
+      {/* ============ LA REVIEW + LE DÉBRIEF (paper corrigé) ============ */}
+      {mark && (
         <div className="no-print mt-6 space-y-4">
           <div className="card p-5 bg-indigo-soft border-indigo-soft flex items-center justify-between flex-wrap gap-3">
             <p className="font-semibold text-indigo-deep">{mark.summary}</p>
@@ -159,14 +272,67 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
               </div>
             );
           })}
-          {data.lesson && (
-            <Link href={`/lesson/${data.lesson.id}`} className="btn-ghost inline-block">Back to the lesson →</Link>
-          )}
+
+          {/* ============ LE DÉBRIEF COACHÉ — le cœur du cycle ============ */}
+          <div className="card p-5 border-indigo">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h2 className="font-serif font-semibold text-lg">🎯 Debrief this paper with Emma</h2>
+                <p className="text-sm text-muted mt-0.5">What went well, where the marks went, what to do differently — in conversation.</p>
+              </div>
+              <VoiceTalk mode="paper" paperId={id} label="🎙 Debrief out loud" />
+            </div>
+
+            {qas.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {qas.map((qa, i) => (
+                  <div key={qa.id || i} className="space-y-2">
+                    <div className="flex justify-end">
+                      <p className="bg-indigo text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-[85%] text-[14px]">{qa.question}</p>
+                    </div>
+                    <div className="flex justify-start">
+                      <div className="bg-indigo-soft rounded-2xl rounded-bl-sm px-4 py-2.5 max-w-[92%]">
+                        <RichText text={qa.answer} className="text-[14px]" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {qas.length === 0 && !dBusy && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {DEBRIEF_OPENERS.map((o) => (
+                  <button key={o} onClick={() => askDebrief(o)} className="btn-ghost !py-1.5 !px-3 text-[13px]">{o}</button>
+                ))}
+              </div>
+            )}
+            {dBusy && <p className="text-sm text-faint mt-3">Emma is looking at your paper…</p>}
+            <form onSubmit={(e) => { e.preventDefault(); askDebrief(dInput); }} className="mt-3 flex gap-2">
+              <input
+                className="input flex-1 !py-2"
+                placeholder="Ask Emma about this paper…"
+                value={dInput}
+                onChange={(e) => setDInput(e.target.value)}
+                disabled={dBusy}
+              />
+              <button className="btn-primary !py-2 !px-4 text-[13.5px]" disabled={dBusy || !dInput.trim()}>Send</button>
+            </form>
+          </div>
+
+          {/* ============ LA SUITE DU CYCLE ============ */}
+          <div className="flex flex-wrap gap-3">
+            {mark.decision === "redo" ? (
+              <button onClick={doVariation} disabled={variantBusy} className="btn-amber !py-2.5">
+                {variantBusy ? "Emma is preparing the variation…" : "📝 Do a variation paper (same skills, new questions)"}
+              </button>
+            ) : (
+              <button onClick={doVariation} disabled={variantBusy} className="btn-ghost">
+                {variantBusy ? "Preparing…" : "One more paper to be sure"}
+              </button>
+            )}
+            {data.lesson && <Link href={`/matiere/${data.lesson.subject}`} className="btn-ghost">Back to {data.lesson.subject === "maths" ? "Mathematics" : "the subject"} →</Link>}
+          </div>
         </div>
-      ) : (
-        <p className="no-print text-sm text-muted mt-4">
-          Not marked yet — do it on paper (print above) then upload your script from the lesson, or answer online.
-        </p>
       )}
 
       <style>{`

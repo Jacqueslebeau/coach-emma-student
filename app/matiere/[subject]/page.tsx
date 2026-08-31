@@ -34,6 +34,7 @@ type Data = {
   mastery: { lesson_id: string; concept_key: string; label: string; status: string }[];
   weak_points: { id: string; lesson_id: string; label: string; misconception: string | null }[];
   papers: { id: string; lesson_id: string; title: string; at: string; total_marks: number; awarded: number | null; decision: string | null }[];
+  coached_paper_ids?: string[];
   exam_scores: { at: string; pct: number }[];
   avg_pct: number | null;
   estimated_grade: string | null;
@@ -130,6 +131,31 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
     masteryByLesson.set(m.lesson_id, cur);
   }
   const acquis = data.mastery.filter((m) => m.status === "acquis").length;
+
+  // LE CYCLE PAR TOPIC (nouveau format) : Lesson → Paper → Coached → Secured.
+  const coachedIds = new Set(data.coached_paper_ids || []);
+  const cycleOf = (lessonId: string, stage: string) => {
+    const ps = (data.papers || []).filter((p) => p.lesson_id === lessonId);
+    const markedPcts = ps.filter((p) => p.awarded !== null && p.total_marks > 0).map((p) => Math.round((100 * (p.awarded as number)) / p.total_marks));
+    const bestPct = markedPcts.length ? Math.max(...markedPcts) : null;
+    const hasTodo = ps.some((p) => p.awarded === null);
+    const coached = ps.some((p) => coachedIds.has(p.id));
+    const advanced = ps.some((p) => p.decision === "advance");
+    const secured = coached && advanced && bestPct !== null && bestPct >= 75;
+    return { bestPct, hasTodo, coached, secured, lessonDone: stage === "done" || ps.length > 0 };
+  };
+  const CycleChips = ({ lessonId, stage }: { lessonId: string; stage: string }) => {
+    const c = cycleOf(lessonId, stage);
+    if (c.secured) return <span className="chip-acquis shrink-0">Secured ✓</span>;
+    return (
+      <span className="flex items-center gap-1 shrink-0 flex-wrap">
+        <span className={c.lessonDone ? "chip-acquis" : "chip-todo"}>{c.lessonDone ? "Lesson ✓" : STAGE_LABEL[stage] || stage}</span>
+        {c.hasTodo && <span className="chip bg-amber-soft text-amber">Paper to do</span>}
+        {c.bestPct !== null && <span className={c.bestPct >= 75 ? "chip-acquis" : "chip-fragile"}>Paper {c.bestPct}%</span>}
+        {c.coached && <span className="chip-acquis">Coached ✓</span>}
+      </span>
+    );
+  };
 
   return (
     <div>
@@ -385,9 +411,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                     <span className="font-semibold text-[15px]">{latest.title}</span>
                     {latest.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{latest.spec_topic}</span>}
                   </span>
-                  <span className={latest.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
-                    {STAGE_LABEL[latest.stage] || latest.stage}
-                  </span>
+                  <CycleChips lessonId={latest.id} stage={latest.stage} />
                   <span className="font-mono text-xs text-faint shrink-0">
                     {new Date(latest.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </span>
@@ -412,9 +436,7 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
                         {l.spec_topic && <span className="font-mono text-[11px] text-faint ml-2">{l.spec_topic}</span>}
                       </span>
                       <span className="text-xs text-muted shrink-0">{m ? `${m.acquis}/${m.total} secure` : `${nConcepts} concepts`}</span>
-                      <span className={l.stage === "done" ? "chip-acquis shrink-0" : "chip-todo shrink-0"}>
-                        {STAGE_LABEL[l.stage] || l.stage}
-                      </span>
+                      <CycleChips lessonId={l.id} stage={l.stage} />
                       <span className="font-mono text-xs text-faint shrink-0 w-14 text-right">
                         {new Date(l.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </span>
@@ -453,19 +475,20 @@ export default function SubjectDashboard({ params }: { params: Promise<{ subject
           <p className="text-sm text-faint">Every set is kept here — reopen it, reprint it, review the marking.</p>
         </div>
         {(!data.papers || data.papers.length === 0) ? (
-          <p className="text-sm text-faint mt-3">Your practice papers will appear here — do them online, or print them and upload your script.</p>
+          <p className="text-sm text-faint mt-3">Emma assigns a past paper at the end of each lesson — it will appear here, to do online or on paper.</p>
         ) : (
           <div className="card mt-4 divide-y divide-line overflow-hidden">
-            {data.papers.map((pp) => (
+            {[...data.papers].sort((a, b) => (a.awarded === null ? -1 : 1) - (b.awarded === null ? -1 : 1)).map((pp) => (
               <Link key={pp.id} href={`/paper/${pp.id}`} className="p-4 flex items-center gap-3 flex-wrap hover:bg-indigo-soft/40 transition">
-                <span className={pp.awarded === null ? "chip-todo shrink-0" : pp.decision === "advance" ? "chip-acquis shrink-0" : "chip-fragile shrink-0"}>
-                  {pp.awarded === null ? "not marked" : `${pp.awarded}/${pp.total_marks} marks`}
+                <span className={pp.awarded === null ? "chip bg-amber-soft text-amber shrink-0" : pp.decision === "advance" ? "chip-acquis shrink-0" : "chip-fragile shrink-0"}>
+                  {pp.awarded === null ? "to do" : `${pp.awarded}/${pp.total_marks} marks`}
                 </span>
                 <span className="flex-1 min-w-[200px] font-semibold text-[14.5px]">{pp.title}</span>
+                {pp.awarded !== null && coachedIds.has(pp.id) && <span className="chip-acquis shrink-0">Coached ✓</span>}
                 <span className="font-mono text-xs text-faint shrink-0">
                   {new Date(pp.at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                 </span>
-                <span className="text-indigo font-semibold text-sm shrink-0">Open →</span>
+                <span className="text-indigo font-semibold text-sm shrink-0">{pp.awarded === null ? "Do it →" : "Open →"}</span>
               </Link>
             ))}
           </div>
