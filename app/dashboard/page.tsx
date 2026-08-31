@@ -27,7 +27,7 @@ type Overview = {
   profile: { tutor_style: string; target_grade: string; content_lang?: string };
   enrolments: Enrolment[];
   by_subject: Record<string, Roll>;
-  lessons: { id: string; subject: string }[];
+  lessons: { id: string; subject: string; title?: string; stage?: string }[];
   papers_todo?: { id: string; lesson_id: string; subject: string; title: string; marks: number; minutes: number; assigned_at: string }[];
 };
 
@@ -195,6 +195,21 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
+                  {/* Leçon EN COURS : la reprendre est l'action n°1 — elle se
+                      termine par l'assignation du past paper. */}
+                  {(() => {
+                    const inProgress = data.lessons.find((l) => l.subject === e.subject && l.stage && l.stage !== "done");
+                    return inProgress ? (
+                      <Link
+                        href={`/lesson/${inProgress.id}`}
+                        className="mt-3 flex items-center gap-2 bg-amber-soft rounded-xl px-3.5 py-2.5 hover:brightness-95 transition"
+                      >
+                        <span className="chip bg-white text-amber shrink-0">in progress</span>
+                        <span className="flex-1 text-[13.5px] font-semibold">▶ Continue the lesson: {inProgress.title || "your lesson"}</span>
+                        <span className="text-[11.5px] text-muted shrink-0">finish it to get your past paper</span>
+                      </Link>
+                    ) : null;
+                  })()}
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Link href={`/matiere/${e.subject}`} className="btn-ghost !py-1.5 !px-3.5 text-[13px]">Tutoring Plan &amp; reports</Link>
                     <Link href={`/matiere/${e.subject}#papers`} className="btn-ghost !py-1.5 !px-3.5 text-[13px]">Past-paper practice</Link>
