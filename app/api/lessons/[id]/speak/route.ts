@@ -34,8 +34,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     );
   }
 
-  const source =
-    key === "intro" ? course.intro
+  // "overview" : l'OUVERTURE du mode Listen — le concept en une phrase, à
+  // quoi il sert à l'examen, puis l'annonce du plan (« part 1: …, part 2: … »).
+  const isOverview = key === "overview";
+  const source = isOverview
+    ? `INTRO OF THE LESSON:\n${course.intro || ""}\n\nTHE PARTS OF THIS LESSON, IN ORDER:\n${(course.sections || []).map((s, i) => `Part ${i + 1}: ${s.title}`).join("\n")}${course.recap ? `\nFinal part: one-minute recap` : ""}`
+    : key === "intro" ? course.intro
     : key === "recap" ? course.recap
     : course.sections?.find((s) => s.concept_key === key)?.body;
   if (!source) return NextResponse.json({ error: "section introuvable" }, { status: 404 });
@@ -47,9 +51,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       // STORYBOARD façon mini-vidéo : des écrans visuels (vraies formules
       // LaTeX, bullets) + une narration courte et punchy. Court = démarrage
       // rapide ET attention d'un public de 16-18 ans.
+      const overviewRules = isOverview
+        ? `\nSPECIAL CASE — THIS IS THE OPENING of the whole lesson presentation (like a great teacher announcing the plan):\n` +
+          `- Slide 1: WHAT this topic is in one punchy line + WHY it matters (where the marks are). 🎯\n` +
+          `- Slide 2 (and 3 if needed): the roadmap as bullets — "Part 1: …", "Part 2: …" exactly matching the parts listed in the source.\n` +
+          `- The "say" narration: welcome the student, name the concept and what it's for in one sentence, then announce each part ("In part one we'll…, then in part two…"). Total narration UNDER 70 words.\n`
+        : "";
       const raw = await askClaude({
         system:
           `You are Emma, an energetic UK sixth-form tutor making a SHORT explainer video (60-90 seconds) about ONE concept, for a 16-18 year old, in ${lang}.\n` +
+          overviewRules +
           `Turn the course section below into a storyboard of 4 to 7 slides. Respond ONLY with JSON:\n` +
           `{"slides":[{"show":"…","say":"…"}]}\n` +
           `RULES for "show" (what appears ON SCREEN — visual, punchy):\n` +

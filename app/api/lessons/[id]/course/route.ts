@@ -42,19 +42,59 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const elapsed = await sessionElapsedMin({ sb: auth.sb, userId: auth.user.id, kind: "lesson", refId: id });
 
   try {
-    const raw = await askClaude({
-      system: courseSystem(auth.firstName, auth.style, subj, mode, concepts) + sessionClock("tutoring", elapsed),
-      content: userMsg,
-      maxTokens: mode === "full" ? 8000 : 3500,
-      // Vitesse façon Coach Emma : réflexion minimale sur la génération — la
-      // qualité vient du prompt (fiche board) + de la relectrice Opus en fond.
-      effort: "low",
-      workflow: `course-${mode}`,
-      lessonId: id,
-      userId: auth.user.id,
-      sb: auth.sb,
-    });
-    const course = extractJson<Course>(raw);
+    const sys = courseSystem(auth.firstName, auth.style, subj, mode, concepts) + sessionClock("tutoring", elapsed);
+    const common = { content: userMsg, effort: "low" as const, lessonId: id, userId: auth.user.id, sb: auth.sb };
+
+    let course: Course;
+    if (mode === "full" && concepts.length > 1) {
+      // FULL LESSON EN PARALLÈLE : une requête par section + une pour le
+      // cadre (intro/recap) → le temps total = la section la plus longue
+      // (~30 s) au lieu de la somme. La relectrice Opus (en fond) garantit
+      // la cohérence inter-sections — c'est sa checklist. En cas de pépin
+      // sur une section, on retombe sur la génération monobloc.
+      const secP = concepts.map((c) =>
+        askClaude({
+          ...common,
+          system: sys +
+            `\n\nMODE PARALLÈLE : écris UNIQUEMENT la section du concept « ${c.key} » (${c.label}). Les autres concepts (${concepts.filter((x) => x.key !== c.key).map((x) => x.label).join(", ")}) ont leur propre section écrite séparément — ne les développe pas (une référence d'une phrase au plus). RÉPONDS UNIQUEMENT avec ce JSON : {"concept_key":"${c.key}","title":"…","body":"markdown + LaTeX selon MISE EN PAGE"}`,
+          maxTokens: 2200,
+          workflow: "course-full-section",
+        }).then((r) => extractJson<{ concept_key: string; title: string; body: string }>(r))
+      );
+      const frameP = askClaude({
+        ...common,
+        system: sys +
+          `\n\nMODE PARALLÈLE : écris UNIQUEMENT l'intro (l'accroche : ce qu'on va maîtriser, où ça rapporte des marks) et le recap minute (réflexes à retenir, en bullets) — les sections sont écrites séparément. RÉPONDS UNIQUEMENT avec : {"intro":"…","recap":"…"}`,
+        maxTokens: 900,
+        workflow: "course-full-frame",
+      }).then((r) => extractJson<{ intro: string; recap: string }>(r));
+
+      try {
+        const [frame, ...secs] = await Promise.all([frameP, ...secP]);
+        const ordered = concepts.map((c) => secs.find((s) => s?.concept_key === c.key));
+        if (ordered.some((s) => !s?.body)) throw new Error("section manquante");
+        course = {
+          mode: "full",
+          intro: frame.intro || "",
+          recap: frame.recap || "",
+          sections: ordered.map((s) => ({ concept_key: s!.concept_key, title: s!.title, body: s!.body })),
+        } as Course;
+      } catch {
+        // Repli monobloc (rare) — plus lent mais toujours juste.
+        course = extractJson<Course>(
+          await askClaude({ ...common, system: sys, maxTokens: 8000, workflow: "course-full" })
+        );
+      }
+    } else {
+      course = extractJson<Course>(
+        await askClaude({
+          ...common,
+          system: sys,
+          maxTokens: mode === "full" ? 8000 : 3500,
+          workflow: `course-${mode}`,
+        })
+      );
+    }
 
     // Le cours part TOUT DE SUITE — sauvegardé, l'élève commence à lire.
     await auth.sb

@@ -96,7 +96,7 @@ export default function LessonPage() {
     const mode = course.mode === "full" ? "full" : "key";
     if (warmedRef.current === mode) return;
     warmedRef.current = mode;
-    const keys = ["intro", ...course.sections.map((s) => s.concept_key), ...(course.recap ? ["recap"] : [])];
+    const keys = ["overview", ...course.sections.map((s) => s.concept_key), ...(course.recap ? ["recap"] : [])];
     (async () => {
       // 2 générations en parallèle max — silencieux, jamais bloquant.
       const queue = [...keys];
@@ -308,7 +308,8 @@ export default function LessonPage() {
               lessonId={lesson.id}
               mode={course.mode === "full" ? "full" : "key"}
               sections={[
-                { key: "intro", title: "Introduction" },
+                // L'ouverture : le concept en une phrase + l'annonce du plan.
+                { key: "overview", title: "What we'll cover today" },
                 ...course.sections.map((s) => ({ key: s.concept_key, title: s.title })),
                 ...(course.recap ? [{ key: "recap", title: "One-minute recap" }] : []),
               ]}
