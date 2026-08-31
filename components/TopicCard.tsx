@@ -114,44 +114,35 @@ export default function TopicCard({ lesson, masteryRows, papers, coachedIds, ses
 
       {/* ===== Les 4 menus ===== */}
       <div className="flex flex-wrap items-center gap-2 mt-4">
-        {/* View reports ▾ — visible seulement s'il y a au moins un report */}
-        {(hasTutoringReport || hasCoachingReport) && (
-          <div className="relative">
-            <button
-              onClick={() => { setStartOpen(false); setReportsOpen((o) => !o); }}
-              className={panel === "tutoring" || panel === "coaching" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}
-            >
-              View reports ▾
-            </button>
-            {reportsOpen && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
-                {hasTutoringReport && (
-                  <button onClick={() => togglePanel("tutoring")} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
-                    <p className="text-sm font-semibold">📖 Tutoring report</p>
-                    <p className="text-[11.5px] text-faint">Understanding level, concept by concept</p>
-                  </button>
-                )}
-                {hasCoachingReport && (
-                  <button onClick={openCoaching} className="block w-full text-left px-4 py-2.5 hover:bg-indigo-soft">
-                    <p className="text-sm font-semibold">🎯 Coaching report</p>
-                    <p className="text-[11.5px] text-faint">Your coaching session on the marked paper</p>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* View reports ▾ — toujours visible ; s'estompe tant qu'il est vide
+            et se remplit au fur et à mesure du cycle */}
+        <div className="relative">
+          <button
+            onClick={() => { setStartOpen(false); setReportsOpen((o) => !o); }}
+            className={`${panel === "tutoring" || panel === "coaching" ? "btn-primary" : "btn-ghost"} !py-1.5 !px-3.5 text-[13px]${hasTutoringReport || hasCoachingReport ? "" : " opacity-60"}`}
+          >
+            View reports ▾
+          </button>
+          {reportsOpen && (
+            <div className="absolute left-0 top-full mt-2 w-64 bg-white border border-line rounded-xl shadow-lg z-20 overflow-hidden py-1">
+              <button onClick={() => togglePanel("tutoring")} className={`block w-full text-left px-4 py-2.5 hover:bg-indigo-soft${hasTutoringReport ? "" : " opacity-60"}`}>
+                <p className="text-sm font-semibold">📖 Tutoring report</p>
+                <p className="text-[11.5px] text-faint">{hasTutoringReport ? "Understanding level, concept by concept" : "Fills in after the mastery check"}</p>
+              </button>
+              <button onClick={openCoaching} className={`block w-full text-left px-4 py-2.5 hover:bg-indigo-soft${hasCoachingReport ? "" : " opacity-60"}`}>
+                <p className="text-sm font-semibold">🎯 Coaching report</p>
+                <p className="text-[11.5px] text-faint">{hasCoachingReport ? "Your coaching session on the marked paper" : "Fills in after your coaching session"}</p>
+              </button>
+            </div>
+          )}
+        </div>
 
-        {todoPapers.length > 0 && (
-          <button onClick={() => togglePanel("papers")} className={panel === "papers" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
-            Papers ({todoPapers.length} to do) ▾
-          </button>
-        )}
-        {markedPapers.length > 0 && (
-          <button onClick={() => togglePanel("results")} className={panel === "results" ? "btn-primary !py-1.5 !px-3.5 text-[13px]" : "btn-ghost !py-1.5 !px-3.5 text-[13px]"}>
-            Paper results ({markedPapers.length}) ▾
-          </button>
-        )}
+        <button onClick={() => togglePanel("papers")} className={`${panel === "papers" ? "btn-primary" : "btn-ghost"} !py-1.5 !px-3.5 text-[13px]${todoPapers.length ? "" : " opacity-60"}`}>
+          Papers{todoPapers.length ? ` (${todoPapers.length} to do)` : ""} ▾
+        </button>
+        <button onClick={() => togglePanel("results")} className={`${panel === "results" ? "btn-primary" : "btn-ghost"} !py-1.5 !px-3.5 text-[13px]${markedPapers.length ? "" : " opacity-60"}`}>
+          Paper results{markedPapers.length ? ` (${markedPapers.length})` : ""} ▾
+        </button>
 
         {/* Start ▾ */}
         <div className="relative ml-auto">
